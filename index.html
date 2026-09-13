@@ -6,43 +6,41 @@
   <script>document.documentElement.classList.remove('no-js');</script>
 
   <!-- ==========================================================
-       SEO / META
-       PLACEHOLDER: replace BrandName, domain, OG image, handles
+       SEO / META — PLACEHOLDER: business name, domain, OG image
        ========================================================== -->
   <title>BrandName — Custom Websites, Instagram Reels &amp; Photography in Daman &amp; Vapi</title>
   <meta name="description" content="BrandName builds 100% custom websites, shoots Instagram reels and runs product photo shoots for small businesses in Daman, Vapi and nearby areas. Delivered in 3-4 days with unlimited revisions." />
-  <meta name="theme-color" content="#0A0A0B" />
-  <meta name="author" content="BrandName" />
-  <link rel="canonical" href="https://brandname.com/" /><!-- PLACEHOLDER: live domain -->
+  <meta name="theme-color" content="#22C55E" />
+  <link rel="canonical" href="https://brandname.com/" /><!-- PLACEHOLDER -->
 
-  <!-- Open Graph / social sharing -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="BrandName" />
   <meta property="og:title" content="BrandName — Custom Websites, Reels &amp; Photography" />
   <meta property="og:description" content="Every website we build is designed from scratch — never a template. Websites, Instagram reels and photo shoots for small businesses in Daman &amp; Vapi." />
   <meta property="og:url" content="https://brandname.com/" /><!-- PLACEHOLDER -->
-  <meta property="og:image" content="https://brandname.com/og-image.jpg" /><!-- PLACEHOLDER: 1200x630 share image -->
+  <meta property="og:image" content="https://brandname.com/og-image.jpg" /><!-- PLACEHOLDER: 1200x630 -->
   <meta property="og:locale" content="en_IN" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="BrandName — Custom Websites, Reels &amp; Photography" />
   <meta name="twitter:description" content="Custom websites, Instagram reels and photo shoots for small businesses in Daman &amp; Vapi." />
   <meta name="twitter:image" content="https://brandname.com/og-image.jpg" /><!-- PLACEHOLDER -->
 
-  <!-- PLACEHOLDER FAVICON: swap this inline SVG for /favicon.ico or /favicon.svg -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237C3AED'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='18' font-weight='700' fill='%23fff' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" /><!-- PLACEHOLDER: 180x180 png -->
+  <!-- PLACEHOLDER FAVICON: a plain green tile as a PNG (no SVG anywhere on
+       this site). Swap for your real /favicon.png when you have a logo. -->
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAWElEQVR42u3XsQkAIAwF0cziYG7rXNrZKAElJgEvYH2v9IsoV1rtFk9Ozip6hXkdVxFe8S3CO74g/gZExScCAAAAAAAAAAAgHMCfMAUgfJikmGYpxmnEPB+23GRJW3TK6AAAAABJRU5ErkJggg==" />
 
-  <!-- Google Fonts: Space Grotesk (display) + Inter (body) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Icon set via CDN. Font Awesome's webfont build draws icons from a font
+       file, so no SVG is used anywhere on the page. -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ==========================================================
-       LocalBusiness structured data (JSON-LD)
-       PLACEHOLDER: phone, email, address, social URLs, geo
-       ========================================================== -->
+  <!-- LocalBusiness structured data. PLACEHOLDER: phone, address, socials -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -51,7 +49,7 @@
     "description": "Digital services agency building custom websites, Instagram reels and photography for small businesses.",
     "url": "https://brandname.com/",
     "image": "https://brandname.com/og-image.jpg",
-    "telephone": "+91-XXXXXXXXXX",
+    "telephone": "+91-98765-43210",
     "email": "hello@brandname.com",
     "priceRange": "₹1,000 - ₹12,000",
     "address": {
@@ -66,10 +64,7 @@
       { "@type": "City", "name": "Daman" },
       { "@type": "City", "name": "Vapi" }
     ],
-    "sameAs": [
-      "https://instagram.com/brandname",
-      "https://wa.me/91XXXXXXXXXX"
-    ],
+    "sameAs": ["https://instagram.com/brandname", "https://wa.me/919876543210"],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
       "name": "Packages",
@@ -85,820 +80,607 @@
 </head>
 
 <body>
-  <!-- Skip link for keyboard + screen reader users -->
   <a class="skip-link" href="#main">Skip to content</a>
-
-  <!-- Reading-progress bar, width driven from JS -->
-  <div class="progress" id="progress" aria-hidden="true"></div>
-
-  <!-- Site-wide film grain for depth -->
-  <div class="grain" aria-hidden="true"></div>
-
-  <!-- ==========================================================
-       1. STICKY NAVBAR
-       ========================================================== -->
-  <header class="nav" id="nav">
-    <div class="container nav__inner">
-      <a class="logo" href="#home" aria-label="BrandName home">
-        <span class="logo__mark" aria-hidden="true"></span>
-        <!-- PLACEHOLDER: business name -->
-        <span class="logo__text">Brand<span class="logo__accent">Name</span></span>
-      </a>
-
-      <nav class="nav__links" id="navLinks" aria-label="Main navigation">
-        <a href="#services">Services</a>
-        <a href="#packages">Packages</a>
-        <a href="#work">Work</a>
-        <a href="#process">Process</a>
-        <a href="#contact">Contact</a>
-        <!-- Duplicated CTA, visible only inside the mobile drawer -->
-        <button class="btn btn--primary nav__drawer-cta" data-wa-modal data-service="Not Sure">Get Quote</button>
-      </nav>
-
-      <div class="nav__actions">
-        <button class="btn btn--primary btn--sm nav__cta" data-wa-modal data-service="Not Sure">Get Quote</button>
-        <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
-          <span class="nav__bar"></span>
-          <span class="nav__bar"></span>
-          <span class="nav__bar"></span>
-        </button>
-      </div>
-    </div>
-  </header>
-  <!-- Backdrop behind the mobile drawer -->
-  <div class="nav__scrim" id="navScrim" hidden></div>
 
   <main id="main">
 
-    <!-- ==========================================================
-         2. HERO
-         ========================================================== -->
-    <section class="hero" id="home">
-      <div class="hero__grain" aria-hidden="true"></div>
-      <div class="hero__glow" aria-hidden="true"></div>
+  <!-- ======================================================================
+       ROW 1 — HERO (left) + SERVICES (right)
+       ====================================================================== -->
+  <section class="row row--top">
 
-      <div class="container hero__inner">
-        <div class="hero__copy">
-          <p class="pill-badge reveal">
-            <span class="pill-badge__pulse" aria-hidden="true"></span>
-            Taking on new projects &nbsp;·&nbsp; Daman &amp; Vapi
-          </p>
+    <!-- ---------- HERO ---------- -->
+    <div class="hero" id="home">
+      <!-- PLACEHOLDER IMAGE: replace with your own workspace photo.
+           Loaded as a real raster photo, not an SVG. -->
+      <img class="hero__bg" alt=""
+           src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1500&q=80"
+           data-fallback="https://picsum.photos/seed/brandname-desk/1500/1000" />
+      <div class="hero__veil"></div>
 
-          <h1 class="hero__title reveal" data-split>
-            Get your local business <span class="nowrap"><span class="grad-text">online</span>&nbsp;&mdash;</span> properly.
-          </h1>
+      <!-- ---------- NAV ---------- -->
+      <header class="nav">
+        <a class="logo" href="#home" aria-label="BrandName home">
+          <span class="logo__text">Brand<span class="logo__accent">Name</span></span>
+        </a>
 
-          <p class="hero__sub reveal">
-            We build custom websites from scratch, shoot Instagram reels that actually get watched,
-            and photograph your products and store. Made for coaching classes, salons, gyms, cafes,
-            clinics, shops and boutiques that deserve better than a template.
-          </p>
+        <nav class="nav__links" id="navLinks" aria-label="Main navigation">
+          <a href="#services">Services</a>
+          <a href="#packages">Packages</a>
+          <a href="#work">Work</a>
+          <a href="#process">Process</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+          <button class="btn btn--green nav__drawer-cta" data-wa-modal data-service="Not Sure">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Get Quote
+          </button>
+        </nav>
 
-          <div class="hero__cta reveal">
-          <button class="btn btn--primary btn--lg" data-wa-modal data-service="Not Sure">
-            <i data-lucide="message-circle" aria-hidden="true"></i>
+        <div class="nav__actions">
+          <button class="btn btn--green nav__cta" data-wa-modal data-service="Not Sure">
+            <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+            Get Quote
+          </button>
+          <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ---------- HERO CONTENT ---------- -->
+      <div class="hero__inner">
+        <p class="hero__eyebrow">Local Businesses &nbsp;•&nbsp; Bigger Opportunities</p>
+
+        <h1 class="hero__title">
+          Let's Get Your<br />
+          Business <span class="txt-green">Online</span>
+        </h1>
+
+        <p class="hero__sub">
+          Custom websites, Instagram reels and professional<br class="br-desk" />
+          photography for small businesses in Daman &amp; Vapi.
+        </p>
+
+        <div class="hero__cta">
+          <button class="btn btn--green btn--lg" data-wa-modal data-service="Not Sure">
+            <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
             Start Your Project
           </button>
-            <a class="btn btn--ghost btn--lg" href="#packages">
-              See Packages
-              <i data-lucide="arrow-down" aria-hidden="true"></i>
-            </a>
-          </div>
+          <a class="btn btn--outline-light btn--lg" href="#packages">
+            See Packages <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+          </a>
         </div>
 
-        <!-- Hero visual: an abstract site preview built entirely in CSS.
-             PLACEHOLDER: swap .mock for a real screenshot if you prefer. -->
-        <div class="hero__visual reveal" aria-hidden="true">
-          <div class="mock" data-tilt>
-            <div class="mock__bar">
-              <span class="mock__dot"></span>
-              <span class="mock__dot"></span>
-              <span class="mock__dot"></span>
-              <span class="mock__url">yourbusiness.com</span>
-            </div>
-            <div class="mock__body">
-              <div class="mock__nav">
-                <span class="mock__logo"></span>
-                <span class="mock__link"></span>
-                <span class="mock__link"></span>
-                <span class="mock__link"></span>
-                <span class="mock__btn"></span>
-              </div>
-              <div class="mock__hero">
-                <span class="mock__h1"></span>
-                <span class="mock__h1 mock__h1--short"></span>
-                <span class="mock__p"></span>
-                <span class="mock__p mock__p--short"></span>
-                <span class="mock__cta"></span>
-              </div>
-              <div class="mock__grid">
-                <span class="mock__tile"></span>
-                <span class="mock__tile"></span>
-                <span class="mock__tile"></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Floating proof chips -->
-          <div class="float-chip float-chip--a">
-            <strong>3-4 days</strong>
-            <span>start to live</span>
-          </div>
-          <div class="float-chip float-chip--b">
-            <strong>&#8377;12,000</strong>
-            <span>combo package</span>
-          </div>
-        </div>
-
-        <!-- Trust stats — numbers count up on scroll into view -->
-        <ul class="stats reveal" aria-label="Why businesses choose us">
-          <li class="stat">
-            <span class="stat__num"><span data-count="4" data-prefix="3–">3–4</span></span>
-            <span class="stat__label">Day Delivery</span>
+        <ul class="trust">
+          <li>
+            <i class="fa-solid fa-bolt trust__ico" aria-hidden="true"></i>
+            <span><strong data-count="4" data-prefix="3-">3-4</strong>Day Delivery</span>
           </li>
-          <li class="stat">
-            <span class="stat__num stat__num--symbol">&#8734;</span>
-            <span class="stat__label">Unlimited Revisions</span>
+          <li>
+            <i class="fa-solid fa-arrows-rotate trust__ico" aria-hidden="true"></i>
+            <span><strong>Unlimited</strong>Revisions</span>
           </li>
-          <li class="stat">
-            <span class="stat__num"><span data-count="100" data-suffix="%">100%</span></span>
-            <span class="stat__label">Custom Design</span>
+          <li>
+            <i class="fa-solid fa-shield-halved trust__ico" aria-hidden="true"></i>
+            <span><strong data-count="100" data-suffix="%">100%</strong>Custom Design</span>
           </li>
         </ul>
       </div>
-    </section>
 
-    <!-- Scrolling keyword band — pauses on hover, hidden from screen readers
-         since it only repeats what the sections below already say. -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__track">
-        <div class="marquee__group">
-          <span>Custom Websites</span><span class="marquee__sep">&#9670;</span>
-          <span>Instagram Reels</span><span class="marquee__sep">&#9670;</span>
-          <span>Product Photography</span><span class="marquee__sep">&#9670;</span>
-          <span>No Templates</span><span class="marquee__sep">&#9670;</span>
-          <span>Unlimited Revisions</span><span class="marquee__sep">&#9670;</span>
-          <span>Daman &amp; Vapi</span><span class="marquee__sep">&#9670;</span>
+      <!-- Hand-written note over the photo -->
+      <p class="scribble" aria-hidden="true">
+        Websites<br />Reels<br />Photography
+        <i class="fa-solid fa-arrow-turn-down scribble__arrow"></i>
+      </p>
+    </div>
+
+    <!-- ---------- SERVICES ---------- -->
+    <aside class="services" id="services">
+      <!-- PLACEHOLDER IMAGE: decorative foliage backdrop -->
+      <img class="services__bg" alt=""
+           src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=80"
+           data-fallback="https://picsum.photos/seed/brandname-leaf/1000/1200" />
+      <div class="services__veil"></div>
+
+      <div class="services__inner">
+        <h2 class="services__title">Our <span class="txt-green">Services</span></h2>
+        <p class="services__lede">Everything you need to grow your business, under one roof.</p>
+
+        <div class="svc-grid">
+          <article class="svc">
+            <span class="svc__ico" aria-hidden="true"><i class="fa-solid fa-display"></i></span>
+            <h3>Website Development</h3>
+            <p>Custom designed websites for your business. No templates. 100% unique design.</p>
+            <button class="svc__link" data-wa-modal data-service="Website Development">
+              Enquire on WhatsApp <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </article>
+
+          <article class="svc">
+            <span class="svc__ico" aria-hidden="true"><i class="fa-solid fa-video"></i></span>
+            <h3>Reel Making</h3>
+            <p>Shoot and edit engaging Instagram reels with trending audio and effects.</p>
+            <button class="svc__link" data-wa-modal data-service="Reel Making">
+              Enquire on WhatsApp <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </article>
+
+          <article class="svc">
+            <span class="svc__ico" aria-hidden="true"><i class="fa-solid fa-camera"></i></span>
+            <h3>Photo Shoot</h3>
+            <p>Professional photography for your products, store and team.</p>
+            <button class="svc__link" data-wa-modal data-service="Photo Shoot">
+              Enquire on WhatsApp <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </article>
         </div>
-        <div class="marquee__group">
-          <span>Custom Websites</span><span class="marquee__sep">&#9670;</span>
-          <span>Instagram Reels</span><span class="marquee__sep">&#9670;</span>
-          <span>Product Photography</span><span class="marquee__sep">&#9670;</span>
-          <span>No Templates</span><span class="marquee__sep">&#9670;</span>
-          <span>Unlimited Revisions</span><span class="marquee__sep">&#9670;</span>
-          <span>Daman &amp; Vapi</span><span class="marquee__sep">&#9670;</span>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ======================================================================
+       ROW 2 — PACKAGES (left) + BUILDER (right)
+       ====================================================================== -->
+  <section class="row row--mid">
+
+    <!-- ---------- PACKAGES ---------- -->
+    <div class="block" id="packages">
+      <h2 class="h-sec">Our Packages</h2>
+      <p class="p-sec">Choose the package that fits your needs. All packages include unlimited revisions.</p>
+
+      <div class="pkg-grid">
+        <article class="pkg">
+          <h3 class="pkg__name">Website Only</h3>
+          <p class="pkg__price">₹5,000</p>
+          <ul class="pkg__list">
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Custom designed website</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Mobile responsive</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Unlimited revisions until approved</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Domain + hosting charged separately</li>
+          </ul>
+          <button class="btn btn--green btn--block" data-wa-package="Website Only" data-wa-price="5,000">Book This Package</button>
+        </article>
+
+        <article class="pkg pkg--featured">
+          <span class="pkg__badge">Most Popular</span>
+          <h3 class="pkg__name">Combo Package</h3>
+          <p class="pkg__price">₹12,000</p>
+          <ul class="pkg__list">
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Custom website (unique design)</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>1-year domain + hosting included</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>2 Instagram reels (shoot + edit)</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Professional photo shoot</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Unlimited revisions</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivery in 3-4 days</li>
+          </ul>
+          <button class="btn btn--green btn--block" data-wa-package="Combo Package" data-wa-price="12,000">Book This Package</button>
+        </article>
+
+        <article class="pkg">
+          <h3 class="pkg__name">Reel Making</h3>
+          <p class="pkg__price">₹2,000</p>
+          <ul class="pkg__list">
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Shooting + professional editing</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Trending audio and transitions</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivered ready to post</li>
+          </ul>
+          <button class="btn btn--green btn--block" data-wa-package="Reel Making" data-wa-price="2,000">Book This Package</button>
+        </article>
+
+        <article class="pkg">
+          <h3 class="pkg__name">Photo Shoot</h3>
+          <p class="pkg__price">₹1,000</p>
+          <ul class="pkg__list">
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Product / store / staff photography</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Edited and color-corrected</li>
+            <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivered in web and print formats</li>
+          </ul>
+          <button class="btn btn--green btn--block" data-wa-package="Photo Shoot" data-wa-price="1,000">Book This Package</button>
+        </article>
+      </div>
+
+      <!-- Maintenance add-on -->
+      <div class="addon">
+        <span class="addon__ico" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
+        <div class="addon__copy">
+          <h3>Maintenance Add-on</h3>
+          <p>Keep your website updated and running smoothly.</p>
         </div>
+        <div class="addon__opts">
+          <button class="addon__opt" data-wa-package="Maintenance — 6 Months" data-wa-price="2,000">6 Months — ₹2,000</button>
+          <button class="addon__opt" data-wa-package="Maintenance — 1 Year" data-wa-price="4,000">1 Year — ₹4,000</button>
+        </div>
+        <ul class="addon__list">
+          <li><i class="fa-solid fa-check" aria-hidden="true"></i>Content updates</li>
+          <li><i class="fa-solid fa-check" aria-hidden="true"></i>Bug fixes</li>
+          <li><i class="fa-solid fa-check" aria-hidden="true"></i>Uptime monitoring</li>
+        </ul>
       </div>
     </div>
 
-    <!-- ==========================================================
-         3. SERVICES
-         ========================================================== -->
-    <section class="section" id="services">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">01</span>What we do</p>
-          <h2 class="section__title" data-split>Three things, done properly.</h2>
-          <p class="section__lede">
-            No bloated retainers, no jargon. Pick what your business actually needs right now.
-          </p>
-        </header>
+    <!-- ---------- BUILDER ---------- -->
+    <div class="block block--divide" id="builder">
+      <h2 class="h-sec">Build <span class="txt-green">Your Own</span> Package</h2>
+      <p class="p-sec">Select what you need and get an instant quote.</p>
 
-        <div class="grid grid--3 stagger">
-          <article class="card card--service reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="layout-template"></i></span>
-            <h3 class="card__title">Website Development</h3>
-            <p class="card__text">
-              Every site is designed from a blank page for your business — not picked off a
-              template marketplace. Mobile-first, fast, and built to be found on Google.
-            </p>
-            <button class="link-btn" data-wa-modal data-service="Website Development">
-              Enquire <i data-lucide="arrow-up-right" aria-hidden="true"></i>
-            </button>
-          </article>
+      <div class="bld">
+        <form class="bld__form" id="builderForm" novalidate>
+          <ul class="opt-list">
+            <li class="opt">
+              <label class="opt__row">
+                <input type="checkbox" name="service" value="website" />
+                <span class="opt__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                <span class="opt__label">Website Development</span>
+                <span class="opt__price" data-price-for="website">₹5,000</span>
+              </label>
+            </li>
+            <li class="opt">
+              <label class="opt__row">
+                <input type="checkbox" name="service" value="reel" />
+                <span class="opt__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                <span class="opt__label">Reel Making <span class="opt__note">(₹2,000 each)</span></span>
+                <span class="opt__price" data-price-for="reel">₹2,000</span>
+              </label>
+            </li>
+            <li class="opt">
+              <label class="opt__row">
+                <input type="checkbox" name="service" value="photo" />
+                <span class="opt__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                <span class="opt__label">Photo Shoot</span>
+                <span class="opt__price" data-price-for="photo">₹1,000</span>
+              </label>
+            </li>
+            <li class="opt">
+              <label class="opt__row">
+                <input type="checkbox" name="service" value="domain" />
+                <span class="opt__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                <span class="opt__label">Domain + Hosting <span class="opt__note">(1 Year)</span></span>
+                <span class="opt__price" data-price-for="domain">₹1,500</span>
+              </label>
+            </li>
+          </ul>
 
-          <article class="card card--service reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="clapperboard"></i></span>
-            <h3 class="card__title">Reel Making</h3>
-            <p class="card__text">
-              Shot and edited by creators who already run accounts with real followers and real
-              engagement. Trending audio, clean cuts, delivered ready to post.
-            </p>
-            <button class="link-btn" data-wa-modal data-service="Reel Making">
-              Enquire <i data-lucide="arrow-up-right" aria-hidden="true"></i>
-            </button>
-          </article>
-
-          <article class="card card--service reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="camera"></i></span>
-            <h3 class="card__title">Photo Shoot</h3>
-            <p class="card__text">
-              Product, store and staff photography for your website and social feed. Edited,
-              colour-corrected and exported for both web and print.
-            </p>
-            <button class="link-btn" data-wa-modal data-service="Photo Shoot">
-              Enquire <i data-lucide="arrow-up-right" aria-hidden="true"></i>
-            </button>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==========================================================
-         4. PACKAGES / PRICING
-         ========================================================== -->
-    <section class="section section--alt" id="packages">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">02</span>Pricing</p>
-          <h2 class="section__title" data-split>Straight pricing. No surprises.</h2>
-          <p class="section__lede">
-            One price, written down. What you see here is what you pay.
-          </p>
-        </header>
-
-        <div class="grid grid--4 stagger">
-
-          <!-- COMBO — featured -->
-          <article class="card card--price card--featured reveal">
-            <span class="badge">Most Popular</span>
-            <h3 class="price__name">Combo Package</h3>
-            <p class="price__amount"><span class="price__cur">₹</span>12,000</p>
-            <p class="price__note">Everything you need to go live.</p>
-            <ul class="price__list">
-              <li><i data-lucide="check" aria-hidden="true"></i> Custom website (unique design)</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> 1-year domain + hosting included</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> 2 Instagram reels (shoot + edit)</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Professional photo shoot</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Unlimited revisions</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Delivery in 3-4 days</li>
-            </ul>
-            <button class="btn btn--primary btn--block" data-wa-package="Combo Package" data-wa-price="12,000">
-              Book This
-            </button>
-          </article>
-
-          <!-- WEBSITE ONLY -->
-          <article class="card card--price reveal">
-            <h3 class="price__name">Website Only</h3>
-            <p class="price__amount"><span class="price__cur">₹</span>5,000</p>
-            <p class="price__note">Just the site, built custom.</p>
-            <ul class="price__list">
-              <li><i data-lucide="check" aria-hidden="true"></i> Custom designed website</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Mobile responsive</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Unlimited revisions until approved</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Domain + hosting charged separately</li>
-            </ul>
-            <button class="btn btn--outline btn--block" data-wa-package="Website Only" data-wa-price="5,000">
-              Book This
-            </button>
-          </article>
-
-          <!-- REEL MAKING -->
-          <article class="card card--price reveal">
-            <h3 class="price__name">Reel Making</h3>
-            <p class="price__amount"><span class="price__cur">₹</span>2,000</p>
-            <p class="price__note">Per reel, shoot to post.</p>
-            <ul class="price__list">
-              <li><i data-lucide="check" aria-hidden="true"></i> Shooting + professional editing</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Trending audio and transitions</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Delivered ready to post</li>
-            </ul>
-            <button class="btn btn--outline btn--block" data-wa-package="Reel Making" data-wa-price="2,000">
-              Book This
-            </button>
-          </article>
-
-          <!-- PHOTO SHOOT -->
-          <article class="card card--price reveal">
-            <h3 class="price__name">Photo Shoot</h3>
-            <p class="price__amount"><span class="price__cur">₹</span>1,000</p>
-            <p class="price__note">Shots your feed deserves.</p>
-            <ul class="price__list">
-              <li><i data-lucide="check" aria-hidden="true"></i> Product / store / staff photography</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Edited and colour-corrected</li>
-              <li><i data-lucide="check" aria-hidden="true"></i> Delivered in web and print formats</li>
-            </ul>
-            <button class="btn btn--outline btn--block" data-wa-package="Photo Shoot" data-wa-price="1,000">
-              Book This
-            </button>
-          </article>
-        </div>
-
-        <!-- Maintenance add-on strip -->
-        <aside class="addon reveal" aria-label="Maintenance add-on">
-          <div class="addon__head">
-            <span class="card__icon card__icon--sm" aria-hidden="true"><i data-lucide="wrench"></i></span>
-            <div>
-              <h3 class="addon__title">Add-on: Maintenance</h3>
-              <p class="addon__text">Content updates, bug fixes and uptime monitoring — so the site stays alive after launch.</p>
-            </div>
-          </div>
-          <div class="addon__options">
-            <button class="addon__opt" data-wa-package="Maintenance — 6 Months" data-wa-price="2,000">
-              <span class="addon__opt-label">6 Months</span>
-              <span class="addon__opt-price">₹2,000</span>
-            </button>
-            <button class="addon__opt" data-wa-package="Maintenance — 1 Year" data-wa-price="4,000">
-              <span class="addon__opt-label">1 Year</span>
-              <span class="addon__opt-price">₹4,000</span>
-            </button>
-          </div>
-        </aside>
-
-        <!-- Trust / terms strip -->
-        <div class="terms reveal">
-          <p><i data-lucide="shield-check" aria-hidden="true"></i> <strong>Payment terms:</strong> 50% advance, 50% on delivery.</p>
-          <p><i data-lucide="repeat" aria-hidden="true"></i> <strong>Revisions:</strong> unlimited until you approve.</p>
-          <p><i data-lucide="key-round" aria-hidden="true"></i> <strong>Ownership:</strong> the site is fully yours after final payment.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==========================================================
-         5. SERVICE BUILDER — live quote estimator
-         ========================================================== -->
-    <section class="section" id="builder">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">03</span>Build your quote</p>
-          <h2 class="section__title" data-split>Tick what you need. See the price instantly.</h2>
-          <p class="section__lede">
-            No form to fill, no waiting for a callback. Pick your services and send the quote
-            straight to us on WhatsApp.
-          </p>
-        </header>
-
-        <div class="builder reveal">
-          <!-- ---------- Left: the choices ---------- -->
-          <form class="builder__form" id="builderForm" novalidate>
-            <fieldset class="field">
-              <legend class="field__label">1. What do you need?</legend>
-              <div class="checks">
-                <label class="check">
-                  <input type="checkbox" name="service" value="website" />
-                  <span class="check__box" aria-hidden="true"><i data-lucide="check"></i></span>
-                  <span class="check__body">
-                    <span class="check__title">Website</span>
-                    <span class="check__price">₹5,000</span>
-                  </span>
-                </label>
-
-                <label class="check">
-                  <input type="checkbox" name="service" value="reel" />
-                  <span class="check__box" aria-hidden="true"><i data-lucide="check"></i></span>
-                  <span class="check__body">
-                    <span class="check__title">Reel Making</span>
-                    <span class="check__price">₹2,000 each</span>
-                  </span>
-                </label>
-
-                <label class="check">
-                  <input type="checkbox" name="service" value="photo" />
-                  <span class="check__box" aria-hidden="true"><i data-lucide="check"></i></span>
-                  <span class="check__body">
-                    <span class="check__title">Photo Shoot</span>
-                    <span class="check__price">₹1,000</span>
-                  </span>
-                </label>
-
-                <label class="check">
-                  <!-- PLACEHOLDER PRICE: domain + hosting is passed through at
-                       cost. The amount lives in PRICES.domain in script.js. -->
-                  <input type="checkbox" name="service" value="domain" />
-                  <span class="check__box" aria-hidden="true"><i data-lucide="check"></i></span>
-                  <span class="check__body">
-                    <span class="check__title">Domain + Hosting</span>
-                    <span class="check__price">₹3,000 / year</span>
-                  </span>
-                </label>
-              </div>
-            </fieldset>
-
-            <!-- Sub-choice: business type (revealed when Website is ticked) -->
-            <div class="subfield" id="subWebsite" hidden>
-              <label class="field__label" for="businessType">Business type</label>
-              <p class="field__hint">Helps us design for your actual customers.</p>
-              <select class="select" id="businessType" name="businessType">
-                <option value="Coaching Class">Coaching Class</option>
-                <option value="Retail Shop">Retail Shop</option>
-                <option value="Salon/Spa">Salon / Spa</option>
-                <option value="Gym/Fitness">Gym / Fitness</option>
-                <option value="Cafe/Restaurant">Cafe / Restaurant</option>
-                <option value="Clinic">Clinic</option>
-                <option value="Other">Other</option>
-              </select>
+          <div class="bld__fields">
+            <div class="fld" id="subWebsite">
+              <label class="fld__label" for="businessType">
+                Business Type <span class="fld__hint">(if Website selected)</span>
+              </label>
+              <span class="sel">
+                <select id="businessType" name="businessType">
+                  <option value="Coaching Class">Coaching Class</option>
+                  <option value="Retail Shop">Retail Shop</option>
+                  <option value="Salon/Spa">Salon / Spa</option>
+                  <option value="Gym/Fitness">Gym / Fitness</option>
+                  <option value="Cafe/Restaurant">Cafe / Restaurant</option>
+                  <option value="Clinic">Clinic</option>
+                  <option value="Other">Other</option>
+                </select>
+              </span>
             </div>
 
-            <!-- Sub-choice: reel quantity (revealed when Reel is ticked) -->
-            <div class="subfield" id="subReel" hidden>
-              <span class="field__label" id="reelQtyLabel">How many reels?</span>
-              <p class="field__hint">Between 1 and 5.</p>
-              <div class="stepper" role="group" aria-labelledby="reelQtyLabel">
-                <button type="button" class="stepper__btn" id="reelMinus" aria-label="Decrease number of reels">
-                  <i data-lucide="minus" aria-hidden="true"></i>
+            <div class="fld" id="subReel">
+              <span class="fld__label" id="reelQtyLabel">
+                Number of Reels <span class="fld__hint">(if Reel selected)</span>
+              </span>
+              <div class="step" role="group" aria-labelledby="reelQtyLabel">
+                <button type="button" class="step__btn" id="reelMinus" aria-label="Decrease number of reels">
+                  <i class="fa-solid fa-minus" aria-hidden="true"></i>
                 </button>
-                <output class="stepper__value" id="reelQty" aria-live="polite" for="reelMinus reelPlus">1</output>
-                <button type="button" class="stepper__btn" id="reelPlus" aria-label="Increase number of reels">
-                  <i data-lucide="plus" aria-hidden="true"></i>
+                <output class="step__val" id="reelQty" aria-live="polite" for="reelMinus reelPlus">2</output>
+                <button type="button" class="step__btn" id="reelPlus" aria-label="Increase number of reels">
+                  <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
 
-            <!-- Sub-choice: photo type (revealed when Photo Shoot is ticked) -->
-            <fieldset class="subfield" id="subPhoto" hidden>
-              <legend class="field__label">Photo shoot type</legend>
+            <fieldset class="fld" id="subPhoto">
+              <legend class="fld__label">
+                Photo Shoot Type <span class="fld__hint">(if Photo selected)</span>
+              </legend>
               <div class="radios">
-                <label class="radio">
-                  <input type="radio" name="photoType" value="Product Photos" checked />
-                  <span class="radio__dot" aria-hidden="true"></span>
-                  <span>Product Photos</span>
-                </label>
-                <label class="radio">
-                  <input type="radio" name="photoType" value="Store Photos" />
-                  <span class="radio__dot" aria-hidden="true"></span>
-                  <span>Store Photos</span>
-                </label>
-                <label class="radio">
-                  <input type="radio" name="photoType" value="Both" />
-                  <span class="radio__dot" aria-hidden="true"></span>
-                  <span>Both</span>
-                </label>
+                <label class="rad"><input type="radio" name="photoType" value="Product Photos" checked /><span class="rad__dot" aria-hidden="true"></span>Product Photos</label>
+                <label class="rad"><input type="radio" name="photoType" value="Store Photos" /><span class="rad__dot" aria-hidden="true"></span>Store Photos</label>
+                <label class="rad"><input type="radio" name="photoType" value="Both" /><span class="rad__dot" aria-hidden="true"></span>Both</label>
               </div>
             </fieldset>
 
-            <div class="field">
-              <label class="field__label" for="maintenance">2. Maintenance (optional)</label>
-              <p class="field__hint">Content updates, bug fixes and uptime monitoring.</p>
-              <select class="select" id="maintenance" name="maintenance">
-                <option value="none">None</option>
-                <option value="6 Months">6 Months (+₹2,000)</option>
-                <option value="1 Year">1 Year (+₹4,000)</option>
-              </select>
+            <div class="fld">
+              <label class="fld__label" for="maintenance">
+                Maintenance <span class="fld__hint">(Optional)</span>
+              </label>
+              <span class="sel">
+                <select id="maintenance" name="maintenance">
+                  <option value="none">None</option>
+                  <option value="6 Months">6 Months — ₹2,000</option>
+                  <option value="1 Year">1 Year — ₹4,000</option>
+                </select>
+              </span>
             </div>
-          </form>
+          </div>
+        </form>
 
-          <!-- ---------- Right: live summary ---------- -->
-          <aside class="summary" id="summary" aria-label="Your estimate">
-            <div class="summary__inner">
-              <h3 class="summary__title">Your estimate</h3>
+        <!-- Live estimate -->
+        <aside class="est" aria-label="Your price estimate">
+          <h3 class="est__title">Price Estimate</h3>
 
-              <ul class="summary__lines" id="summaryLines" aria-live="polite">
-                <li class="summary__empty">Nothing selected yet — tick a service to see your price.</li>
-              </ul>
+          <ul class="est__lines" id="summaryLines" aria-live="polite">
+            <li class="est__empty"><span>Nothing selected yet</span><span>—</span></li>
+          </ul>
 
-              <div class="summary__combo" id="comboNote" hidden>
-                <i data-lucide="sparkles" aria-hidden="true"></i>
-                <span>Combo discount applied</span>
-              </div>
+          <div class="est__total">
+            <span>Total</span>
+            <span class="est__amount">
+              <s id="strikeTotal" hidden></s>
+              <strong id="grandTotal">₹0</strong>
+            </span>
+          </div>
 
-              <div class="summary__total">
-                <span class="summary__total-label">Estimated total</span>
-                <span class="summary__total-value">
-                  <s class="summary__strike" id="strikeTotal" hidden></s>
-                  <span id="grandTotal">₹0</span>
-                </span>
-              </div>
+          <button type="button" class="btn btn--green btn--block" id="builderSend">
+            <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+            Send on WhatsApp
+          </button>
+          <p class="est__fine">50% advance, 50% on delivery</p>
 
-              <button type="button" class="btn btn--primary btn--block btn--lg" id="builderSend">
-                <i data-lucide="message-circle" aria-hidden="true"></i>
-                Send on WhatsApp
-              </button>
-              <p class="summary__fine">Estimate only — final quote confirmed on WhatsApp. 50% advance, 50% on delivery.</p>
-            </div>
-          </aside>
-        </div>
+          <p class="est__tip" id="comboNote">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+            <span id="comboNoteText">Select Website + Reel + Photo Shoot to get the ₹12,000 combo!</span>
+          </p>
+        </aside>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ==========================================================
-         6. PORTFOLIO / WORK
-         ========================================================== -->
-    <section class="section section--alt" id="work">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">04</span>Our work</p>
-          <h2 class="section__title" data-split>Recent projects.</h2>
-          <p class="section__lede">A young studio with a growing shelf. Here is what is live and what is on the way.</p>
-        </header>
+  <!-- ======================================================================
+       ROW 3 — WORK + PROCESS + WHY US
+       ====================================================================== -->
+  <section class="row row--three">
 
-        <!-- Filter chips -->
-        <div class="chips reveal" role="tablist" aria-label="Filter projects">
+    <!-- ---------- WORK ---------- -->
+    <div class="block" id="work">
+      <div class="block__head">
+        <div>
+          <h2 class="h-sec">Our Work</h2>
+          <p class="p-sec">Here are some of the businesses we've helped grow.</p>
+        </div>
+        <div class="chips" role="tablist" aria-label="Filter projects">
           <button class="chip is-active" role="tab" aria-selected="true" data-filter="all">All</button>
           <button class="chip" role="tab" aria-selected="false" data-filter="websites">Websites</button>
           <button class="chip" role="tab" aria-selected="false" data-filter="reels">Reels</button>
           <button class="chip" role="tab" aria-selected="false" data-filter="photography">Photography</button>
         </div>
+      </div>
 
-        <div class="grid work-grid stagger" id="workGrid">
-
-          <!-- REAL PROJECT -->
-          <article class="card card--work reveal" data-category="websites">
-            <!-- PLACEHOLDER IMAGE: drop a real screenshot at /work/webofbags.jpg and
-                 replace this .thumb div with <img src="work/webofbags.jpg" alt="..."> -->
-            <div class="thumb" aria-hidden="true">
-              <span class="thumb__label">webofbags.com</span>
-              <span class="thumb__shine"></span>
-            </div>
-            <div class="card__body">
+      <div class="work-grid" id="workGrid">
+        <article class="work" data-category="websites">
+          <span class="work__thumb">
+            <!-- PLACEHOLDER IMAGE: swap for a real screenshot of the site -->
+            <img alt="Web of Bags — non-woven bag manufacturer website"
+                 src="https://images.unsplash.com/photo-1597484662317-9bd7bdda2907?auto=format&fit=crop&w=500&q=80"
+                 data-fallback="https://picsum.photos/seed/webofbags/500/380" />
+          </span>
+          <div class="work__body">
+            <h3>webofbags.com</h3>
+            <p>Non-woven bag manufacturer</p>
+            <div class="work__foot">
               <span class="tag">Website</span>
-              <h3 class="card__title">Web of Bags</h3>
-              <p class="card__text">Non-woven bag manufacturer — product catalogue, enquiry flow and a clean manufacturer identity.</p>
-              <a class="link-btn" href="https://webofbags.com" target="_blank" rel="noopener noreferrer">
-                Visit site <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+              <a href="https://webofbags.com" target="_blank" rel="noopener noreferrer" class="work__link">
+                Visit Site <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
               </a>
             </div>
-          </article>
+          </div>
+        </article>
 
-          <!-- COMING SOON x3 -->
-          <article class="card card--work card--soon reveal" data-category="reels">
-            <div class="thumb thumb--soon" aria-hidden="true"><i data-lucide="clapperboard"></i></div>
-            <div class="card__body">
-              <span class="tag tag--muted">Reels</span>
-              <h3 class="card__title">Coming Soon</h3>
-              <p class="card__text">A reel series for a local cafe — currently in production.</p>
-            </div>
-          </article>
+        <article class="work work--soon" data-category="websites">
+          <i class="fa-regular fa-image work__ico" aria-hidden="true"></i>
+          <h3>Coming Soon</h3>
+          <p>Another amazing project is on the way.</p>
+          <span class="tag tag--dark">Website</span>
+        </article>
 
-          <article class="card card--work card--soon reveal" data-category="photography">
-            <div class="thumb thumb--soon" aria-hidden="true"><i data-lucide="camera"></i></div>
-            <div class="card__body">
-              <span class="tag tag--muted">Photography</span>
-              <h3 class="card__title">Coming Soon</h3>
-              <p class="card__text">Product shoot for a boutique in Vapi — shooting this month.</p>
-            </div>
-          </article>
+        <article class="work work--soon" data-category="reels">
+          <i class="fa-regular fa-image work__ico" aria-hidden="true"></i>
+          <h3>Coming Soon</h3>
+          <p>Another amazing project is on the way.</p>
+          <span class="tag tag--dark">Reels</span>
+        </article>
 
-          <article class="card card--work card--soon reveal" data-category="websites">
-            <div class="thumb thumb--soon" aria-hidden="true"><i data-lucide="layout-template"></i></div>
-            <div class="card__body">
-              <span class="tag tag--muted">Website</span>
-              <h3 class="card__title">Coming Soon</h3>
-              <p class="card__text">A coaching class site with batch listings and admission enquiries.</p>
-            </div>
-          </article>
-        </div>
-
-        <p class="work__empty" id="workEmpty" hidden>Nothing in this category yet — but it is coming.</p>
+        <article class="work work--soon" data-category="photography">
+          <i class="fa-regular fa-image work__ico" aria-hidden="true"></i>
+          <h3>Coming Soon</h3>
+          <p>Another amazing project is on the way.</p>
+          <span class="tag tag--dark">Photography</span>
+        </article>
       </div>
-    </section>
 
-    <!-- ==========================================================
-         7. PROCESS
-         ========================================================== -->
-    <section class="section" id="process">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">05</span>How it works</p>
-          <h2 class="section__title" data-split>Five steps. Start to handover.</h2>
-          <p class="section__lede">Everything runs on WhatsApp. No meetings you did not ask for.</p>
-        </header>
+      <p class="work__empty" id="workEmpty" hidden>Nothing in this category yet — but it is coming.</p>
+    </div>
 
-        <ol class="timeline stagger">
-          <li class="step reveal">
-            <span class="step__num">1</span>
-            <h3 class="step__title">Discuss on WhatsApp</h3>
-            <p class="step__text">Tell us what your business does and what you need. We reply with a clear quote.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step__num">2</span>
-            <h3 class="step__title">Design concepts</h3>
-            <p class="step__text">We share design concepts built for your business. You approve the direction.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step__num">3</span>
-            <h3 class="step__title">50% advance</h3>
-            <p class="step__text">Half up front and we start building right away.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step__num">4</span>
-            <h3 class="step__title">Unlimited revisions</h3>
-            <p class="step__text">We keep refining until you are actually happy with it. No revision counter.</p>
-          </li>
-          <li class="step reveal">
-            <span class="step__num">5</span>
-            <h3 class="step__title">Payment &amp; handover</h3>
-            <p class="step__text">Final 50%, then it goes live and everything is handed over to you.</p>
-          </li>
-        </ol>
+    <!-- ---------- PROCESS ---------- -->
+    <div class="block block--divide" id="process">
+      <h2 class="h-sec">Our Process</h2>
+      <p class="p-sec">A simple and clear process from discussion to launch.</p>
+
+      <ol class="proc">
+        <li class="proc__step"><span class="proc__num">1</span><p>Discuss requirements on WhatsApp</p></li>
+        <li class="proc__step"><span class="proc__num">2</span><p>We share design concepts for approval</p></li>
+        <li class="proc__step"><span class="proc__num">3</span><p>50% advance, we start building</p></li>
+        <li class="proc__step"><span class="proc__num">4</span><p>Unlimited revisions until you're happy</p></li>
+        <li class="proc__step"><span class="proc__num">5</span><p>Final payment and handover</p></li>
+      </ol>
+    </div>
+
+    <!-- ---------- WHY US ---------- -->
+    <div class="block block--divide" id="why">
+      <h2 class="h-sec">Why Choose Us</h2>
+
+      <div class="why-grid">
+        <article class="why">
+          <i class="fa-regular fa-gem why__ico" aria-hidden="true"></i>
+          <div>
+            <h3>Every Website<br />Is Unique</h3>
+            <p>No templates, ever. Custom design for every client.</p>
+          </div>
+        </article>
+        <article class="why">
+          <i class="fa-solid fa-arrows-rotate why__ico" aria-hidden="true"></i>
+          <div>
+            <h3>Unlimited<br />Revisions</h3>
+            <p>We keep working until you're 100% happy.</p>
+          </div>
+        </article>
+        <article class="why">
+          <i class="fa-solid fa-bolt why__ico" aria-hidden="true"></i>
+          <div>
+            <h3>Delivered in 3-4 Days</h3>
+            <p>Get your website and content live quickly.</p>
+          </div>
+        </article>
+        <article class="why">
+          <i class="fa-solid fa-location-dot why__ico" aria-hidden="true"></i>
+          <div>
+            <h3>Local Team You Can Meet</h3>
+            <p>Based in Daman / Vapi. Real people, real support.</p>
+          </div>
+        </article>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ==========================================================
-         8. WHY US
-         ========================================================== -->
-    <section class="section section--alt" id="why">
-      <div class="container">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">06</span>Why us</p>
-          <h2 class="section__title" data-split>Why local businesses pick us.</h2>
-        </header>
+  <!-- ======================================================================
+       ROW 4 — FAQ + CONTACT + FORM
+       ====================================================================== -->
+  <section class="row row--four" id="contact">
 
-        <div class="grid grid--4 stagger">
-          <article class="card card--why reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="fingerprint"></i></span>
-            <h3 class="card__title">Every Website Is Unique</h3>
-            <p class="card__text">We do not use templates. Your site is designed from a blank page, so it never looks like the shop next door.</p>
-          </article>
-          <article class="card card--why reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="repeat"></i></span>
-            <h3 class="card__title">Unlimited Revisions</h3>
-            <p class="card__text">Change it as many times as you need. We stop when you say it is right, not when a counter runs out.</p>
-          </article>
-          <article class="card card--why reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="zap"></i></span>
-            <h3 class="card__title">Delivered in 3-4 Days</h3>
-            <p class="card__text">From design approval to live site in under a week. Small team, no queue, no handoffs.</p>
-          </article>
-          <article class="card card--why reveal">
-            <span class="card__icon" aria-hidden="true"><i data-lucide="map-pin"></i></span>
-            <h3 class="card__title">Local Team You Can Meet</h3>
-            <p class="card__text">We are based in Daman and Vapi. Come and meet us — no faceless agency on the other side of the country.</p>
-          </article>
-        </div>
-      </div>
-    </section>
+    <!-- ---------- FAQ ---------- -->
+    <div class="block" id="faq">
+      <h2 class="h-sec">Frequently Asked Questions</h2>
 
-    <!-- ==========================================================
-         9. FAQ
-         ========================================================== -->
-    <section class="section" id="faq">
-      <div class="container container--narrow">
-        <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">07</span>FAQ</p>
-          <h2 class="section__title" data-split>Questions we get asked.</h2>
-        </header>
-
-        <div class="accordion stagger" id="accordion">
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn1" aria-expanded="false" aria-controls="accPanel1">
-                <span>Do you use templates?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+      <div class="faq-cols">
+        <div class="faq-col">
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn1" aria-expanded="false" aria-controls="accPanel1">
+              Do you use templates? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel1" role="region" aria-labelledby="accBtn1">
-              <div class="acc__inner">
-                <p>No. Every design is custom. We start from a blank page and design around your business, your colours and your customers — never a pre-made theme with your logo dropped in.</p>
-              </div>
+              <div class="acc__in"><p>No. Every design is custom, built from a blank page around your business — never a pre-made theme with your logo dropped in.</p></div>
             </div>
           </div>
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn2" aria-expanded="false" aria-controls="accPanel2">
-                <span>How long does a website take?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn2" aria-expanded="false" aria-controls="accPanel2">
+              How long does a website take? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel2" role="region" aria-labelledby="accBtn2">
-              <div class="acc__inner">
-                <p>3-4 days from design approval. The clock starts once you have approved the concept and we have your content — photos, text and logo.</p>
-              </div>
+              <div class="acc__in"><p>3-4 days from design approval, once we have your content — photos, text and logo.</p></div>
             </div>
           </div>
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn3" aria-expanded="false" aria-controls="accPanel3">
-                <span>What if I don't like the design?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn3" aria-expanded="false" aria-controls="accPanel3">
+              What if I don't like the design? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel3" role="region" aria-labelledby="accBtn3">
-              <div class="acc__inner">
-                <p>We revise it — as many times as it takes. Unlimited revisions until you approve. That is the whole point of working with a small local team.</p>
-              </div>
+              <div class="acc__in"><p>We revise it as many times as it takes. Unlimited revisions until you approve.</p></div>
             </div>
           </div>
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn4" aria-expanded="false" aria-controls="accPanel4">
-                <span>Do I own the website?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn4" aria-expanded="false" aria-controls="accPanel4">
+              Do I own the website? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel4" role="region" aria-labelledby="accBtn4">
-              <div class="acc__inner">
-                <p>Yes — fully yours after final payment. Domain, hosting access, files and all the content. Nothing is locked to us.</p>
-              </div>
+              <div class="acc__in"><p>Yes — fully yours after final payment. Domain, hosting access, files and content. Nothing is locked to us.</p></div>
             </div>
           </div>
+        </div>
 
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn5" aria-expanded="false" aria-controls="accPanel5">
-                <span>What about domain and hosting?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+        <div class="faq-col">
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn5" aria-expanded="false" aria-controls="accPanel5">
+              What about domain and hosting? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel5" role="region" aria-labelledby="accBtn5">
-              <div class="acc__inner">
-                <p>Included free for 1 year in the Combo Package. On the Website Only package they are charged separately at cost, and we set everything up for you either way.</p>
-              </div>
+              <div class="acc__in"><p>Included free for 1 year in the Combo Package. On Website Only they are charged separately at cost, and we set everything up either way.</p></div>
             </div>
           </div>
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn6" aria-expanded="false" aria-controls="accPanel6">
-                <span>What are the payment terms?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn6" aria-expanded="false" aria-controls="accPanel6">
+              What are the payment terms? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel6" role="region" aria-labelledby="accBtn6">
-              <div class="acc__inner">
-                <p>50% advance, 50% on delivery. The advance is what starts the build; the balance is due when the work is approved and ready to hand over.</p>
-              </div>
+              <div class="acc__in"><p>50% advance, 50% on delivery. The advance starts the build; the balance is due when the work is approved and ready to hand over.</p></div>
             </div>
           </div>
-
-          <div class="acc reveal">
-            <h3>
-              <button class="acc__btn" id="accBtn7" aria-expanded="false" aria-controls="accPanel7">
-                <span>Do you provide maintenance?</span>
-                <i data-lucide="plus" class="acc__icon" aria-hidden="true"></i>
-              </button>
-            </h3>
+          <div class="acc">
+            <h3><button class="acc__btn" id="accBtn7" aria-expanded="false" aria-controls="accPanel7">
+              Do you provide maintenance? <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button></h3>
             <div class="acc__panel" id="accPanel7" role="region" aria-labelledby="accBtn7">
-              <div class="acc__inner">
-                <p>Yes, as an optional add-on — ₹2,000 for 6 months or ₹4,000 for 1 year. That covers content updates, bug fixes and uptime monitoring.</p>
-              </div>
+              <div class="acc__in"><p>Yes, as an optional add-on — ₹2,000 for 6 months or ₹4,000 for 1 year. Covers content updates, bug fixes and uptime monitoring.</p></div>
             </div>
           </div>
-
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- ==========================================================
-         10. CONTACT / CTA
-         ========================================================== -->
-    <section class="section section--contact" id="contact">
-      <div class="container">
-        <div class="contact">
+    <!-- ---------- GET IN TOUCH ---------- -->
+    <div class="block block--divide">
+      <h2 class="h-sec">Get In Touch</h2>
+      <p class="p-sec">Ready to grow your business? Send us a message on WhatsApp or fill the form below.</p>
 
-          <div class="contact__pitch reveal">
-            <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">08</span>Let's talk</p>
-            <h2 class="section__title" data-split>Message us. We reply fast.</h2>
-            <p class="section__lede">
-              Everything starts with a WhatsApp message — no forms to chase, no call centre.
-              Tell us about your business and we will send you a quote the same day.
-            </p>
+      <ul class="reach">
+        <li>
+          <span class="reach__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+          <span class="reach__body">
+            <strong>Chat on WhatsApp</strong>
+            <!-- PLACEHOLDER: phone number -->
+            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">+91 98765 43210</a>
+            <em>Quick response</em>
+          </span>
+        </li>
+        <li>
+          <span class="reach__ico reach__ico--alt" aria-hidden="true"><i class="fa-solid fa-phone"></i></span>
+          <span class="reach__body">
+            <strong>Call Us</strong>
+            <!-- PLACEHOLDER: phone number -->
+            <a href="tel:+919876543210">+91 98765 43210</a>
+            <em>Mon - Sat, 10AM - 7PM</em>
+          </span>
+        </li>
+        <li>
+          <span class="reach__ico reach__ico--alt" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
+          <span class="reach__body">
+            <strong>Email Us</strong>
+            <!-- PLACEHOLDER: email -->
+            <a href="mailto:hello@brandname.com">hello@brandname.com</a>
+            <em>We reply within 24 hours</em>
+          </span>
+        </li>
+      </ul>
+    </div>
 
-            <div class="contact__actions">
-              <button class="btn btn--primary btn--lg" data-wa-modal data-service="Not Sure">
-                <i data-lucide="message-circle" aria-hidden="true"></i>
-                Chat on WhatsApp
-              </button>
-            </div>
-
-            <ul class="contact__list">
-              <!-- PLACEHOLDER: phone number -->
-              <li>
-                <i data-lucide="phone" aria-hidden="true"></i>
-                <a href="tel:+91XXXXXXXXXX">+91 XXXXX XXXXX</a>
-              </li>
-              <!-- PLACEHOLDER: email -->
-              <li>
-                <i data-lucide="mail" aria-hidden="true"></i>
-                <a href="mailto:hello@brandname.com">hello@brandname.com</a>
-              </li>
-              <li>
-                <i data-lucide="map-pin" aria-hidden="true"></i>
-                <span>Daman &amp; Vapi, Gujarat — India</span>
-              </li>
-            </ul>
+    <!-- ---------- FORM ---------- -->
+    <div class="block block--divide">
+      <!-- Never posts anywhere: on submit it formats a WhatsApp message. -->
+      <form class="cform" id="contactForm" novalidate>
+        <div class="cform__grid">
+          <div class="cf-row">
+            <label for="cfName">Your Name <span class="req">*</span></label>
+            <input class="input" type="text" id="cfName" name="name" autocomplete="name" placeholder="Enter your name" required />
+            <p class="cf-err" id="cfNameErr" hidden>Please enter your name.</p>
           </div>
-
-          <!-- This form never submits to a server. On submit it builds a WhatsApp message. -->
-          <form class="contact__form card reveal" id="contactForm" novalidate>
-            <h3 class="card__title">Send the details</h3>
-            <p class="card__text">Fill this in and it opens WhatsApp with your message ready to send.</p>
-
-            <div class="input-row">
-              <label class="field__label" for="cfName">Your name</label>
-              <input class="input" type="text" id="cfName" name="name" autocomplete="name" placeholder="e.g. Ramesh Patel" required />
-              <p class="input__error" id="cfNameErr" hidden>Please enter your name.</p>
-            </div>
-
-            <div class="input-row">
-              <label class="field__label" for="cfBusiness">Business name</label>
-              <input class="input" type="text" id="cfBusiness" name="business" autocomplete="organization" placeholder="e.g. Patel Coaching Classes" required />
-              <p class="input__error" id="cfBusinessErr" hidden>Please enter your business name.</p>
-            </div>
-
-            <div class="input-row">
-              <label class="field__label" for="cfPhone">Phone number</label>
-              <input class="input" type="tel" id="cfPhone" name="phone" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile number" required />
-              <p class="input__error" id="cfPhoneErr" hidden>Please enter a valid 10-digit phone number.</p>
-            </div>
-
-            <div class="input-row">
-              <label class="field__label" for="cfService">Service needed</label>
-              <select class="select" id="cfService" name="service">
+          <div class="cf-row">
+            <label for="cfBusiness">Business Name <span class="req">*</span></label>
+            <input class="input" type="text" id="cfBusiness" name="business" autocomplete="organization" placeholder="Enter business name" required />
+            <p class="cf-err" id="cfBusinessErr" hidden>Please enter your business name.</p>
+          </div>
+          <div class="cf-row">
+            <label for="cfPhone">Phone Number <span class="req">*</span></label>
+            <input class="input" type="tel" id="cfPhone" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Enter phone number" required />
+            <p class="cf-err" id="cfPhoneErr" hidden>Please enter a valid phone number.</p>
+          </div>
+          <div class="cf-row">
+            <label for="cfService">Service Needed <span class="req">*</span></label>
+            <span class="sel">
+              <select id="cfService" name="service">
+                <option value="">Select a service</option>
                 <option value="Combo Package">Combo Package</option>
                 <option value="Website Development">Website Development</option>
                 <option value="Reel Making">Reel Making</option>
@@ -906,158 +688,106 @@
                 <option value="Maintenance">Maintenance</option>
                 <option value="Not Sure">Not Sure Yet</option>
               </select>
-            </div>
-
-            <div class="input-row">
-              <label class="field__label" for="cfMessage">Message</label>
-              <textarea class="input input--area" id="cfMessage" name="message" rows="4" placeholder="Tell us a little about your business..."></textarea>
-            </div>
-
-            <button class="btn btn--primary btn--block btn--lg" type="submit">
-              <i data-lucide="send" aria-hidden="true"></i>
-              Send on WhatsApp
-            </button>
-            <p class="summary__fine">Nothing is stored or emailed — this only opens WhatsApp.</p>
-          </form>
+            </span>
+            <p class="cf-err" id="cfServiceErr" hidden>Please pick a service.</p>
+          </div>
+          <div class="cf-row cf-row--wide">
+            <label for="cfMessage">Your Message <span class="opt-lbl">(Optional)</span></label>
+            <textarea class="input" id="cfMessage" name="message" rows="2" placeholder="Tell us about your project..."></textarea>
+          </div>
         </div>
-      </div>
-    </section>
+
+        <button class="btn btn--green btn--block" type="submit">
+          <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+          Send on WhatsApp
+        </button>
+      </form>
+    </div>
+
+    <!-- ---------- SIGN-OFF ---------- -->
+    <div class="block block--sign" aria-hidden="true">
+      <p class="sign">Let's<br />Build Something<br />Great Together</p>
+      <i class="fa-solid fa-arrow-turn-down sign__arrow"></i>
+    </div>
+  </section>
   </main>
 
-  <!-- ==========================================================
-       11. FOOTER
-       ========================================================== -->
-  <footer class="footer">
-    <div class="container footer__inner">
-      <div class="footer__brand">
-        <a class="logo" href="#home" aria-label="BrandName home">
-          <span class="logo__mark" aria-hidden="true"></span>
-          <span class="logo__text">Brand<span class="logo__accent">Name</span></span>
-        </a>
-        <p class="footer__desc">
-          Custom websites, Instagram reels and photography for small businesses that deserve a real online presence.
-        </p>
-        <div class="socials">
-          <!-- PLACEHOLDER: Instagram handle URL -->
-          <a href="https://instagram.com/brandname" target="_blank" rel="noopener noreferrer" aria-label="BrandName on Instagram">
-            <i data-lucide="instagram" aria-hidden="true"></i>
-          </a>
-          <!-- Opens WhatsApp with the default greeting -->
-          <button data-wa-modal data-service="Not Sure" aria-label="Chat with BrandName on WhatsApp">
-            <i data-lucide="message-circle" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
-
-      <nav class="footer__col" aria-label="Quick links">
-        <h3 class="footer__title">Quick Links</h3>
-        <ul>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#packages">Packages</a></li>
-          <li><a href="#builder">Build a Quote</a></li>
-          <li><a href="#work">Work</a></li>
-          <li><a href="#process">Process</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-      </nav>
-
-      <div class="footer__col">
-        <h3 class="footer__title">Services</h3>
-        <ul>
-          <li><button data-wa-modal data-service="Website Development">Website Development</button></li>
-          <li><button data-wa-modal data-service="Reel Making">Reel Making</button></li>
-          <li><button data-wa-modal data-service="Photo Shoot">Photo Shoot</button></li>
-          <li><button data-wa-modal data-service="Combo Package">Combo Package</button></li>
-        </ul>
-      </div>
-
-      <div class="footer__col">
-        <h3 class="footer__title">Get in touch</h3>
-        <ul>
-          <!-- PLACEHOLDER: phone + email -->
-          <li><a href="tel:+91XXXXXXXXXX">+91 XXXXX XXXXX</a></li>
-          <li><a href="mailto:hello@brandname.com">hello@brandname.com</a></li>
-          <li><span class="footer__area">Serving Daman, Vapi and nearby areas</span></li>
-        </ul>
-      </div>
+  <!-- ======================================================================
+       FOOTER
+       ====================================================================== -->
+  <footer class="foot">
+    <div class="foot__brand">
+      <span class="logo__text">Brand<span class="logo__accent">Name</span></span>
+      <p>Custom websites, reels and photography for local businesses.</p>
     </div>
 
-    <div class="container footer__bottom">
-      <p>&copy; <span id="year">2026</span> BrandName. All rights reserved.</p>
-      <p>Built by a small team in Daman &amp; Vapi.</p>
+    <nav class="foot__links" aria-label="Footer navigation">
+      <a href="#home">Home</a>
+      <a href="#services">Services</a>
+      <a href="#packages">Packages</a>
+      <a href="#work">Work</a>
+      <a href="#process">Process</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="foot__social">
+      <!-- PLACEHOLDER: Instagram handle -->
+      <a href="https://instagram.com/brandname" target="_blank" rel="noopener noreferrer" aria-label="BrandName on Instagram">
+        <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+      </a>
+      <button data-wa-modal data-service="Not Sure" aria-label="Chat with BrandName on WhatsApp">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+      </button>
     </div>
+
+    <p class="foot__area">Serving Daman, Vapi and nearby areas</p>
+    <p class="foot__copy">&copy; <span id="year">2024</span> BrandName. All rights reserved.</p>
   </footer>
 
-  <!-- ==========================================================
-       12. FLOATING WHATSAPP BUTTON
-       ========================================================== -->
-  <button class="fab icon-fallback" data-fallback="✉" id="fab" data-wa-modal data-service="Not Sure" aria-label="Chat with us on WhatsApp">
-    <span class="fab__pulse" aria-hidden="true"></span>
-    <i data-lucide="message-circle" aria-hidden="true"></i>
-  </button>
-
-  <!-- ==========================================================
+  <!-- ======================================================================
        WHATSAPP MODAL
-       ========================================================== -->
+       ====================================================================== -->
   <div class="modal" id="waModal" hidden>
     <div class="modal__backdrop" data-close-modal></div>
 
     <div class="modal__dialog" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="modalTitle" aria-describedby="modalDesc">
-      <button class="modal__close icon-fallback" data-fallback="✕" data-close-modal aria-label="Close dialog">
-        <i data-lucide="x" aria-hidden="true"></i>
+      <button class="modal__close" data-close-modal aria-label="Close dialog">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
 
       <h2 class="modal__title" id="modalTitle">Start on WhatsApp</h2>
-      <p class="modal__desc" id="modalDesc">Pick what you are interested in and we will pick it up from there.</p>
+      <p class="modal__desc" id="modalDesc">Pick what you are interested in and we will take it from there.</p>
 
-      <!-- Shown only when the modal is opened from a pricing card -->
       <div class="modal__booking" id="modalBooking" hidden>
-        <i data-lucide="package-check" aria-hidden="true"></i>
+        <i class="fa-solid fa-box-open" aria-hidden="true"></i>
         <span id="modalBookingText"></span>
       </div>
 
-      <!-- Service picker (hidden in booking mode) -->
       <fieldset class="modal__picker" id="modalPicker">
-        <legend class="field__label">I'm interested in</legend>
+        <legend class="fld__label">I'm interested in</legend>
         <div class="pills">
-          <label class="pill">
-            <input type="radio" name="modalService" value="Website Development" />
-            <span>Website</span>
-          </label>
-          <label class="pill">
-            <input type="radio" name="modalService" value="Reel Making" />
-            <span>Reel</span>
-          </label>
-          <label class="pill">
-            <input type="radio" name="modalService" value="Photo Shoot" />
-            <span>Photo Shoot</span>
-          </label>
-          <label class="pill">
-            <input type="radio" name="modalService" value="Combo Package" />
-            <span>Combo Package</span>
-          </label>
-          <label class="pill">
-            <input type="radio" name="modalService" value="Not Sure" checked />
-            <span>Not Sure</span>
-          </label>
+          <label class="pill"><input type="radio" name="modalService" value="Website Development" /><span>Website</span></label>
+          <label class="pill"><input type="radio" name="modalService" value="Reel Making" /><span>Reel</span></label>
+          <label class="pill"><input type="radio" name="modalService" value="Photo Shoot" /><span>Photo Shoot</span></label>
+          <label class="pill"><input type="radio" name="modalService" value="Combo Package" /><span>Combo Package</span></label>
+          <label class="pill"><input type="radio" name="modalService" value="Not Sure" checked /><span>Not Sure</span></label>
         </div>
       </fieldset>
 
-      <div class="input-row">
-        <label class="field__label" for="modalName">Your name <span class="field__optional">(optional)</span></label>
-        <input class="input" type="text" id="modalName" autocomplete="name" placeholder="e.g. Ramesh Patel" />
+      <div class="cf-row">
+        <label for="modalName">Your name <span class="opt-lbl">(optional)</span></label>
+        <input class="input" type="text" id="modalName" autocomplete="name" placeholder="Enter your name" />
       </div>
 
-      <button class="btn btn--primary btn--block btn--lg" id="modalContinue">
-        <i data-lucide="message-circle" aria-hidden="true"></i>
+      <button class="btn btn--green btn--block" id="modalContinue">
+        <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
         Continue on WhatsApp
       </button>
-      <p class="summary__fine">Opens WhatsApp with your message ready — nothing is sent until you press send there.</p>
+      <p class="est__fine">Opens WhatsApp with your message ready — nothing is sent until you press send there.</p>
     </div>
   </div>
 
-  <!-- Icon set via CDN (Lucide). The site degrades gracefully if it fails to load. -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* ==========================================================================
    BrandName — site behaviour
-   Vanilla JS, no dependencies. Everything funnels into WhatsApp; there is no
-   backend and no form is ever POSTed anywhere.
+   Vanilla JS, no dependencies. Every enquiry path ends in a wa.me link;
+   there is no backend and no form is ever POSTed anywhere.
    ========================================================================== */
 (function () {
   'use strict';
@@ -11,18 +11,17 @@
      PLACEHOLDER values: replace all three.
      ------------------------------------------------------------------------ */
   const CONFIG = {
-    whatsappNumber: "91XXXXXXXXXX",   // country code + number, digits only
+    whatsappNumber: "919876543210",   // country code + number, digits only
     businessName: "BrandName",
     email: "hello@brandname.com"
   };
 
-  /* Pricing used by the service builder (all amounts in ₹).
-     Keep these in sync with the pricing cards in index.html. */
+  /* Prices used by the quote builder (₹). Keep in sync with the cards. */
   const PRICES = {
     website: 5000,
     reel: 2000,          // per reel
     photo: 1000,
-    domain: 3000,        // PLACEHOLDER: domain + hosting, 1 year, at cost
+    domain: 1500,        // domain + hosting, 1 year
     maintenance: { "none": 0, "6 Months": 2000, "1 Year": 4000 }
   };
 
@@ -40,15 +39,12 @@
   const $  = (sel, scope) => (scope || document).querySelector(sel);
   const $$ = (sel, scope) => Array.from((scope || document).querySelectorAll(sel));
 
-  /** Format a number as Indian rupees, e.g. 12000 -> "₹12,000" */
+  /** 12000 -> "₹12,000" */
   function formatINR(amount) {
     return '₹' + Number(amount).toLocaleString('en-IN');
   }
 
-  /**
-   * Single entry point for every WhatsApp hand-off on the site.
-   * URL-encodes the message and opens wa.me in a new tab.
-   */
+  /** Single entry point for every WhatsApp hand-off on the site. */
   function openWhatsApp(message) {
     const url = 'https://wa.me/' + CONFIG.whatsappNumber +
                 '?text=' + encodeURIComponent(message);
@@ -60,45 +56,73 @@
      ------------------------------------------------------------------------ */
   const templates = {
     service(serviceName, name) {
-      const who = name ? ", I'm " + name + "." : ",";
-      return "Hi " + CONFIG.businessName + who +
+      return "Hi " + CONFIG.businessName + (name ? ", I'm " + name + "." : ",") +
              " I'm interested in " + serviceName + ". Can you share details?";
     },
     pkg(packageName, price, name) {
-      const who = name ? ", I'm " + name + "." : ",";
-      return "Hi " + CONFIG.businessName + who +
-             " I want to book the " + packageName + " package (₹" + price + "). " +
+      // Several names already end in "Package", so only add the word when it
+      // is missing — otherwise the message reads "the Combo Package package".
+      const label = /package$/i.test(packageName) ? packageName : packageName + ' package';
+      return "Hi " + CONFIG.businessName + (name ? ", I'm " + name + "." : ",") +
+             " I want to book the " + label + " (₹" + price + "). " +
              "Please share the next steps.";
     },
-    contact(data) {
-      return "Hi " + CONFIG.businessName + ", I'm " + data.name +
-             " from " + data.business + ". Phone: " + data.phone +
-             ". I need: " + data.service +
-             ". Message: " + (data.message || '-');
+    contact(d) {
+      return "Hi " + CONFIG.businessName + ", I'm " + d.name + " from " + d.business +
+             ". Phone: " + d.phone + ". I need: " + d.service +
+             ". Message: " + (d.message || '-');
     }
   };
 
   /* ========================================================================
-     1. NAVBAR — sticky state + mobile drawer
+     1. IMAGE FALLBACKS
+     Photos are remote placeholders. If one 404s we try a backup, and if that
+     also fails we hide the <img> so the dark panel behind it still reads.
      ======================================================================== */
-  const nav       = $('#nav');
+  function handleImageFailure(img) {
+    if (img.dataset.triedFallback) {
+      img.classList.add('is-broken');
+      return;
+    }
+    img.dataset.triedFallback = '1';
+    img.src = img.dataset.fallback;
+  }
+
+  $$('img[data-fallback]').forEach(function (img) {
+    img.addEventListener('error', function () { handleImageFailure(img); });
+
+    // This script is deferred, so an image can already have failed by the time
+    // we get here — in that case the error event has been and gone.
+    if (img.complete && img.naturalWidth === 0) handleImageFailure(img);
+  });
+
+  /* ========================================================================
+     2. NAV — mobile drawer
+     ======================================================================== */
   const navToggle = $('#navToggle');
   const navLinks  = $('#navLinks');
-  const navScrim  = $('#navScrim');
+
+  // The scrim is purely a JS affordance, so it is created here rather than
+  // sitting in the markup as an empty div.
+  const navScrim = document.createElement('div');
+  navScrim.className = 'nav__scrim';
+  navScrim.hidden = true;
+  document.body.appendChild(navScrim);
 
   function setNavOpen(open) {
     navLinks.classList.toggle('is-open', open);
-    navScrim.classList.toggle('is-open', open);
     navToggle.setAttribute('aria-expanded', String(open));
     navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     document.body.classList.toggle('is-locked', open);
+
     if (open) {
       navScrim.hidden = false;
+      requestAnimationFrame(function () { navScrim.classList.add('is-open'); });
     } else {
-      // Wait for the fade-out before removing it from the a11y tree
+      navScrim.classList.remove('is-open');
       setTimeout(function () {
         if (!navLinks.classList.contains('is-open')) navScrim.hidden = true;
-      }, 260);
+      }, 200);
     }
   }
 
@@ -106,89 +130,45 @@
     setNavOpen(navToggle.getAttribute('aria-expanded') !== 'true');
   });
   navScrim.addEventListener('click', function () { setNavOpen(false); });
-
-  // Any link inside the drawer closes it
-  $$('#navLinks a').forEach(function (link) {
-    link.addEventListener('click', function () { setNavOpen(false); });
+  $$('#navLinks a').forEach(function (a) {
+    a.addEventListener('click', function () { setNavOpen(false); });
   });
 
-  const progressBar = $('#progress');
-  const heroGlow    = $('.hero__glow');
-  let scrollQueued  = false;
-
-  // One rAF-throttled handler drives the sticky nav, the reading-progress bar
-  // and the hero parallax, so scrolling only ever does one layout read.
-  function onScroll() {
-    const y = window.scrollY;
-
-    nav.classList.toggle('is-stuck', y > 12);
-
-    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-    progressBar.style.width = scrollable > 0
-      ? Math.min(y / scrollable, 1) * 100 + '%'
-      : '0%';
-
-    // Drift the hero light slightly slower than the page
-    if (heroGlow && !prefersReducedMotion && y < window.innerHeight * 1.5) {
-      heroGlow.style.transform = 'translate3d(0,' + (y * 0.18) + 'px,0)';
-    }
-
-    scrollQueued = false;
-  }
-
-  window.addEventListener('scroll', function () {
-    if (scrollQueued) return;
-    scrollQueued = true;
-    requestAnimationFrame(onScroll);
-  }, { passive: true });
-  onScroll();
-
   /* ========================================================================
-     2. WHATSAPP MODAL — service picker + focus trap
+     3. WHATSAPP MODAL — service picker + focus trap
      ======================================================================== */
-  const modal        = $('#waModal');
-  const modalDialog  = $('.modal__dialog', modal);
-  const modalPicker  = $('#modalPicker');
-  const modalBooking = $('#modalBooking');
+  const modal            = $('#waModal');
+  const modalDialog      = $('.modal__dialog', modal);
+  const modalPicker      = $('#modalPicker');
+  const modalBooking     = $('#modalBooking');
   const modalBookingText = $('#modalBookingText');
-  const modalName    = $('#modalName');
-  const modalContinue = $('#modalContinue');
-  const modalTitle   = $('#modalTitle');
-  const modalDesc    = $('#modalDesc');
+  const modalName        = $('#modalName');
+  const modalTitle       = $('#modalTitle');
+  const modalDesc        = $('#modalDesc');
 
-  let lastFocused = null;     // element to restore focus to on close
-  let bookingContext = null;  // { name, price } when opened from a pricing card
+  let lastFocused = null;
+  let bookingContext = null;   // { name, price } when opened from a package
 
-  const FOCUSABLE =
-    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), ' +
+                    'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-  /**
-   * Open the modal.
-   * @param {Object} options
-   * @param {string} [options.service]  pre-selected service pill
-   * @param {Object} [options.booking]  { name, price } — switches to booking mode
-   */
   function openModal(options) {
     const opts = options || {};
-    setNavOpen(false);            // in case it was opened from the mobile drawer
+    setNavOpen(false);              // in case it was opened from the drawer
     lastFocused = document.activeElement;
     bookingContext = opts.booking || null;
 
     if (bookingContext) {
-      // Booking mode: the package is already decided, hide the picker
       modalPicker.hidden = true;
       modalBooking.hidden = false;
-      modalBookingText.textContent =
-        bookingContext.name + ' — ₹' + bookingContext.price;
+      modalBookingText.textContent = bookingContext.name + ' — ₹' + bookingContext.price;
       modalTitle.textContent = 'Book on WhatsApp';
-      modalDesc.textContent =
-        'Add your name if you like, then continue — we will confirm everything on chat.';
+      modalDesc.textContent = 'Add your name if you like, then continue — we will confirm everything on chat.';
     } else {
       modalPicker.hidden = false;
       modalBooking.hidden = true;
       modalTitle.textContent = 'Start on WhatsApp';
-      modalDesc.textContent =
-        'Pick what you are interested in and we will pick it up from there.';
+      modalDesc.textContent = 'Pick what you are interested in and we will take it from there.';
 
       const preset = $('input[name="modalService"][value="' + (opts.service || 'Not Sure') + '"]', modal);
       if (preset) preset.checked = true;
@@ -196,9 +176,6 @@
 
     modal.hidden = false;
     document.body.classList.add('is-locked');
-
-    // Focus the dialog itself — screen readers announce it and Tab then walks
-    // the controls in order (the service pills are visually hidden inputs).
     modalDialog.focus({ preventScroll: true });
   }
 
@@ -211,30 +188,24 @@
     }
   }
 
-  // Close on the X button and on backdrop click
   $$('[data-close-modal]', modal).forEach(function (el) {
     el.addEventListener('click', closeModal);
   });
 
-  // Escape closes the modal (or the mobile drawer)
   document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape') return;
-    if (!modal.hidden) { closeModal(); return; }
-    if (navLinks.classList.contains('is-open')) setNavOpen(false);
-  });
+    if (e.key === 'Escape') {
+      if (!modal.hidden) { closeModal(); return; }
+      if (navLinks.classList.contains('is-open')) setNavOpen(false);
+      return;
+    }
 
-  // Focus trap — keep Tab cycling inside the dialog while it is open
-  document.addEventListener('keydown', function (e) {
+    // Keep Tab cycling inside the dialog while it is open
     if (e.key !== 'Tab' || modal.hidden) return;
-
-    const items = $$(FOCUSABLE, modalDialog).filter(function (el) {
-      return el.offsetParent !== null;   // skip anything hidden
-    });
+    const items = $$(FOCUSABLE, modalDialog).filter(function (el) { return el.offsetParent !== null; });
     if (!items.length) return;
 
     const first = items[0];
     const last  = items[items.length - 1];
-
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault();
       last.focus();
@@ -244,23 +215,17 @@
     }
   });
 
-  // Any element with data-wa-modal opens the picker
   $$('[data-wa-modal]').forEach(function (el) {
-    el.addEventListener('click', function () {
-      openModal({ service: el.dataset.service });
-    });
+    el.addEventListener('click', function () { openModal({ service: el.dataset.service }); });
   });
 
-  // Pricing cards / maintenance options open the modal in booking mode
   $$('[data-wa-package]').forEach(function (el) {
     el.addEventListener('click', function () {
-      openModal({
-        booking: { name: el.dataset.waPackage, price: el.dataset.waPrice }
-      });
+      openModal({ booking: { name: el.dataset.waPackage, price: el.dataset.waPrice } });
     });
   });
 
-  modalContinue.addEventListener('click', function () {
+  $('#modalContinue').addEventListener('click', function () {
     const name = modalName.value.trim();
     let message;
 
@@ -280,29 +245,28 @@
   });
 
   /* ========================================================================
-     3. SERVICE BUILDER — live price estimate
+     4. QUOTE BUILDER — live estimate
      ======================================================================== */
-  const builderForm = $('#builderForm');
-  const summaryEl   = $('#summary');
+  const builderForm  = $('#builderForm');
   const summaryLines = $('#summaryLines');
   const comboNote    = $('#comboNote');
+  const comboText    = $('#comboNoteText');
   const strikeTotal  = $('#strikeTotal');
   const grandTotalEl = $('#grandTotal');
   const reelQtyEl    = $('#reelQty');
   const reelMinus    = $('#reelMinus');
   const reelPlus     = $('#reelPlus');
-  const fab          = $('#fab');
 
   const REEL_MIN = 1;
   const REEL_MAX = 5;
-  let reelQty = 1;
+  let reelQty = 2;
 
-  /** Read every control and return the current selection. */
+  const TIP_DEFAULT = 'Select Website + Reel + Photo Shoot to get the ₹12,000 combo!';
+
   function readSelection() {
     const checked = $$('input[name="service"]:checked', builderForm)
-      .map(function (input) { return input.value; });
-
-    const maintenanceSelect = $('#maintenance');
+      .map(function (i) { return i.value; });
+    const maint = $('#maintenance').value;
 
     return {
       website: checked.indexOf('website') > -1,
@@ -311,135 +275,113 @@
       domain:  checked.indexOf('domain') > -1,
       businessType: $('#businessType').value,
       photoType: ($('input[name="photoType"]:checked', builderForm) || {}).value || 'Product Photos',
-      maintenance: maintenanceSelect.value,
-      maintenancePrice: PRICES.maintenance[maintenanceSelect.value] || 0,
+      maintenance: maint,
+      maintenancePrice: PRICES.maintenance[maint] || 0,
       reels: reelQty
     };
   }
 
   /**
-   * Turn a selection into priced line items plus a total.
-   * The combo kicks in only when Website + Reel + Photo Shoot are all picked;
-   * it bundles domain + hosting and two reels, so a single-reel selection is
-   * lifted to the two the package includes.
+   * Price a selection.
+   *
+   * The Combo Package bundles a website, two reels, a photo shoot and a year
+   * of domain + hosting for a flat ₹12,000. It is only substituted when it
+   * actually costs the visitor less than the same items bought separately —
+   * a "discount" that raised the price would not be one.
    */
   function priceSelection(sel) {
-    const lines = [];
-    let total = 0;
-    let isCombo = sel.website && sel.reel && sel.photo;
-    let reels = sel.reels;
-    let bumped = false;
+    const alaCarte =
+      (sel.website ? PRICES.website : 0) +
+      (sel.reel ? sel.reels * PRICES.reel : 0) +
+      (sel.photo ? PRICES.photo : 0) +
+      (sel.domain ? PRICES.domain : 0);
 
-    if (isCombo && reels < COMBO.reelsIncluded) {
-      reels = COMBO.reelsIncluded;   // the package already includes two
-      bumped = true;
+    const allThree = sel.website && sel.reel && sel.photo;
+    let comboApplies = false;
+    let comboTotal = 0;
+    let comboListPrice = 0;
+
+    if (allThree) {
+      const reels = Math.max(sel.reels, COMBO.reelsIncluded);
+      comboTotal = COMBO.price + (reels - COMBO.reelsIncluded) * PRICES.reel;
+      // What the combo's own contents would cost bought separately
+      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.photo + PRICES.domain;
+      comboApplies = comboTotal < comboListPrice;
     }
 
-    if (isCombo) {
-      const extraReels = reels - COMBO.reelsIncluded;
-      const comboTotal = COMBO.price + extraReels * PRICES.reel;
+    const servicesTotal = comboApplies ? comboTotal : alaCarte;
 
-      // What the same contents would cost bought separately
-      const listTotal = PRICES.website + reels * PRICES.reel +
-                        PRICES.photo + PRICES.domain;
-
-      lines.push({ label: 'Custom website (' + sel.businessType + ')', value: 'included' });
-      lines.push({
-        label: 'Instagram reels × ' + reels + (bumped ? ' (combo includes 2)' : ''),
-        value: extraReels > 0 ? formatINR(extraReels * PRICES.reel) + ' extra' : 'included'
-      });
-      lines.push({ label: 'Photo shoot (' + sel.photoType + ')', value: 'included' });
-      lines.push({ label: 'Domain + hosting (1 year)', value: 'free' });
-      lines.push({ label: 'Combo Package', value: formatINR(COMBO.price), strong: true });
-
-      total = comboTotal;
-      strikeTotal.textContent = formatINR(listTotal + sel.maintenancePrice);
-      strikeTotal.hidden = false;
-      comboNote.hidden = false;
-    } else {
-      strikeTotal.hidden = true;
-      comboNote.hidden = true;
-
-      if (sel.website) {
-        lines.push({
-          label: 'Website (' + sel.businessType + ')',
-          value: formatINR(PRICES.website)
-        });
-        total += PRICES.website;
-      }
-      if (sel.reel) {
-        lines.push({
-          label: 'Instagram reels × ' + reels,
-          value: formatINR(reels * PRICES.reel)
-        });
-        total += reels * PRICES.reel;
-      }
-      if (sel.photo) {
-        lines.push({
-          label: 'Photo shoot (' + sel.photoType + ')',
-          value: formatINR(PRICES.photo)
-        });
-        total += PRICES.photo;
-      }
-      if (sel.domain) {
-        lines.push({
-          label: 'Domain + hosting (1 year)',
-          value: formatINR(PRICES.domain)
-        });
-        total += PRICES.domain;
-      }
-    }
-
-    if (sel.maintenancePrice > 0) {
-      lines.push({
-        label: 'Maintenance — ' + sel.maintenance,
-        value: formatINR(sel.maintenancePrice)
-      });
-      total += sel.maintenancePrice;
-    }
-
-    return { lines: lines, total: total, isCombo: isCombo, reels: reels };
+    return {
+      allThree: allThree,
+      comboApplies: comboApplies,
+      comboTotal: comboTotal,
+      comboListPrice: comboListPrice,
+      alaCarte: alaCarte,
+      total: servicesTotal + sel.maintenancePrice
+    };
   }
 
-  /** Repaint the summary panel. Called on every change. */
+  /** Repaint the estimate. Called on every change. */
   function updateBuilder() {
     const sel = readSelection();
+    const q = priceSelection(sel);
 
-    // Show or hide the dependent sub-fields
-    $('#subWebsite').hidden = !sel.website;
-    $('#subReel').hidden    = !sel.reel;
-    $('#subPhoto').hidden   = !sel.photo;
+    // Reel price in the option list tracks the quantity
+    const reelPriceEl = $('[data-price-for="reel"]');
+    if (reelPriceEl) reelPriceEl.textContent = formatINR(sel.reels * PRICES.reel);
 
-    const quote = priceSelection(sel);
+    // Sub-fields stay in place (as in the design) but go dim and inert until
+    // their service is ticked, so the "(if X selected)" hints are actionable.
+    [['#subWebsite', sel.website], ['#subReel', sel.reel], ['#subPhoto', sel.photo]]
+      .forEach(function (pair) {
+        const field = $(pair[0]);
+        if (!field) return;
+        field.classList.toggle('is-dim', !pair[1]);
+        $$('select, input, button', field).forEach(function (ctrl) {
+          ctrl.disabled = !pair[1];
+        });
+      });
+
+    // Every row is always shown; unselected ones read as a dash.
+    const rows = [
+      ['Website',          sel.website ? formatINR(PRICES.website) : '–'],
+      ['Reels (' + sel.reels + ')', sel.reel ? formatINR(sel.reels * PRICES.reel) : '–'],
+      ['Photo Shoot',      sel.photo ? formatINR(PRICES.photo) : '–'],
+      ['Domain + Hosting', (sel.domain || q.comboApplies) ? (q.comboApplies ? 'included' : formatINR(PRICES.domain)) : '–'],
+      ['Maintenance',      sel.maintenancePrice ? formatINR(sel.maintenancePrice) : '–']
+    ];
+
+    if (q.comboApplies) rows.push(['Combo Package', formatINR(q.comboTotal)]);
 
     summaryLines.innerHTML = '';
-    if (!quote.lines.length) {
+    rows.forEach(function (row) {
       const li = document.createElement('li');
-      li.className = 'summary__empty';
-      li.textContent = 'Nothing selected yet — tick a service to see your price.';
+      const a = document.createElement('span');
+      const b = document.createElement('span');
+      a.textContent = row[0];
+      b.textContent = row[1];
+      li.appendChild(a);
+      li.appendChild(b);
       summaryLines.appendChild(li);
+    });
+
+    grandTotalEl.textContent = formatINR(q.total);
+
+    if (q.comboApplies) {
+      strikeTotal.textContent = formatINR(q.comboListPrice + sel.maintenancePrice);
+      strikeTotal.hidden = false;
+      comboText.textContent = 'Combo discount applied — you save ' +
+        formatINR(q.comboListPrice - q.comboTotal) + '.';
     } else {
-      quote.lines.forEach(function (line) {
-        const li = document.createElement('li');
-        const label = document.createElement('span');
-        const value = document.createElement('span');
-        label.textContent = line.label;
-        value.textContent = line.value;
-        if (line.strong) {
-          label.style.color = 'var(--c-heading)';
-          label.style.fontWeight = '600';
-        }
-        li.appendChild(label);
-        li.appendChild(value);
-        summaryLines.appendChild(li);
-      });
+      strikeTotal.hidden = true;
+      comboText.textContent = q.allThree
+        ? 'Combo Package is ₹12,000 and includes 1-year domain + hosting.'
+        : TIP_DEFAULT;
     }
 
-    grandTotalEl.textContent = formatINR(quote.total);
-    return quote;
+    return q;
   }
 
-  // Reel stepper
   function setReelQty(next) {
     reelQty = Math.min(REEL_MAX, Math.max(REEL_MIN, next));
     reelQtyEl.textContent = String(reelQty);
@@ -453,54 +395,38 @@
   builderForm.addEventListener('change', updateBuilder);
   builderForm.addEventListener('submit', function (e) { e.preventDefault(); });
 
-  // Send the built quote to WhatsApp
   $('#builderSend').addEventListener('click', function () {
     const sel = readSelection();
-    const quote = priceSelection(sel);
+    const q = priceSelection(sel);
 
-    if (!quote.lines.length) {
+    if (!sel.website && !sel.reel && !sel.photo && !sel.domain && !sel.maintenancePrice) {
       openWhatsApp("Hi " + CONFIG.businessName +
         ", I'd like a quote but I'm not sure what I need yet. Can you help?");
       return;
     }
 
-    // Human-readable service list
     const services = [];
     if (sel.website) services.push('Website');
-    if (sel.reel)    services.push(quote.reels + ' Reel' + (quote.reels > 1 ? 's' : ''));
+    if (sel.reel)    services.push(sel.reels + ' Reel' + (sel.reels > 1 ? 's' : ''));
     if (sel.photo)   services.push('Photo Shoot (' + sel.photoType + ')');
-    if (sel.domain || quote.isCombo) services.push('Domain + Hosting');
+    if (sel.domain || q.comboApplies) services.push('Domain + Hosting');
 
     const parts = ["Hi " + CONFIG.businessName + ", I'd like a quote."];
-    parts.push('Services: ' + services.join(', '));
+    if (services.length) parts.push('Services: ' + services.join(', '));
     if (sel.website) parts.push('Business Type: ' + sel.businessType);
     parts.push('Maintenance: ' + (sel.maintenance === 'none' ? 'None' : sel.maintenance));
-    if (quote.isCombo) parts.push('Combo discount applied');
-    parts.push('Estimated Total: ' + formatINR(quote.total));
+    if (q.comboApplies) parts.push('Combo discount applied');
+    parts.push('Estimated Total: ' + formatINR(q.total));
 
     openWhatsApp(parts.join('\n'));
   });
 
-  setReelQty(1);   // paints the initial state of the summary too
-
-  /* The summary is a bottom sheet on mobile — only show it while the builder
-     section is on screen, and tuck the floating button away while it is up. */
-  const builderSection = $('#builder');
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        const isMobile = window.matchMedia('(max-width: 1023px)').matches;
-        const show = entry.isIntersecting && isMobile;
-        summaryEl.classList.toggle('is-visible', show);
-        fab.classList.toggle('is-tucked', show);
-      });
-    }, { threshold: 0.18 }).observe(builderSection);
-  }
+  setReelQty(reelQty);   // paints the initial estimate too
 
   /* ========================================================================
-     4. PORTFOLIO FILTER
+     5. WORK FILTER
      ======================================================================== */
-  const workCards = $$('#workGrid .card--work');
+  const workCards = $$('#workGrid .work');
   const workEmpty = $('#workEmpty');
 
   $$('.chip').forEach(function (chip) {
@@ -525,7 +451,7 @@
   });
 
   /* ========================================================================
-     5. FAQ ACCORDION — one panel open at a time
+     6. FAQ ACCORDION — one panel open at a time
      ======================================================================== */
   const accButtons = $$('.acc__btn');
 
@@ -533,14 +459,12 @@
     btn.addEventListener('click', function () {
       const isOpen = btn.getAttribute('aria-expanded') === 'true';
 
-      // Close everything first
       accButtons.forEach(function (other) {
         other.setAttribute('aria-expanded', 'false');
         other.closest('.acc').classList.remove('is-open');
         $('#' + other.getAttribute('aria-controls')).classList.remove('is-open');
       });
 
-      // Then reopen this one if it was closed
       if (!isOpen) {
         btn.setAttribute('aria-expanded', 'true');
         btn.closest('.acc').classList.add('is-open');
@@ -550,11 +474,11 @@
   });
 
   /* ========================================================================
-     6. CONTACT FORM — validates, then hands off to WhatsApp. Never submits.
+     7. CONTACT FORM — validates, then hands off to WhatsApp. Never submits.
      ======================================================================== */
   const contactForm = $('#contactForm');
 
-  function validateField(input, errorEl, test) {
+  function validate(input, errorEl, test) {
     const ok = test(input.value.trim());
     input.classList.toggle('is-invalid', !ok);
     errorEl.hidden = ok;
@@ -563,21 +487,23 @@
   }
 
   contactForm.addEventListener('submit', function (e) {
-    e.preventDefault();   // there is no server — this never posts
+    e.preventDefault();      // there is no server — this never posts
 
     const name     = $('#cfName');
     const business = $('#cfBusiness');
     const phone    = $('#cfPhone');
+    const service  = $('#cfService');
 
-    const okName = validateField(name, $('#cfNameErr'), function (v) { return v.length > 1; });
-    const okBiz  = validateField(business, $('#cfBusinessErr'), function (v) { return v.length > 1; });
-    const okPhone = validateField(phone, $('#cfPhoneErr'), function (v) {
+    const okName = validate(name, $('#cfNameErr'), function (v) { return v.length > 1; });
+    const okBiz  = validate(business, $('#cfBusinessErr'), function (v) { return v.length > 1; });
+    const okPhone = validate(phone, $('#cfPhoneErr'), function (v) {
       const digits = v.replace(/\D/g, '');
       return digits.length >= 10 && digits.length <= 13;
     });
+    const okSvc = validate(service, $('#cfServiceErr'), function (v) { return v !== ''; });
 
-    if (!okName || !okBiz || !okPhone) {
-      const firstBad = $('.input.is-invalid', contactForm);
+    if (!okName || !okBiz || !okPhone || !okSvc) {
+      const firstBad = $('.is-invalid', contactForm);
       if (firstBad) firstBad.focus();
       return;
     }
@@ -586,113 +512,22 @@
       name: name.value.trim(),
       business: business.value.trim(),
       phone: phone.value.trim(),
-      service: $('#cfService').value,
+      service: service.value,
       message: $('#cfMessage').value.trim()
     }));
   });
 
   // Clear the error state as soon as the visitor starts fixing it
-  $$('#contactForm .input').forEach(function (input) {
-    input.addEventListener('input', function () {
-      if (!input.classList.contains('is-invalid')) return;
-      input.classList.remove('is-invalid');
-      input.removeAttribute('aria-invalid');
-      const err = $('#' + input.id + 'Err');
+  $$('#contactForm .input, #contactForm select').forEach(function (field) {
+    const evt = field.tagName === 'SELECT' ? 'change' : 'input';
+    field.addEventListener(evt, function () {
+      if (!field.classList.contains('is-invalid')) return;
+      field.classList.remove('is-invalid');
+      field.removeAttribute('aria-invalid');
+      const err = $('#' + field.id + 'Err');
       if (err) err.hidden = true;
     });
   });
-
-  /* ========================================================================
-     6b. HEADLINE WORD REVEAL
-     Wraps each word in .word > span so the span can slide up behind the
-     clipped .word. Element children (e.g. the gradient span) are kept whole,
-     so the visible text and the accessibility tree are unchanged.
-     ======================================================================== */
-  function splitWords(heading) {
-    const pieces = [];
-
-    Array.from(heading.childNodes).forEach(function (node) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        node.textContent.split(/([ \t\r\n]+)/).forEach(function (chunk) {
-          if (chunk.trim() === '') {
-            if (chunk) pieces.push(document.createTextNode(' '));
-          } else {
-            pieces.push(chunk);      // a plain word
-          }
-        });
-      } else {
-        pieces.push(node);           // keep elements intact
-      }
-    });
-
-    heading.textContent = '';
-    let index = 0;
-
-    pieces.forEach(function (piece) {
-      if (piece.nodeType === Node.TEXT_NODE) {
-        heading.appendChild(piece);  // preserve the spaces between words
-        return;
-      }
-      const outer = document.createElement('span');
-      outer.className = 'word';
-      outer.style.setProperty('--word-index', index++);
-
-      const inner = document.createElement('span');
-      if (typeof piece === 'string') {
-        inner.textContent = piece;
-      } else {
-        inner.appendChild(piece);
-      }
-      outer.appendChild(inner);
-      heading.appendChild(outer);
-    });
-  }
-
-  if (!prefersReducedMotion) {
-    $$('[data-split]').forEach(splitWords);
-  }
-
-  /* ========================================================================
-     6c. CARD SPOTLIGHT — a soft glow that tracks the pointer
-     One delegated listener rather than one per card.
-     ======================================================================== */
-  if (!prefersReducedMotion && window.matchMedia('(hover: hover)').matches) {
-    $$('.card').forEach(function (card) { card.classList.add('card--spotlight'); });
-
-    document.addEventListener('pointermove', function (e) {
-      const card = e.target.closest && e.target.closest('.card--spotlight');
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
-    }, { passive: true });
-  }
-
-  /* ========================================================================
-     7. SCROLL REVEALS — staggered by child index
-     ======================================================================== */
-  // Give children of a .stagger container an increasing delay
-  $$('.stagger').forEach(function (group) {
-    $$('.reveal', group).forEach(function (el, i) {
-      el.style.setProperty('--reveal-delay', (i * 70) + 'ms');
-    });
-  });
-
-  const revealEls = $$('.reveal');
-
-  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-    revealEls.forEach(function (el) { el.classList.add('is-visible'); });
-  } else {
-    const revealObserver = new IntersectionObserver(function (entries, obs) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        obs.unobserve(entry.target);   // reveal once, then stop watching
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-    revealEls.forEach(function (el) { revealObserver.observe(el); });
-  }
 
   /* ========================================================================
      8. COUNT-UP ON THE TRUST STATS
@@ -703,13 +538,12 @@
     const target = parseInt(el.dataset.count, 10);
     const prefix = el.dataset.prefix || '';
     const suffix = el.dataset.suffix || '';
-    const duration = 1100;
+    const duration = 1000;
     const start = performance.now();
 
     function frame(now) {
       const progress = Math.min((now - start) / duration, 1);
-      // easeOutCubic
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = 1 - Math.pow(1 - progress, 3);     // easeOutCubic
       el.textContent = prefix + Math.round(target * eased) + suffix;
       if (progress < 1) requestAnimationFrame(frame);
     }
@@ -723,21 +557,20 @@
         el.textContent = (el.dataset.prefix || '') + el.dataset.count + (el.dataset.suffix || '');
       });
     } else {
-      const countObserver = new IntersectionObserver(function (entries, obs) {
+      const io = new IntersectionObserver(function (entries, obs) {
         entries.forEach(function (entry) {
           if (!entry.isIntersecting) return;
           runCount(entry.target);
           obs.unobserve(entry.target);
         });
       }, { threshold: 0.6 });
-
-      counters.forEach(function (el) { countObserver.observe(el); });
+      counters.forEach(function (el) { io.observe(el); });
     }
   }
 
   /* ========================================================================
      9. SMOOTH SCROLL for in-page anchors
-        (CSS handles it too; this keeps focus correct for keyboard users)
+        (CSS handles the motion; this keeps focus correct for keyboard users)
      ======================================================================== */
   $$('a[href^="#"]').forEach(function (link) {
     link.addEventListener('click', function (e) {
@@ -752,8 +585,6 @@
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
         block: 'start'
       });
-
-      // Move focus to the section so screen readers follow along
       target.setAttribute('tabindex', '-1');
       target.focus({ preventScroll: true });
       history.replaceState(null, '', id);
@@ -763,20 +594,11 @@
   /* ========================================================================
      10. ODDS AND ENDS
      ======================================================================== */
-  // Footer copyright year
   $('#year').textContent = new Date().getFullYear();
 
-  // Keep the mailto / tel links in sync with CONFIG.email
+  // Keep mailto links in sync with CONFIG.email
   $$('a[href^="mailto:"]').forEach(function (a) {
     a.href = 'mailto:' + CONFIG.email;
     a.textContent = CONFIG.email;
   });
-
-  // Render the CDN icon set once the DOM is ready
-  function renderIcons() {
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
-    }
-  }
-  renderIcons();
 })();
