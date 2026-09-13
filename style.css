@@ -466,24 +466,8 @@ img.is-broken { display: none; }
 /* ---- Services ---- */
 .services {
   position: relative;
-  overflow: hidden;
-  background: #10161A;
-  color: #fff;
-}
-.services__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.services__veil {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(150deg,
-    rgba(10, 16, 13, 0.95) 0%,
-    rgba(10, 16, 13, 0.9) 55%,
-    rgba(10, 20, 14, 0.72) 100%);
+  background: #fff;
+  color: var(--ink);
 }
 .services__inner {
   position: relative;
@@ -497,46 +481,58 @@ img.is-broken { display: none; }
 .services__title {
   font-size: var(--fs-h2);
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
   margin-bottom: 4px;
 }
 .services__lede {
   font-size: var(--fs-sm);
-  color: rgba(255, 255, 255, 0.72);
-  margin-bottom: 16px;
+  color: var(--body);
+  margin-bottom: 22px;
 }
 
 .svc-grid { display: grid; gap: 12px; }
 @media (min-width: 700px) { .svc-grid { grid-template-columns: repeat(3, 1fr); } }
 
 .svc {
-  padding: 13px 12px;
-  border-radius: var(--r);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(12, 16, 20, 0.66);
-  backdrop-filter: blur(6px);
-  transition: border-color var(--tr), transform var(--tr), background var(--tr);
+  padding: 24px 20px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: #fff;
+  transition: border-color var(--tr), transform var(--tr), box-shadow var(--tr);
 }
 .svc:hover {
-  border-color: rgba(34, 197, 94, 0.55);
-  background: rgba(12, 16, 20, 0.82);
-  transform: translateY(-2px);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px -18px rgba(16, 24, 40, 0.3),
+              0 0 0 1px rgba(34, 197, 94, 0.18);
 }
 .svc__ico {
-  display: block;
-  font-size: 22px;
-  color: var(--green);
-  margin-bottom: 9px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  border-radius: 15px;
+  background: var(--green-soft);
+  border: 1px solid var(--green-line);
+  color: var(--green-700);
+  font-size: 21px;
+  transition: background var(--tr), color var(--tr), border-color var(--tr);
 }
-.svc h3 { font-size: var(--fs-h3); color: #fff; margin-bottom: 6px; }
-.svc p { font-size: var(--fs-sm); color: rgba(255, 255, 255, 0.7); margin-bottom: 10px; }
+.svc:hover .svc__ico {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.svc h3 { font-size: var(--fs-h3); color: var(--ink); margin-bottom: 8px; }
+.svc p { font-size: var(--fs-sm); color: var(--body); margin-bottom: 16px; }
 .svc__link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--green);
+  color: var(--green-700);
   padding: 0;
   transition: gap var(--tr);
 }
@@ -1321,7 +1317,7 @@ textarea.input { resize: vertical; min-height: 44px; }
    12. PRINT
    -------------------------------------------------------------------------- */
 @media print {
-  .nav, .modal, .scribble, .hero__bg, .services__bg { display: none !important; }
+  .nav, .modal, .scribble, .hero__bg { display: none !important; }
   body { background: #fff; color: #000; }
   .row + .row { border-top: 1px solid #ccc; }
 }
@@ -1925,9 +1921,7 @@ textarea.input { resize: vertical; min-height: 44px; }
   background: var(--green);
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
 }
-/* On the dark services panel the darker green would disappear */
-.services .eyebrow { color: var(--green); }
-.services .eyebrow__dot { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22); }
+
 
 /* ---- Headings get a touch more presence ---- */
 .h-sec, .services__title {
@@ -1978,7 +1972,7 @@ textarea.input { resize: vertical; min-height: 44px; }
 }
 
 /* Hairline of brand colour under the dark services band */
-.services { border-bottom: 2px solid var(--green); }
+.hero { border-bottom: 2px solid var(--green); }
 
 /* ---- Chips and tags sit a little softer ---- */
 .chip.is-active {
