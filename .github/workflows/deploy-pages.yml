@@ -1,0 +1,47 @@
+# Publishes the static site to GitHub Pages on every push to the default branch.
+#
+# There is nothing to build — index.html, style.css and script.js are uploaded
+# as-is. `enablement: true` switches Pages on the first time this runs, so no
+# manual setting-up is needed in the repository settings.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [claude/agency-marketing-website-zg3x64]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Configure Pages (enables it on the first run)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # The site lives at the repository root. The action already skips
+          # .git and .github for us.
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
