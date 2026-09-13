@@ -114,6 +114,11 @@
           <a href="#process">Process</a>
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
+          <button type="button" class="nav__orders" data-show-orders>
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+            My Orders
+            <span class="nav__orders-count" data-orders-count hidden>0</span>
+          </button>
           <button class="btn btn--green nav__drawer-cta" data-wa-modal data-service="Not Sure">
             <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Get Quote
           </button>
@@ -801,7 +806,7 @@
         <div class="cart__head-actions">
           <button class="cart__tab" id="ordersTab" data-show-orders>
             <i class="fa-regular fa-clock-rotate-left" aria-hidden="true"></i>
-            My Orders <span class="cart__tab-count" id="ordersCount" hidden>0</span>
+            My Orders <span class="cart__tab-count" data-orders-count hidden>0</span>
           </button>
           <button class="cart__close" data-close-cart aria-label="Close cart">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>

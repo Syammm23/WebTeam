@@ -2025,3 +2025,41 @@ textarea.input { resize: vertical; min-height: 44px; }
 /* Four contact routes now, so they pair up before spreading into a row */
 @media (min-width: 700px)  { .reach { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .reach { grid-template-columns: repeat(4, 1fr); } }
+
+/* --------------------------------------------------------------------------
+   17. "MY ORDERS" IN THE HEADER
+   -------------------------------------------------------------------------- */
+.nav__orders {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  transition: color var(--tr);
+}
+.nav__orders:hover { color: var(--green); }
+.nav__orders i { font-size: 0.95em; }
+
+.nav__orders-count {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--green);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+}
+
+/* In the drawer it lines up with the links above it */
+@media (max-width: 899px) {
+  .nav__orders {
+    justify-content: flex-start;
+    padding: 12px 0;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
