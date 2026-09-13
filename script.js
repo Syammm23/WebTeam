@@ -35,15 +35,16 @@
 
   /* Prices used by the quote builder (₹). Keep in sync with the cards. */
   const PRICES = {
+    // A year of domain + hosting is bundled into every website package
+    // rather than being sold separately.
     website: 5000,
     reel: 2000,          // per reel
     photo: 1000,
-    domain: 1500,        // domain + hosting, 1 year
     maintenance: { "none": 0, "6 Months": 2000, "1 Year": 4000 }
   };
 
   const COMBO = {
-    price: 12000,        // Combo Package headline price
+    price: 9000,         // Combo Package headline price — ₹1,000 under à la carte
     reelsIncluded: 2     // reels bundled into the combo
   };
 
@@ -265,7 +266,7 @@
   const REEL_MAX = 5;
   let reelQty = 2;
 
-  const TIP_DEFAULT = 'Select Website + Reel + Photo Shoot to get the ₹12,000 combo!';
+  const TIP_DEFAULT = 'Select Website + Reel + Photo Shoot to get the ₹9,000 combo!';
 
   function readSelection() {
     const checked = $$('input[name="service"]:checked', builderForm)
@@ -276,7 +277,6 @@
       website: checked.indexOf('website') > -1,
       reel:    checked.indexOf('reel') > -1,
       photo:   checked.indexOf('photo') > -1,
-      domain:  checked.indexOf('domain') > -1,
       businessType: $('#businessType').value,
       photoType: ($('input[name="photoType"]:checked', builderForm) || {}).value || 'Product Photos',
       maintenance: maint,
@@ -297,8 +297,7 @@
     const alaCarte =
       (sel.website ? PRICES.website : 0) +
       (sel.reel ? sel.reels * PRICES.reel : 0) +
-      (sel.photo ? PRICES.photo : 0) +
-      (sel.domain ? PRICES.domain : 0);
+      (sel.photo ? PRICES.photo : 0);
 
     const allThree = sel.website && sel.reel && sel.photo;
     let comboApplies = false;
@@ -309,7 +308,7 @@
       const reels = Math.max(sel.reels, COMBO.reelsIncluded);
       comboTotal = COMBO.price + (reels - COMBO.reelsIncluded) * PRICES.reel;
       // What the combo's own contents would cost bought separately
-      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.photo + PRICES.domain;
+      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.photo;
       comboApplies = comboTotal < comboListPrice;
     }
 
@@ -351,7 +350,7 @@
       ['Website',          sel.website ? formatINR(PRICES.website) : '–'],
       ['Reels (' + sel.reels + ')', sel.reel ? formatINR(sel.reels * PRICES.reel) : '–'],
       ['Photo Shoot',      sel.photo ? formatINR(PRICES.photo) : '–'],
-      ['Domain + Hosting', (sel.domain || q.comboApplies) ? (q.comboApplies ? 'included' : formatINR(PRICES.domain)) : '–'],
+      ['Domain + Hosting (1 yr)', (sel.website || q.comboApplies) ? 'included free' : '–'],
       ['Maintenance',      sel.maintenancePrice ? formatINR(sel.maintenancePrice) : '–']
     ];
 
@@ -405,7 +404,7 @@
     const sel = readSelection();
     const q = priceSelection(sel);
 
-    if (!sel.website && !sel.reel && !sel.photo && !sel.domain && !sel.maintenancePrice) {
+    if (!sel.website && !sel.reel && !sel.photo && !sel.maintenancePrice) {
       openCart();          // nothing ticked — just show them the cart
       return;
     }
@@ -436,11 +435,6 @@
           kind: 'media', note: sel.photoType
         });
       }
-      if (sel.domain) {
-        addToCart({
-          id: 'domain', name: 'Domain + Hosting (1 Year)', price: PRICES.domain, kind: 'web'
-        });
-      }
     }
 
     if (sel.maintenancePrice > 0) {
@@ -469,7 +463,7 @@
      stamped with a reference and why the last step asks the customer to send
      it over — it is the only thing linking a payment to an order.
      ======================================================================== */
-  const CART_KEY = 'brandname.cart.v1';
+  const CART_KEY = 'brandname.cart.v2';   // v1 could hold the retired domain item
   const MAX_QTY  = 20;
 
   let cart = [];
@@ -678,18 +672,18 @@
 
     // What the combo would replace, keeping anything it does not cover.
     const replaced = cart.filter(function (i) {
-      return ['website', 'reel', 'photo', 'domain'].indexOf(i.id) > -1;
+      return ['website', 'reel', 'photo'].indexOf(i.id) > -1;
     }).reduce(function (sum, i) { return sum + i.price * i.qty; }, 0);
 
-    const saving = replaced - 12000;
+    const saving = replaced - COMBO.price;
     if (saving <= 0) {
       cartTipEl.hidden = true;
       return;
     }
 
     cartTipText.textContent =
-      'The Combo Package covers all of this for ₹12,000 — you would save ' +
-      formatINR(saving) + '.';
+      'The Combo Package covers all of this for ' + formatINR(COMBO.price) +
+      ' — you would save ' + formatINR(saving) + '.';
     cartTipEl.hidden = false;
   }
 

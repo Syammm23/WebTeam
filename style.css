@@ -1344,12 +1344,12 @@ textarea.input { resize: vertical; min-height: 44px; }
 .cart { position: fixed; inset: 0; z-index: 260; }
 .cart[hidden] { display: none; }
 
+/* Invisible click-catcher, like the menu's: tapping outside closes the cart
+   without the page changing colour behind it. */
 .cart__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 17, 21, 0.55);
-  backdrop-filter: blur(3px);
-  animation: cart-fade 200ms ease both;
+  background: transparent;
 }
 
 .cart__panel {
