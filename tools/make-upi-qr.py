@@ -33,7 +33,9 @@ def main() -> int:
 
     # No amount: one QR serves every order, and the visitor types the figure
     # shown on screen. The "open a UPI app" link carries the amount instead.
-    payload = f"upi://pay?pa={quote(vpa)}&pn={quote(PAYEE)}&cu=INR"
+    # "@" is left as-is: every bank-issued UPI QR writes it raw, and some
+    # apps do not un-escape %40 in the payee address.
+    payload = f"upi://pay?pa={quote(vpa, safe='@.')}&pn={quote(PAYEE)}&cu=INR"
 
     qr = qrcode.QRCode(
         version=None,
