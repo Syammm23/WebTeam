@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Order Book — WE3</title>
+
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+
+<body class="adm">
+  <header class="adm__top">
+    <a class="adm__brand" href="index.html">
+      <img src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
+      <span>Order Book</span>
+    </a>
+    <div class="adm__top-actions">
+      <button class="btn btn--outline-dark btn--sm" id="exportBtn">
+        <i class="fa-solid fa-download" aria-hidden="true"></i> Export
+      </button>
+      <label class="btn btn--outline-dark btn--sm" for="importFile">
+        <i class="fa-solid fa-upload" aria-hidden="true"></i> Import
+      </label>
+      <input type="file" id="importFile" accept="application/json" hidden />
+      <a class="btn btn--green btn--sm" href="index.html">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Website
+      </a>
+    </div>
+  </header>
+
+  <!-- This is stated up front rather than buried: the page cannot reach a
+       customer's phone, so nobody assumes marking an order here tells them. -->
+  <p class="adm__notice">
+    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    <span>
+      This order book lives in <strong>this browser only</strong>. Marking an order
+      verified here does not change what the customer sees on their phone — tell
+      them on WhatsApp. Use <strong>Export</strong> to share the book with the team.
+    </span>
+  </p>
+
+  <main class="adm__main">
+    <section class="adm__stats" aria-label="Summary">
+      <article class="stat-tile">
+        <span class="stat-tile__label">Orders</span>
+        <strong class="stat-tile__value" id="statTotal">0</strong>
+      </article>
+      <article class="stat-tile stat-tile--pending">
+        <span class="stat-tile__label">Pending</span>
+        <strong class="stat-tile__value" id="statPending">0</strong>
+      </article>
+      <article class="stat-tile stat-tile--ok">
+        <span class="stat-tile__label">Verified</span>
+        <strong class="stat-tile__value" id="statVerified">0</strong>
+      </article>
+      <article class="stat-tile stat-tile--money">
+        <span class="stat-tile__label">Received (verified)</span>
+        <strong class="stat-tile__value" id="statMoney">₹0</strong>
+      </article>
+      <article class="stat-tile stat-tile--due">
+        <span class="stat-tile__label">Balance due</span>
+        <strong class="stat-tile__value" id="statDue">₹0</strong>
+      </article>
+    </section>
+
+    <section class="adm__panel" aria-labelledby="addTitle">
+      <h2 class="adm__h" id="addTitle">Log an order</h2>
+      <form class="adm__form" id="orderForm" novalidate>
+        <div class="cf-row">
+          <label for="fName">Customer name <span class="req">*</span></label>
+          <input class="input" id="fName" required placeholder="Ramesh Patel" />
+        </div>
+        <div class="cf-row">
+          <label for="fPhone">Phone <span class="req">*</span></label>
+          <input class="input" id="fPhone" required inputmode="numeric" placeholder="98765 43210" />
+        </div>
+        <div class="cf-row">
+          <label for="fItems">What they ordered</label>
+          <input class="input" id="fItems" placeholder="Combo Package" />
+        </div>
+        <div class="cf-row">
+          <label for="fTotal">Order total ₹ <span class="req">*</span></label>
+          <input class="input" id="fTotal" required inputmode="numeric" placeholder="9000" />
+        </div>
+        <div class="cf-row">
+          <label for="fPaid">Paid now ₹ <span class="req">*</span></label>
+          <input class="input" id="fPaid" required inputmode="numeric" placeholder="4500" />
+        </div>
+        <div class="cf-row">
+          <label for="fRef">Order reference</label>
+          <input class="input" id="fRef" placeholder="WE3-AB12CD (from their screen)" />
+        </div>
+        <div class="cf-row cf-row--wide">
+          <label for="fNote">Note</label>
+          <input class="input" id="fNote" placeholder="UTR number, or anything worth remembering" />
+        </div>
+        <p class="cf-err" id="formErr" hidden></p>
+        <button class="btn btn--green btn--block" type="submit">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add order
+        </button>
+      </form>
+    </section>
+
+    <section class="adm__panel" aria-labelledby="listTitle">
+      <div class="adm__list-head">
+        <h2 class="adm__h" id="listTitle">Orders</h2>
+        <div class="chips" role="tablist" aria-label="Filter orders">
+          <button class="chip is-active" role="tab" aria-selected="true" data-status="all">All</button>
+          <button class="chip" role="tab" aria-selected="false" data-status="pending">Pending</button>
+          <button class="chip" role="tab" aria-selected="false" data-status="verified">Verified</button>
+          <button class="chip" role="tab" aria-selected="false" data-status="rejected">Rejected</button>
+        </div>
+      </div>
+
+      <input class="input adm__search" id="search" placeholder="Search name, phone or reference…" />
+
+      <p class="adm__empty" id="listEmpty">No orders yet. Log one above as soon as a payment screenshot arrives.</p>
+      <ul class="adm__orders" id="orderList"></ul>
+    </section>
+  </main>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>
