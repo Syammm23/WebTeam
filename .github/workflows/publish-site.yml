@@ -12,6 +12,9 @@ on:
       - index.html
       - style.css
       - script.js
+      - admin.html
+      - admin.css
+      - admin.js
       - assets/**
       - .github/workflows/publish-site.yml
   workflow_dispatch:
@@ -40,6 +43,7 @@ jobs:
           # Stash the site before switching branches.
           staging="$(mktemp -d)"
           cp index.html style.css script.js "$staging/"
+          cp admin.html admin.css admin.js "$staging/"
           touch "$staging/.nojekyll"
           if [ -d assets ]; then
             cp -r assets "$staging/assets"
@@ -52,7 +56,8 @@ jobs:
           git checkout gh-pages
 
           cp "$staging/index.html" "$staging/style.css" \
-             "$staging/script.js" "$staging/.nojekyll" .
+             "$staging/script.js" "$staging/.nojekyll" \
+             "$staging/admin.html" "$staging/admin.css" "$staging/admin.js" .
 
           # Replace assets wholesale so deleted files do not linger on the
           # live branch.
@@ -61,7 +66,8 @@ jobs:
             cp -r "$staging/assets" assets
           fi
 
-          git add -A index.html style.css script.js .nojekyll assets
+          git add -A index.html style.css script.js .nojekyll assets \
+                     admin.html admin.css admin.js
 
           if git diff --staged --quiet; then
             echo "gh-pages already matches ${GITHUB_SHA}; nothing to publish."
