@@ -18,7 +18,8 @@
     // digits only, no "+" and no spaces.
     whatsapp: {
       web:   "917990853947",               // websites, domain/hosting, maintenance
-      media: "917990487721"                // reels and photo shoots
+      reel:  "917990487721",               // reel shooting and editing
+      photo: "919601356699"                // photography
     },
 
     upi: {
@@ -75,21 +76,25 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  /** Reels and photo shoots go to the media line; everything else to web. */
-  const MEDIA_SERVICES = ['Reel Making', 'Photo Shoot'];
+  /** Each service goes to the person who does it; anything else to web. */
+  const SERVICE_LINES = {
+    'Reel Making': 'reel',
+    'Photo Shoot': 'photo'
+  };
   function numberForService(service) {
-    return MEDIA_SERVICES.indexOf(service) > -1
-      ? CONFIG.whatsapp.media
-      : CONFIG.whatsapp.web;
+    return CONFIG.whatsapp[SERVICE_LINES[service] || 'web'];
   }
 
   /**
-   * A mixed cart goes to the website line — that is the bigger job and the
-   * person there can loop in the media side.
+   * A cart with a website in it goes to the website line — that is the bigger
+   * job and the person there can loop the others in. A media-only cart goes
+   * to whoever does the work, with reels taking precedence over photos when
+   * both are in the basket.
    */
   function numberForCart(items) {
-    const hasWeb = items.some(function (i) { return i.kind === 'web'; });
-    return hasWeb ? CONFIG.whatsapp.web : CONFIG.whatsapp.media;
+    if (items.some(function (i) { return i.kind === 'web'; })) return CONFIG.whatsapp.web;
+    if (items.some(function (i) { return i.id === 'reel'; }))  return CONFIG.whatsapp.reel;
+    return CONFIG.whatsapp.photo;
   }
 
   /* ------------------------------------------------------------------------
