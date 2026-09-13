@@ -850,21 +850,8 @@
 
           <button class="btn btn--green btn--block btn--lg" id="payBtn">
             <span class="btn__ico" aria-hidden="true"><i class="fa-solid fa-indian-rupee-sign"></i></span>
-            <span id="payBtnLabel">Pay via UPI</span>
+            <span id="payBtnLabel">Proceed to Pay</span>
           </button>
-
-          <!-- Desktop has no UPI app to hand off to, so the ID is always shown -->
-          <div class="upi-manual">
-            <p class="upi-manual__lead">
-              On a computer? Send the amount to this UPI ID from any UPI app:
-            </p>
-            <div class="upi-id">
-              <code id="upiIdText">—</code>
-              <button type="button" id="copyUpi" class="upi-id__copy">
-                <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy
-              </button>
-            </div>
-          </div>
 
           <p class="est__fine">
             GPay, PhonePe, Paytm — any UPI app works. No card details are ever entered on this site.
@@ -872,24 +859,72 @@
         </div>
       </div>
 
-      <!-- ---------- SCREEN 2: after the UPI app is opened ---------- -->
+
+      <!-- ---------- SCREEN 2: scan the QR and pay ---------- -->
+      <div class="cart__screen pay" id="payScreen" hidden>
+        <div class="pay__body">
+          <p class="pay__lead">Scan and pay this amount</p>
+          <p class="pay__amount" id="payAmount">₹0</p>
+          <p class="pay__split" id="paySplitNote">&nbsp;</p>
+
+          <!-- The QR is filled in from CONFIG.upi.qrImage; until that is set a
+               notice appears here instead, so nobody scans a wrong code. -->
+          <div class="pay__qr" id="payQr"></div>
+
+          <p class="pay__or">or pay to this UPI ID</p>
+          <div class="upi-id">
+            <code id="payUpiId">—</code>
+            <button type="button" id="payCopyUpi" class="upi-id__copy">
+              <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy
+            </button>
+          </div>
+
+          <button class="btn btn--outline-dark btn--block" id="payOpenApp">
+            <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
+            Open a UPI app on this phone
+          </button>
+
+          <p class="pay__ref">Order reference <strong id="payOrderId">—</strong></p>
+
+          <p class="pay__note">
+            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+            After paying, tap the button below. We check every payment by hand and
+            get back to you within 3 hours.
+          </p>
+        </div>
+
+        <div class="pay__foot">
+          <button class="btn btn--green btn--block btn--lg" id="payDoneBtn">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            I have paid
+          </button>
+          <button class="btn btn--plain btn--block" id="payCancel">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to cart
+          </button>
+        </div>
+      </div>
+
+      <!-- ---------- SCREEN 3: waiting on verification ---------- -->
       <div class="cart__screen cart__done" id="cartDone" hidden>
-        <i class="fa-solid fa-circle-check cart__done-ico" aria-hidden="true"></i>
-        <h3>Payment started</h3>
+        <i class="fa-regular fa-hourglass-half cart__done-ico cart__done-ico--wait" aria-hidden="true"></i>
+        <h3>Payment pending verification</h3>
 
         <dl class="cart__done-meta">
           <div><dt>Order</dt><dd id="doneOrderId">—</dd></div>
           <div><dt>Amount</dt><dd id="doneAmount">—</dd></div>
+          <div><dt>Status</dt><dd class="is-pending">Pending</dd></div>
         </dl>
 
         <p class="cart__done-note">
-          A UPI payment only tells us that money arrived — not who sent it or what
-          they ordered. Send us your order so we can match the two and start work.
+          <strong>Please send us the payment screenshot on WhatsApp.</strong>
+          A UPI transfer only tells us money arrived, not who sent it — the
+          screenshot is how we match it to your order. We will verify it and
+          connect with you within 3 hours.
         </p>
 
         <button class="btn btn--green btn--block btn--lg" id="sendOrderBtn">
           <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
-          Send my order details
+          Send screenshot on WhatsApp
         </button>
 
         <button class="btn btn--plain btn--block" id="backToCart">
@@ -897,7 +932,7 @@
         </button>
       </div>
 
-      <!-- ---------- SCREEN 3: past orders (this device) ---------- -->
+      <!-- ---------- SCREEN 4: past orders (this device) ---------- -->
       <div class="cart__screen orders" id="ordersScreen" hidden>
         <div class="orders__body">
           <p class="orders__empty" id="ordersEmpty">
@@ -906,9 +941,13 @@
           <ul class="orders__list" id="ordersList"></ul>
 
           <p class="orders__note" id="ordersNote" hidden>
-            These are saved on this device only. Open the site on another phone
-            or clear your browser data and they will not be here — ask us on
-            WhatsApp any time and we will pull up your order.
+            Every payment is checked by hand, so a new order stays
+            <strong>pending</strong> until we have confirmed it — usually within
+            3 hours. Send the payment screenshot on WhatsApp to speed that up.
+            <br /><br />
+            These orders are saved on this device only. Open the site on another
+            phone, or clear your browser data, and they will not be here — ask
+            us on WhatsApp any time and we will pull up your order.
           </p>
         </div>
 

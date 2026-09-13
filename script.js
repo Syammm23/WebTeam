@@ -29,7 +29,13 @@
       // money can be sent to the wrong person by mistake.
       // ------------------------------------------------------------------
       id: "PLACEHOLDER@upi",
-      payeeName: "WE3"               // name shown inside the UPI app
+      payeeName: "WE3",              // name shown inside the UPI app
+
+      // PLACEHOLDER — export your QR from any UPI app ("My QR code"), drop
+      // the file into assets/ and put its path here, e.g.
+      // "assets/we3-upi-qr.png". While this is empty the payment screen
+      // says so rather than showing something scannable.
+      qrImage: ""
     }
   };
 
@@ -88,12 +94,6 @@
   function numberForCart(items) {
     const hasWeb = items.some(function (i) { return i.kind === 'web'; });
     return hasWeb ? CONFIG.whatsapp.web : CONFIG.whatsapp.media;
-  }
-
-  function formatPhone(number) {
-    // 917990853947 -> +91 79908 53947
-    const d = String(number).replace(/\D/g, '').slice(-10);
-    return '+91 ' + d.slice(0, 5) + ' ' + d.slice(5);
   }
 
   /* ------------------------------------------------------------------------
@@ -502,7 +502,7 @@
   const payBtn       = $('#payBtn');
   const payBtnLabel  = $('#payBtnLabel');
   const cartErr      = $('#cartErr');
-  const upiIdText    = $('#upiIdText');
+  const payScreen    = $('#payScreen');
 
   let lastCartFocus = null;
   let lastOrder = null;    // { id, amount, split, name, phone, items }
@@ -647,10 +647,9 @@
 
     const due = amountDue(subtotal, currentSplit());
     payNowEl.textContent = formatINR(due);
-    payBtnLabel.textContent = 'Pay ' + formatINR(due) + ' via UPI';
+    payBtnLabel.textContent = 'Proceed to Pay ' + formatINR(due);
 
     renderComboTip(subtotal);
-    upiIdText.textContent = CONFIG.upi.id;
   }
 
   /**
@@ -709,11 +708,13 @@
   function showCartScreen() {
     cartScreen.hidden = false;
     cartDone.hidden = true;
+    payScreen.hidden = true;
     if (ordersScreen) ordersScreen.hidden = true;
   }
   function showDoneScreen() {
     cartScreen.hidden = true;
     cartDone.hidden = false;
+    payScreen.hidden = true;
     if (ordersScreen) ordersScreen.hidden = true;
   }
 
@@ -811,6 +812,8 @@
     const amount = amountDue(subtotal, split);
     const orderId = makeOrderId();
 
+    // Held, not recorded: nothing is saved and the cart is left alone until
+    // the visitor says they have actually paid.
     lastOrder = {
       id: orderId,
       amount: amount,
@@ -821,45 +824,95 @@
       items: cart.slice()
     };
 
-    recordOrder(lastOrder);
-
-    // The order is placed, so the cart starts fresh — the items live on in
-    // the order history rather than lingering as a half-finished basket.
-    cart = [];
-    saveCart();
-    renderCart();
-
-    $('#doneOrderId').textContent = orderId;
-    $('#doneAmount').textContent = formatINR(amount) +
-      (split === 'half' ? ' (50% advance)' : ' (full payment)');
-
-    showDoneScreen();
-
-    // Hands off to whichever UPI app the phone has. On a desktop browser
-    // nothing will happen, which is why the UPI ID is also shown on screen.
-    launchUpi(buildUpiLink(amount, orderId));
+    showPayScreen(lastOrder);
   });
 
-  $('#backToCart').addEventListener('click', showCartScreen);
+  /* ---- The scan-and-pay screen ---- */
+  function showPayScreen(order) {
+    $('#payAmount').textContent = formatINR(order.amount);
+    $('#paySplitNote').textContent = order.split === 'half'
+      ? '50% advance of ' + formatINR(order.subtotal) +
+        ' — ' + formatINR(order.subtotal - order.amount) + ' on delivery'
+      : 'Full payment';
+    $('#payOrderId').textContent = order.id;
+    $('#payUpiId').textContent = CONFIG.upi.id;
 
-  $('#copyUpi').addEventListener('click', function () {
-    const btn = $('#copyUpi');
-    const done = function () {
+    const qr = $('#payQr');
+    qr.innerHTML = '';
+    if (CONFIG.upi.qrImage) {
+      qr.classList.remove('pay__qr--empty');
+      const img = document.createElement('img');
+      img.src = CONFIG.upi.qrImage;
+      img.alt = 'UPI QR code for ' + CONFIG.businessName;
+      qr.appendChild(img);
+    } else {
+      // No QR configured yet — say so rather than showing something scannable.
+      qr.classList.add('pay__qr--empty');
+      const note = document.createElement('p');
+      note.className = 'pay__qr-missing';
+      note.innerHTML = '<strong>QR not set up yet</strong>' +
+        'Use the UPI ID below, or message us on WhatsApp and we will send ' +
+        'payment details.';
+      qr.appendChild(note);
+    }
+
+    cartScreen.hidden = true;
+    cartDone.hidden = true;
+    if (ordersScreen) ordersScreen.hidden = true;
+    payScreen.hidden = false;
+  }
+
+  $('#payOpenApp').addEventListener('click', function () {
+    if (!lastOrder) return;
+    // Opens whichever UPI app the phone has, with the amount already filled
+    // in. On a desktop browser nothing happens, which is why the QR and the
+    // UPI ID are on screen too.
+    launchUpi(buildUpiLink(lastOrder.amount, lastOrder.id));
+  });
+
+  $('#payCopyUpi').addEventListener('click', function () {
+    const btn = $('#payCopyUpi');
+    if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+    navigator.clipboard.writeText(CONFIG.upi.id).then(function () {
       btn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> Copied';
       setTimeout(function () {
         btn.innerHTML = '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy';
       }, 1800);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(CONFIG.upi.id).then(done, function () { /* ignore */ });
-    }
+    }, function () { /* ignore */ });
   });
+
+  $('#payCancel').addEventListener('click', function () {
+    lastOrder = null;
+    showCartScreen();
+  });
+
+  /* ---- "I have paid" — the order goes into the book as pending ---- */
+  $('#payDoneBtn').addEventListener('click', function () {
+    if (!lastOrder) return;
+
+    lastOrder.status = 'pending';
+    recordOrder(lastOrder);
+
+    // Now that the order is placed the cart starts fresh; the items live on
+    // in the order history rather than lingering as a half-finished basket.
+    cart = [];
+    saveCart();
+    renderCart();
+
+    $('#doneOrderId').textContent = lastOrder.id;
+    $('#doneAmount').textContent = formatINR(lastOrder.amount) +
+      (lastOrder.split === 'half' ? ' (50% advance)' : ' (full payment)');
+
+    showDoneScreen();
+  });
+
+  $('#backToCart').addEventListener('click', showCartScreen);
 
   /* ---- Send the order across so the payment can be matched to it ---- */
   $('#sendOrderBtn').addEventListener('click', function () {
     if (!lastOrder) return;
 
-    const lines = ['Hi ' + CONFIG.businessName + ', I have placed an order.'];
+    const lines = ['Hi ' + CONFIG.businessName + ', I have paid for my order.'];
     lines.push('Order: ' + lastOrder.id);
     lines.push('Name: ' + lastOrder.name);
     lines.push('Phone: ' + lastOrder.phone);
@@ -872,6 +925,8 @@
     lines.push('Paid now: ' + formatINR(lastOrder.amount) +
                (lastOrder.split === 'half' ? ' (50% advance)' : ' (full payment)'));
     lines.push('Paid to UPI: ' + CONFIG.upi.id);
+    lines.push('');
+    lines.push('Sending the payment screenshot next.');
 
     openWhatsApp(lines.join('\n'), numberForCart(lastOrder.items));
     markOrderShared(lastOrder.id);
@@ -923,7 +978,7 @@
   }
 
   function recordOrder(order) {
-    orders.unshift(Object.assign({ at: Date.now(), shared: false }, order));
+    orders.unshift(Object.assign({ at: Date.now(), shared: false, status: 'pending' }, order));
     orders = orders.slice(0, MAX_ORDERS);
     saveOrders();
     renderOrders();
@@ -947,7 +1002,7 @@
   }
 
   function orderMessage(order) {
-    const lines = ['Hi ' + CONFIG.businessName + ', about my order.'];
+    const lines = ['Hi ' + CONFIG.businessName + ', I have paid for my order.'];
     lines.push('Order: ' + order.id);
     lines.push('Name: ' + order.name);
     lines.push('Phone: ' + order.phone);
@@ -962,6 +1017,8 @@
     if (order.split === 'half') {
       lines.push('Balance on delivery: ' + formatINR(order.subtotal - order.amount));
     }
+    lines.push('');
+    lines.push('Sending the payment screenshot next.');
     return lines.join('\n');
   }
 
@@ -988,12 +1045,20 @@
       head.appendChild(idEl);
       head.appendChild(dateEl);
 
+      // Set by us once the payment has actually been checked. Without a
+      // server nothing can flip this from outside this browser, so it stays
+      // "pending" until that exists — see the note in the panel.
+      const state = order.status || 'pending';
+      const LABELS = {
+        pending:  ['pending',  'Pending verification'],
+        verified: ['verified', 'Payment verified'],
+        rejected: ['rejected', 'Payment not received']
+      };
+      const label = LABELS[state] || LABELS.pending;
+
       const status = document.createElement('span');
-      status.className = 'order__status ' +
-        (order.shared ? 'order__status--sent' : 'order__status--pending');
-      status.textContent = order.shared
-        ? 'Details sent — we will confirm'
-        : 'Send us the details';
+      status.className = 'order__status order__status--' + label[0];
+      status.textContent = label[1];
 
       const itemsEl = document.createElement('div');
       itemsEl.className = 'order__items';
@@ -1035,7 +1100,8 @@
       const resend = document.createElement('button');
       resend.type = 'button';
       resend.className = 'order__resend';
-      resend.innerHTML = '<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Send on WhatsApp';
+      resend.innerHTML = '<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> ' +
+        (order.shared ? 'Send again on WhatsApp' : 'Send screenshot on WhatsApp');
       resend.addEventListener('click', function () {
         openWhatsApp(orderMessage(order), numberForCart(order.items));
         markOrderShared(order.id);
