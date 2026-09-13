@@ -202,7 +202,7 @@
     return book.filter(function (o) {
       if (filter !== 'all' && o.status !== filter) return false;
       if (!q) return true;
-      return [o.name, o.phone, o.ref, o.items, o.note]
+      return [o.name, o.business, o.phone, o.ref, o.items, o.note]
         .some(v => String(v || '').toLowerCase().includes(q));
     });
   }
@@ -249,6 +249,7 @@
       const meta = document.createElement('div');
       meta.className = 'adm-order__meta';
       const bits = [
+        ['Business', order.business || '—'],
         ['Phone', order.phone],
         ['Ordered', order.items || '—'],
         ['Total', money(order.total)],
@@ -373,12 +374,15 @@
       .join(', ');
 
     return {
-      ref:   field(text, 'Order'),
-      name:  field(text, 'Name'),
-      phone: field(text, 'Phone'),
-      total: firstNumber(field(text, 'Total')),
-      paid:  firstNumber(field(text, 'Paid now|Paid')),
-      items: items
+      ref:      field(text, 'Order'),
+      name:     field(text, 'Name'),
+      phone:    field(text, 'Phone'),
+      business: field(text, 'Business'),
+      email:    field(text, 'Email'),
+      brief:    field(text, 'What they need'),
+      total:    firstNumber(field(text, 'Total')),
+      paid:     firstNumber(field(text, 'Paid now|Paid')),
+      items:    items
     };
   }
 
@@ -391,12 +395,18 @@
     const o = parseMessage(text);
     const filled = [];
 
+    if (o.business) { $('#fBusiness').value = o.business; filled.push('business'); }
     if (o.name)  { $('#fName').value  = o.name;  filled.push('name'); }
     if (o.phone) { $('#fPhone').value = o.phone; filled.push('phone'); }
     if (o.items) { $('#fItems').value = o.items; filled.push('items'); }
     if (o.total) { $('#fTotal').value = o.total; filled.push('total'); }
     if (o.paid)  { $('#fPaid').value  = o.paid;  filled.push('paid'); }
     if (o.ref)   { $('#fRef').value   = o.ref;   filled.push('reference'); }
+
+    // The brief is the most useful thing in the message and there is nowhere
+    // else for it to go, so it lands in the note alongside the email.
+    const extra = [o.brief, o.email && ('Email: ' + o.email)].filter(Boolean).join(' · ');
+    if (extra) { $('#fNote').value = extra; filled.push('note'); }
 
     msg.hidden = false;
 
@@ -447,6 +457,7 @@
       at: Date.now(),
       ref: ref || makeRef(),
       name: name,
+      business: $('#fBusiness').value.trim(),
       phone: phone,
       items: $('#fItems').value.trim(),
       total: total,
