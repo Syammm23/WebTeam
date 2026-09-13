@@ -1366,6 +1366,13 @@ textarea.input { resize: vertical; min-height: 44px; }
 }
 .nav__cart:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--green); }
 
+/* The desktop nav lists My Orders in full, so the icon is phone-only.
+   This has to come after .nav__cart's own display or it loses on source
+   order — a media query adds no specificity. */
+@media (min-width: 900px) {
+  .nav__cart--orders { display: none; }
+}
+
 .nav__cart-count,
 .cart-fab__count {
   position: absolute;

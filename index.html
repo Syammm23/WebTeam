@@ -125,6 +125,13 @@
         </nav>
 
         <div class="nav__actions">
+          <!-- Phone only. On desktop the text version sits in nav__links; on a
+               phone that is inside the hamburger, and a customer coming back
+               to check an order should not have to go hunting for it. -->
+          <button class="nav__cart nav__cart--orders" data-show-orders aria-label="My orders">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i>
+            <span class="nav__cart-count" data-orders-count hidden>0</span>
+          </button>
           <button class="nav__cart" data-open-cart aria-label="Open cart">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
             <span class="nav__cart-count" data-cart-count hidden>0</span>
@@ -985,23 +992,41 @@
           <p class="orders__empty" id="ordersEmpty">
             No orders yet. Once you place one it will show up here.
           </p>
+
+          <!-- The same warning as the pending screen, repeated on purpose and
+               at the top rather than the foot. This list is exactly where a
+               customer would otherwise assume the site is keeping their
+               orders safe for them, and it is not. -->
+          <div class="shot" id="ordersShot" hidden>
+            <i class="fa-solid fa-camera shot__ico" aria-hidden="true"></i>
+            <p class="shot__en">
+              <strong>Keep a screenshot of every order.</strong>
+              These are stored only in this browser — clear your browser data,
+              or open the site on another phone, and they will not be here.
+              Your screenshot is your proof of payment.
+            </p>
+            <p class="shot__hi" lang="hi">
+              <strong>हर ऑर्डर का स्क्रीनशॉट संभालकर रखें।</strong>
+              ये सिर्फ़ इसी ब्राउज़र में सेव रहते हैं — ब्राउज़र का डेटा क्लियर करने
+              पर या दूसरे फ़ोन पर साइट खोलने पर ये नहीं मिलेंगे। स्क्रीनशॉट ही
+              आपके पेमेंट का सबूत है।
+            </p>
+          </div>
+
           <ul class="orders__list" id="ordersList"></ul>
 
           <p class="orders__note" id="ordersNote" hidden>
             Every payment is checked by hand, so a new order stays
             <strong>pending</strong> until we have confirmed it — usually within
-            3 hours. Send the payment screenshot on WhatsApp to speed that up.
-            <br /><br />
-            These orders are saved on this device only. Open the site on another
-            phone, or clear your browser data, and they will not be here — so
-            keep your screenshots. You can ask us on WhatsApp any time and we
-            will pull up your order.
+            3 hours. Send the payment screenshot on WhatsApp to speed that up,
+            and ask us there any time if something looks wrong.
           </p>
 
           <p class="orders__note orders__note--hi" id="ordersNoteHi" lang="hi" hidden>
-            ये ऑर्डर सिर्फ़ इसी डिवाइस पर सेव हैं। दूसरे फ़ोन पर साइट खोलने या
-            ब्राउज़र का डेटा क्लियर करने पर ये नहीं दिखेंगे — इसलिए स्क्रीनशॉट
-            संभालकर रखें। कभी भी WhatsApp पर पूछ लीजिए, हम आपका ऑर्डर निकाल देंगे।
+            हर पेमेंट हम खुद चेक करते हैं, इसलिए नया ऑर्डर तब तक
+            <strong>pending</strong> रहता है जब तक हम उसे कन्फर्म न कर दें —
+            आमतौर पर 3 घंटे के अंदर। WhatsApp पर पेमेंट का स्क्रीनशॉट भेज दीजिए
+            तो जल्दी हो जाएगा, और कुछ गड़बड़ लगे तो वहीं पूछ लीजिए।
           </p>
         </div>
 
