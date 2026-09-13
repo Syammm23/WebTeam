@@ -14,12 +14,12 @@
     businessName: "WE3",
     email: "hello@we3agency.com",          // PLACEHOLDER
 
-    // Two lines, split by what the enquiry is about. Country code + number,
-    // digits only, no "+" and no spaces.
+    // Every enquiry from the site lands on this one line; the team passes
+    // work along from there. The reel and photography numbers are still
+    // listed under Get In Touch for anyone who wants to call that person
+    // directly. Country code + number, digits only, no "+" and no spaces.
     whatsapp: {
-      web:   "917990853947",               // websites, domain/hosting, maintenance
-      reel:  "917990487721",               // reel shooting and editing
-      photo: "919601356699"                // photography
+      main: "917990853947"
     },
 
     upi: {
@@ -67,34 +67,23 @@
 
   /**
    * Single entry point for every WhatsApp hand-off on the site.
-   * `number` decides which of the two lines the message goes to; it falls
-   * back to the website line when nothing is passed.
+   * `number` is optional and only exists so a caller can override the
+   * destination; everything on the site uses the one main line.
    */
   function openWhatsApp(message, number) {
-    const url = 'https://wa.me/' + (number || CONFIG.whatsapp.web) +
+    const url = 'https://wa.me/' + (number || CONFIG.whatsapp.main) +
                 '?text=' + encodeURIComponent(message);
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  /** Each service goes to the person who does it; anything else to web. */
-  const SERVICE_LINES = {
-    'Reel Making': 'reel',
-    'Photo Shoot': 'photo'
-  };
-  function numberForService(service) {
-    return CONFIG.whatsapp[SERVICE_LINES[service] || 'web'];
+  // Kept as named helpers rather than inlining CONFIG.whatsapp.main at each
+  // call site: if enquiries are ever split by type again, only these change.
+  function numberForService() {
+    return CONFIG.whatsapp.main;
   }
 
-  /**
-   * A cart with a website in it goes to the website line — that is the bigger
-   * job and the person there can loop the others in. A media-only cart goes
-   * to whoever does the work, with reels taking precedence over photos when
-   * both are in the basket.
-   */
-  function numberForCart(items) {
-    if (items.some(function (i) { return i.kind === 'web'; })) return CONFIG.whatsapp.web;
-    if (items.some(function (i) { return i.id === 'reel'; }))  return CONFIG.whatsapp.reel;
-    return CONFIG.whatsapp.photo;
+  function numberForCart() {
+    return CONFIG.whatsapp.main;
   }
 
   /* ------------------------------------------------------------------------
