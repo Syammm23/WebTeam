@@ -956,19 +956,49 @@ textarea.input { resize: vertical; min-height: 44px; }
 .work__link:hover { gap: 9px; color: var(--green-700); }
 
 /* "Coming soon" cards are dark, as in the reference */
-.work--soon {
+/* Open slots: an invitation rather than an empty "coming soon" */
+.work--invite {
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 14px 10px;
+  gap: 6px;
+  padding: 18px 14px;
   background: var(--dark-2);
   border-color: var(--dark-2);
   text-align: center;
 }
-.work--soon:hover { border-color: rgba(34, 197, 94, 0.5); }
-.work__ico { font-size: 18px; color: rgba(255, 255, 255, 0.45); margin-bottom: 2px; }
-.work--soon h3 { font-size: var(--fs-sm); color: #fff; font-weight: 600; }
-.work--soon p { font-size: var(--fs-xs); color: rgba(255, 255, 255, 0.55); }
+.work--invite:hover { border-color: rgba(34, 197, 94, 0.55); }
+.work__ico {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border-radius: var(--r-pill);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  color: var(--green);
+}
+.work--invite h3 { font-size: var(--fs-sm); color: #fff; font-weight: 600; }
+.work--invite p {
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+.work__claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.12);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--green);
+  transition: background var(--tr), color var(--tr), gap var(--tr);
+}
+.work__claim:hover { background: var(--green); color: #fff; gap: 10px; }
 
 .tag {
   display: inline-block;
@@ -1991,3 +2021,7 @@ textarea.input { resize: vertical; min-height: 44px; }
   border-radius: var(--r-sm);
   background: var(--bg-soft);
 }
+
+/* Four contact routes now, so they pair up before spreading into a row */
+@media (min-width: 700px)  { .reach { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .reach { grid-template-columns: repeat(4, 1fr); } }
