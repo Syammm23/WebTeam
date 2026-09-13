@@ -721,10 +721,12 @@
   function showCartScreen() {
     cartScreen.hidden = false;
     cartDone.hidden = true;
+    if (ordersScreen) ordersScreen.hidden = true;
   }
   function showDoneScreen() {
     cartScreen.hidden = true;
     cartDone.hidden = false;
+    if (ordersScreen) ordersScreen.hidden = true;
   }
 
   $$('[data-open-cart]').forEach(function (el) {
@@ -831,6 +833,14 @@
       items: cart.slice()
     };
 
+    recordOrder(lastOrder);
+
+    // The order is placed, so the cart starts fresh — the items live on in
+    // the order history rather than lingering as a half-finished basket.
+    cart = [];
+    saveCart();
+    renderCart();
+
     $('#doneOrderId').textContent = orderId;
     $('#doneAmount').textContent = formatINR(amount) +
       (split === 'half' ? ' (50% advance)' : ' (full payment)');
@@ -876,6 +886,7 @@
     lines.push('Paid to UPI: ' + CONFIG.upi.id);
 
     openWhatsApp(lines.join('\n'), numberForCart(lastOrder.items));
+    markOrderShared(lastOrder.id);
   });
 
   /* Re-price when the half/full choice changes */
@@ -890,6 +901,185 @@
 
   loadCart();
   renderCart();
+
+
+  /* ------------------------------------------------------------------------
+     ORDER HISTORY
+
+     Saved in this browser only. There is no account system and no server, so
+     this cannot follow someone to another phone — the panel says so plainly
+     rather than implying a real order history exists behind it.
+     ------------------------------------------------------------------------ */
+  const ORDERS_KEY = 'brandname.orders.v1';
+  const MAX_ORDERS = 25;
+
+  let orders = [];
+
+  const ordersScreen = $('#ordersScreen');
+  const ordersListEl = $('#ordersList');
+  const ordersEmpty  = $('#ordersEmpty');
+  const ordersNote   = $('#ordersNote');
+  const ordersCount  = $('#ordersCount');
+
+  function loadOrders() {
+    try {
+      const raw = localStorage.getItem(ORDERS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      orders = Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      orders = [];
+    }
+  }
+  function saveOrders() {
+    try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); } catch (e) { /* ignore */ }
+  }
+
+  function recordOrder(order) {
+    orders.unshift(Object.assign({ at: Date.now(), shared: false }, order));
+    orders = orders.slice(0, MAX_ORDERS);
+    saveOrders();
+    renderOrders();
+  }
+
+  function markOrderShared(id) {
+    const found = orders.find(function (o) { return o.id === id; });
+    if (!found) return;
+    found.shared = true;
+    saveOrders();
+    renderOrders();
+  }
+
+  function formatDate(ms) {
+    try {
+      return new Date(ms).toLocaleDateString('en-IN',
+        { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function orderMessage(order) {
+    const lines = ['Hi ' + CONFIG.businessName + ', about my order.'];
+    lines.push('Order: ' + order.id);
+    lines.push('Name: ' + order.name);
+    lines.push('Phone: ' + order.phone);
+    lines.push('');
+    order.items.forEach(function (i) {
+      lines.push('• ' + i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty));
+    });
+    lines.push('');
+    lines.push('Total: ' + formatINR(order.subtotal));
+    lines.push('Paid: ' + formatINR(order.amount) +
+               (order.split === 'half' ? ' (50% advance)' : ' (full payment)'));
+    if (order.split === 'half') {
+      lines.push('Balance on delivery: ' + formatINR(order.subtotal - order.amount));
+    }
+    return lines.join('\n');
+  }
+
+  function renderOrders() {
+    ordersCount.textContent = String(orders.length);
+    ordersCount.hidden = orders.length === 0;
+
+    ordersEmpty.hidden = orders.length > 0;
+    ordersNote.hidden  = orders.length === 0;
+    ordersListEl.innerHTML = '';
+
+    orders.forEach(function (order) {
+      const li = document.createElement('li');
+      li.className = 'order';
+
+      const head = document.createElement('div');
+      head.className = 'order__head';
+      const idEl = document.createElement('span');
+      idEl.className = 'order__id';
+      idEl.textContent = order.id;
+      const dateEl = document.createElement('span');
+      dateEl.className = 'order__date';
+      dateEl.textContent = formatDate(order.at);
+      head.appendChild(idEl);
+      head.appendChild(dateEl);
+
+      const status = document.createElement('span');
+      status.className = 'order__status ' +
+        (order.shared ? 'order__status--sent' : 'order__status--pending');
+      status.textContent = order.shared
+        ? 'Details sent — we will confirm'
+        : 'Send us the details';
+
+      const itemsEl = document.createElement('div');
+      itemsEl.className = 'order__items';
+      order.items.forEach(function (i) {
+        const row = document.createElement('span');
+        row.textContent = i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty);
+        itemsEl.appendChild(row);
+      });
+
+      const totals = document.createElement('div');
+      totals.className = 'order__totals';
+
+      const totalRow = document.createElement('div');
+      totalRow.innerHTML = '<span>Total</span>';
+      const tv = document.createElement('strong');
+      tv.textContent = formatINR(order.subtotal);
+      totalRow.appendChild(tv);
+
+      const paidRow = document.createElement('div');
+      paidRow.className = 'order__paid';
+      paidRow.innerHTML = '<span>' +
+        (order.split === 'half' ? 'Paid (50% advance)' : 'Paid in full') + '</span>';
+      const pv = document.createElement('strong');
+      pv.textContent = formatINR(order.amount);
+      paidRow.appendChild(pv);
+
+      totals.appendChild(totalRow);
+      totals.appendChild(paidRow);
+
+      if (order.split === 'half') {
+        const balRow = document.createElement('div');
+        balRow.innerHTML = '<span>Balance on delivery</span>';
+        const bv = document.createElement('strong');
+        bv.textContent = formatINR(order.subtotal - order.amount);
+        balRow.appendChild(bv);
+        totals.appendChild(balRow);
+      }
+
+      const resend = document.createElement('button');
+      resend.type = 'button';
+      resend.className = 'order__resend';
+      resend.innerHTML = '<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Send on WhatsApp';
+      resend.addEventListener('click', function () {
+        openWhatsApp(orderMessage(order), numberForCart(order.items));
+        markOrderShared(order.id);
+      });
+
+      li.appendChild(head);
+      li.appendChild(status);
+      li.appendChild(itemsEl);
+      li.appendChild(totals);
+      li.appendChild(resend);
+      ordersListEl.appendChild(li);
+    });
+  }
+
+  function showOrdersScreen() {
+    cartScreen.hidden = true;
+    cartDone.hidden = true;
+    ordersScreen.hidden = false;
+  }
+
+  $$('[data-show-orders]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      if (cartEl.hidden) openCart();
+      showOrdersScreen();
+    });
+  });
+  $$('[data-show-cart]').forEach(function (el) {
+    el.addEventListener('click', showCartScreen);
+  });
+
+  loadOrders();
+  renderOrders();
 
   /* ========================================================================
      5. WORK FILTER
