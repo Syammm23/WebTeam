@@ -32,6 +32,9 @@
   --f-head: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --f-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --f-hand: 'Caveat', ui-serif, cursive;
+  /* Inter and Poppins carry no Devanagari, so Hindi would drop to
+     whatever the device has. Naming the face keeps it consistent. */
+  --f-hi: 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', sans-serif;
 
   /* Mobile-first sizes; tightened for the dense desktop layout further down */
   --fs-xs:    12px;
@@ -1689,6 +1692,46 @@ textarea.input { resize: vertical; min-height: 44px; }
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+
+/* The screenshot prompt on the pending screen. Amber rather than green: it
+   is an instruction the customer has to act on, not a confirmation. */
+.shot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--r);
+  border: 1px solid #FCD34D;
+  background: #FFFBEB;
+}
+.shot__ico {
+  grid-row: 1 / span 2;
+  margin-top: 2px;
+  font-size: 16px;
+  color: #B45309;
+}
+.shot p {
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: #78350F;
+}
+.shot strong { color: #6B2E06; }
+.shot__hi {
+  font-family: var(--f-hi);
+  /* Devanagari sits taller than Latin at the same size, so it is nudged
+     down a step to keep the two paragraphs optically level. */
+  font-size: calc(var(--fs-sm) - 0.5px);
+  padding-top: 8px;
+  border-top: 1px solid #FDE68A;
+  margin-top: 4px;
+}
+
+.orders__note--hi {
+  font-family: var(--f-hi);
+  margin-top: 8px;
 }
 
 .cart__done-note {

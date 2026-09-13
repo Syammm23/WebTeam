@@ -978,6 +978,7 @@
   const ordersListEl = $('#ordersList');
   const ordersEmpty  = $('#ordersEmpty');
   const ordersNote   = $('#ordersNote');
+  const ordersNoteHi = $('#ordersNoteHi');
 
   function loadOrders() {
     try {
@@ -1046,6 +1047,7 @@
 
     ordersEmpty.hidden = orders.length > 0;
     ordersNote.hidden  = orders.length === 0;
+    ordersNoteHi.hidden = orders.length === 0;
     ordersListEl.innerHTML = '';
 
     orders.forEach(function (order) {
