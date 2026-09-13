@@ -1,0 +1,59 @@
+# Keeps the live site in sync with this branch.
+#
+# Pages serves this repository from the `gh-pages` branch, so this workflow
+# copies the three site files onto that branch whenever they change here.
+# There is no build step — the files are published exactly as they are.
+name: Publish site
+
+on:
+  push:
+    branches: [claude/agency-marketing-website-zg3x64]
+    paths:
+      - index.html
+      - style.css
+      - script.js
+      - .github/workflows/publish-site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never let two publishes race each other onto the same branch.
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copy the site onto gh-pages
+        run: |
+          set -euo pipefail
+
+          # Stash the files before switching branches.
+          staging="$(mktemp -d)"
+          cp index.html style.css script.js "$staging/"
+          touch "$staging/.nojekyll"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin gh-pages
+          git checkout gh-pages
+
+          cp "$staging/index.html" "$staging/style.css" \
+             "$staging/script.js" "$staging/.nojekyll" .
+          git add index.html style.css script.js .nojekyll
+
+          if git diff --staged --quiet; then
+            echo "gh-pages already matches ${GITHUB_SHA}; nothing to publish."
+          else
+            git commit -m "Publish ${GITHUB_SHA::7}"
+            git push origin gh-pages
+          fi
