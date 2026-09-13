@@ -438,7 +438,8 @@
         id: sel.maintenance === '1 Year' ? 'maint12' : 'maint6',
         name: 'Maintenance — ' + sel.maintenance,
         price: sel.maintenancePrice,
-        kind: 'web'
+        kind: 'web',
+        max: 1
       });
     }
 
@@ -521,9 +522,13 @@
 
   /* ---- mutations ---- */
   function addToCart(item) {
+    // A maintenance plan is bought once, so it carries max: 1 and clicking
+    // its button again cannot push the quantity past one.
+    const max = item.max || MAX_QTY;
     const existing = cart.find(function (i) { return i.id === item.id; });
     if (existing) {
-      existing.qty = Math.min(MAX_QTY, existing.qty + (item.qty || 1));
+      existing.max = max;
+      existing.qty = Math.min(max, existing.qty + (item.qty || 1));
       if (item.note) existing.note = item.note;
       if (item.name) existing.name = item.name;
     } else {
@@ -532,7 +537,8 @@
         name: item.name,
         price: item.price,
         kind: item.kind || 'web',
-        qty: Math.min(MAX_QTY, item.qty || 1),
+        qty: Math.min(max, item.qty || 1),
+        max: max,
         note: item.note || ''
       });
     }
@@ -543,7 +549,7 @@
   function setQty(id, qty) {
     const item = cart.find(function (i) { return i.id === id; });
     if (!item) return;
-    item.qty = Math.max(1, Math.min(MAX_QTY, qty));
+    item.qty = Math.max(1, Math.min(item.max || MAX_QTY, qty));
     saveCart();
     renderCart();
   }
@@ -597,6 +603,8 @@
       const controls = document.createElement('div');
       controls.className = 'cart__item-controls';
 
+      const fixedQty = (item.max || MAX_QTY) === 1;
+
       const qty = document.createElement('div');
       qty.className = 'cart__qty';
 
@@ -614,7 +622,7 @@
       plus.type = 'button';
       plus.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
       plus.setAttribute('aria-label', 'Increase quantity of ' + item.name);
-      plus.disabled = item.qty >= MAX_QTY;
+      plus.disabled = item.qty >= (item.max || MAX_QTY);
       plus.addEventListener('click', function () { setQty(item.id, item.qty + 1); });
 
       qty.appendChild(minus);
@@ -628,7 +636,14 @@
       remove.setAttribute('aria-label', 'Remove ' + item.name + ' from cart');
       remove.addEventListener('click', function () { removeFromCart(item.id); });
 
-      controls.appendChild(qty);
+      if (fixedQty) {
+        const one = document.createElement('span');
+        one.className = 'cart__qty-fixed';
+        one.textContent = 'One-time';
+        controls.appendChild(one);
+      } else {
+        controls.appendChild(qty);
+      }
       controls.appendChild(remove);
 
       li.appendChild(left);
@@ -728,7 +743,8 @@
         id: btn.dataset.add,
         name: btn.dataset.name,
         price: parseInt(btn.dataset.price, 10),
-        kind: btn.dataset.kind
+        kind: btn.dataset.kind,
+        max: btn.dataset.max ? parseInt(btn.dataset.max, 10) : undefined
       });
       openCart();
     });
