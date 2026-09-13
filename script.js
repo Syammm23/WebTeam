@@ -1304,6 +1304,50 @@
   });
 
   /* ========================================================================
+     9b. REVEAL ON SCROLL
+     Cards ease in as they arrive. If the visitor prefers less movement, or
+     the browser has no observer, everything is simply shown.
+     ======================================================================== */
+  const revealables = $$('[data-reveal]');
+
+  if (revealables.length) {
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealables.forEach(function (el) { el.classList.add('is-shown'); });
+    } else {
+      // Siblings follow each other in, which reads better than a row of
+      // cards appearing all at once.
+      const groups = new Map();
+      revealables.forEach(function (el) {
+        const parent = el.parentElement;
+        if (!groups.has(parent)) groups.set(parent, 0);
+        const i = groups.get(parent);
+        el.style.setProperty('--reveal-delay', (i * 70) + 'ms');
+        groups.set(parent, i + 1);
+      });
+
+      const io = new IntersectionObserver(function (entries, obs) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-in');
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+      revealables.forEach(function (el) { io.observe(el); });
+
+      // Failsafe. The reveal is decoration; content must never be stuck
+      // invisible because an observer callback was missed on a slow device
+      // or during a fast scroll. After a few seconds anything still hidden
+      // is simply shown.
+      setTimeout(function () {
+        revealables.forEach(function (el) {
+          if (!el.classList.contains('is-in')) el.classList.add('is-shown');
+        });
+      }, 4000);
+    }
+  }
+
+  /* ========================================================================
      10. ODDS AND ENDS
      ======================================================================== */
   $('#year').textContent = new Date().getFullYear();
