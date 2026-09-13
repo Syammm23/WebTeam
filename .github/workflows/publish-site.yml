@@ -12,7 +12,7 @@ on:
       - index.html
       - style.css
       - script.js
-      - admin.html
+      - orderbook-k7x2m9f4.html
       - admin.css
       - admin.js
       - assets/**
@@ -43,7 +43,7 @@ jobs:
           # Stash the site before switching branches.
           staging="$(mktemp -d)"
           cp index.html style.css script.js "$staging/"
-          cp admin.html admin.css admin.js "$staging/"
+          cp orderbook-k7x2m9f4.html admin.css admin.js "$staging/"
           touch "$staging/.nojekyll"
           if [ -d assets ]; then
             cp -r assets "$staging/assets"
@@ -57,7 +57,11 @@ jobs:
 
           cp "$staging/index.html" "$staging/style.css" \
              "$staging/script.js" "$staging/.nojekyll" \
-             "$staging/admin.html" "$staging/admin.css" "$staging/admin.js" .
+             "$staging/orderbook-k7x2m9f4.html" "$staging/admin.css" "$staging/admin.js" .
+
+          # The order book used to publish as admin.html. Leaving that behind
+          # would keep the guessable URL working and defeat the rename.
+          git rm -f --ignore-unmatch admin.html
 
           # Replace assets wholesale so deleted files do not linger on the
           # live branch.
@@ -67,7 +71,7 @@ jobs:
           fi
 
           git add -A index.html style.css script.js .nojekyll assets \
-                     admin.html admin.css admin.js
+                     orderbook-k7x2m9f4.html admin.css admin.js
 
           if git diff --staged --quiet; then
             echo "gh-pages already matches ${GITHUB_SHA}; nothing to publish."

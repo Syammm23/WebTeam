@@ -15,7 +15,38 @@
   <link rel="stylesheet" href="admin.css" />
 </head>
 
-<body class="adm">
+<body class="adm is-locked">
+
+  <!-- The gate. Everything else on the page stays hidden behind CSS until the
+       password checks out, so nothing flashes on screen first.
+
+       Worth being clear about what this is: the check runs in the browser, in
+       code anyone can read, so it stops a curious visitor and not a determined
+       one. The password itself is never here — only a PBKDF2 hash of it. -->
+  <div class="lock" id="lock">
+    <form class="lock__card" id="lockForm">
+      <span class="lock__badge">
+        <img class="lock__logo" src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
+      </span>
+      <h1 class="lock__title">Order Book</h1>
+      <p class="lock__desc">Enter the team password to continue.</p>
+
+      <div class="lock__field">
+        <input class="input" type="password" id="lockPw" autocomplete="current-password"
+               placeholder="Password" aria-label="Password" autofocus />
+        <button class="lock__eye" type="button" id="lockEye" aria-label="Show password">
+          <i class="fa-regular fa-eye" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <p class="lock__err" id="lockErr" hidden></p>
+
+      <button class="btn btn--green btn--block" type="submit" id="lockBtn">
+        <i class="fa-solid fa-unlock" aria-hidden="true"></i> Unlock
+      </button>
+    </form>
+  </div>
+
   <header class="adm__top">
     <a class="adm__brand" href="index.html">
       <img src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
@@ -32,6 +63,9 @@
       <a class="btn btn--green btn--sm" href="index.html">
         <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Website
       </a>
+      <button class="btn btn--outline-dark btn--sm" id="lockBackBtn">
+        <i class="fa-solid fa-lock" aria-hidden="true"></i> Lock
+      </button>
     </div>
   </header>
 

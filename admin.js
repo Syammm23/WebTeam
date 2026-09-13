@@ -14,6 +14,132 @@
 
   const KEY = 'we3.orderbook.v1';
 
+  /* ---- the gate ----------------------------------------------------------
+
+     Be honest about what this is and is not.
+
+     IS: a lock on a page that is published on the open web. Someone who finds
+     the URL sees a password prompt instead of every customer's name, phone
+     number and payment.
+
+     IS NOT: security against anyone technical. The check runs in this file,
+     which is public, and the order book sits in localStorage where devtools
+     can read it whatever this code says. Do not put anything here that would
+     genuinely hurt if it leaked.
+
+     The password is not in this file. What is stored is a PBKDF2-HMAC-SHA256
+     hash of it with a random salt, so reading this source does not hand
+     anybody the password — deriving it back would mean brute-forcing 310,000
+     rounds per guess against a 15-character password.                       */
+  const GATE = {
+    salt: '9a1adca5437edf692ba25f7e484736d8',
+    hash: '71529b2b1c1c13196b1ee01cd27cc15ef5b1af842828edc5c898493cd974330b',
+    iterations: 310000
+  };
+  const UNLOCKED_KEY = 'we3.unlocked.v1';
+
+  const hex = buf => Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const unhex = str => new Uint8Array(
+    str.match(/../g).map(h => parseInt(h, 16)));
+
+  async function derive(password) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({
+      name: 'PBKDF2',
+      salt: unhex(GATE.salt),
+      iterations: GATE.iterations,
+      hash: 'SHA-256'
+    }, key, 256);
+    return hex(bits);
+  }
+
+  // Constant time, so a wrong guess cannot be narrowed down by how long the
+  // comparison took. Cheap to do, and there is no reason not to.
+  function sameDigest(a, b) {
+    if (a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return diff === 0;
+  }
+
+  function unlock() {
+    document.body.classList.remove('is-locked');
+    $('#lock').hidden = true;
+    try { sessionStorage.setItem(UNLOCKED_KEY, '1'); } catch (e) { /* private mode */ }
+  }
+
+  function relock() {
+    try { sessionStorage.removeItem(UNLOCKED_KEY); } catch (e) { /* private mode */ }
+    location.reload();
+  }
+
+  function initGate() {
+    const form = $('#lockForm');
+    const input = $('#lockPw');
+    const err = $('#lockErr');
+    const btn = $('#lockBtn');
+
+    // Unlocked earlier in this tab. Closing the tab asks again.
+    let already = false;
+    try { already = sessionStorage.getItem(UNLOCKED_KEY) === '1'; } catch (e) { /* private mode */ }
+    if (already) { unlock(); return; }
+
+    // crypto.subtle only exists in a secure context. Over https, or on
+    // localhost, it is there; opening the file straight off the disk with
+    // file:// it is not, and the page would just silently never unlock.
+    if (!window.crypto || !crypto.subtle) {
+      err.hidden = false;
+      err.textContent = 'This page has to be opened over https (your live site ' +
+                        'address), not from a file on the computer.';
+      input.disabled = true;
+      btn.disabled = true;
+      return;
+    }
+
+    $('#lockEye').addEventListener('click', function () {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      this.innerHTML = '<i class="fa-regular fa-eye' + (show ? '-slash' : '') +
+                       '" aria-hidden="true"></i>';
+      input.focus();
+    });
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      err.hidden = true;
+
+      if (!input.value) {
+        err.hidden = false;
+        err.textContent = 'Enter the password.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Checking…';
+
+      let digest;
+      try {
+        digest = await derive(input.value);
+      } catch (e2) {
+        digest = '';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-unlock" aria-hidden="true"></i> Unlock';
+
+      if (sameDigest(digest, GATE.hash)) { unlock(); return; }
+
+      err.hidden = false;
+      err.textContent = 'Wrong password.';
+      input.select();
+    });
+  }
+
   const $  = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 
@@ -397,6 +523,9 @@
     e.target.value = '';
   });
 
+  $('#lockBackBtn').addEventListener('click', relock);
+
+  initGate();
   load();
   render();
 }());
