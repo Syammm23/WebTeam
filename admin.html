@@ -72,6 +72,20 @@
 
     <section class="adm__panel" aria-labelledby="addTitle">
       <h2 class="adm__h" id="addTitle">Log an order</h2>
+      <!-- The customer's "I have paid" message is generated from a fixed
+           template, so it can be read back apart. This is as close to a
+           connection as the site gets without a server: they paste, the form
+           fills, nobody retypes an amount wrong. -->
+      <div class="paste">
+        <label for="pasteBox">
+          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+          Paste their WhatsApp message here
+        </label>
+        <textarea class="input paste__box" id="pasteBox" rows="3"
+          placeholder="Copy the customer's &quot;I have paid&quot; message from WhatsApp and paste it here. The form below fills itself in."></textarea>
+        <p class="paste__msg" id="pasteMsg" hidden></p>
+      </div>
+
       <form class="adm__form" id="orderForm" novalidate>
         <div class="cf-row">
           <label for="fName">Customer name <span class="req">*</span></label>

@@ -928,23 +928,7 @@
   $('#sendOrderBtn').addEventListener('click', function () {
     if (!lastOrder) return;
 
-    const lines = ['Hi ' + CONFIG.businessName + ', I have paid for my order.'];
-    lines.push('Order: ' + lastOrder.id);
-    lines.push('Name: ' + lastOrder.name);
-    lines.push('Phone: ' + lastOrder.phone);
-    lines.push('');
-    lastOrder.items.forEach(function (i) {
-      lines.push('• ' + i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty));
-    });
-    lines.push('');
-    lines.push('Total: ' + formatINR(lastOrder.subtotal));
-    lines.push('Paid now: ' + formatINR(lastOrder.amount) +
-               (lastOrder.split === 'half' ? ' (50% advance)' : ' (full payment)'));
-    lines.push('Paid to UPI: ' + CONFIG.upi.id);
-    lines.push('');
-    lines.push('Sending the payment screenshot next.');
-
-    openWhatsApp(lines.join('\n'), numberForCart(lastOrder.items));
+    openWhatsApp(orderMessage(lastOrder), numberForCart(lastOrder.items));
     markOrderShared(lastOrder.id);
   });
 
@@ -1018,7 +1002,14 @@
     }
   }
 
+  /**
+   * The message a customer sends when they say they have paid.
+   *
+   * The admin page reads this back apart to fill its form, so the labels are
+   * a contract between the two files — change one and change the other.
+   */
   function orderMessage(order) {
+    const balance = order.subtotal - order.amount;
     const lines = ['Hi ' + CONFIG.businessName + ', I have paid for my order.'];
     lines.push('Order: ' + order.id);
     lines.push('Name: ' + order.name);
@@ -1029,11 +1020,12 @@
     });
     lines.push('');
     lines.push('Total: ' + formatINR(order.subtotal));
-    lines.push('Paid: ' + formatINR(order.amount) +
+    lines.push('Paid now: ' + formatINR(order.amount) +
                (order.split === 'half' ? ' (50% advance)' : ' (full payment)'));
-    if (order.split === 'half') {
-      lines.push('Balance on delivery: ' + formatINR(order.subtotal - order.amount));
+    if (balance > 0) {
+      lines.push('Balance on delivery: ' + formatINR(balance));
     }
+    lines.push('Paid to UPI: ' + CONFIG.upi.id);
     lines.push('');
     lines.push('Sending the payment screenshot next.');
     return lines.join('\n');

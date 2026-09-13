@@ -12,7 +12,6 @@
 (function () {
   'use strict';
 
-  const WHATSAPP = { web: '917990853947', media: '917990487721' };
   const KEY = 'we3.orderbook.v1';
 
   const $  = (s, r) => (r || document).querySelector(s);
@@ -208,6 +207,94 @@
   }
 
   /* ---- add ---- */
+  /* ---- paste the customer's WhatsApp message to fill the form ----
+
+     orderMessage() in script.js builds that message from a fixed template, so
+     it reads back cleanly. The labels below are a contract with that
+     function — change one and change the other. */
+
+  // A WhatsApp chat export prefixes every line with "[13/09/26, 4:32 pm]
+  // Someone: ". Strip it once so everything after this sees a plain message.
+  function stripChatPrefix(text) {
+    return text.split('\n')
+      .map(l => l.replace(/^\[[^\]]*\]\s*[^:]{0,40}:\s*/, ''))
+      .join('\n');
+  }
+
+  // `labels` is a regex alternation. "Paid now|Paid" still reads messages sent
+  // before the two templates were merged, and cannot catch "Paid to UPI:"
+  // because the colon has to come straight after the label.
+  function field(text, labels) {
+    const m = text.match(new RegExp('^(?:' + labels + '):\\s*(.+)$', 'im'));
+    return m ? m[1].trim() : '';
+  }
+
+  // Takes the FIRST number only: "₹4,500 (50% advance)" is 4500, not 450050.
+  function firstNumber(str) {
+    const m = String(str).match(/[\d,]+/);
+    return m ? Number(m[0].replace(/,/g, '')) : 0;
+  }
+
+  function parseMessage(raw) {
+    const text = stripChatPrefix(raw);
+
+    const items = text.split('\n')
+      .filter(l => /^\s*•/.test(l))
+      // Drop the trailing price; the total is captured separately and the
+      // line is easier to scan without it.
+      .map(l => l.replace(/^\s*•\s*/, '').replace(/\s*—\s*₹[\d,]+\s*$/, '').trim())
+      .filter(Boolean)
+      .join(', ');
+
+    return {
+      ref:   field(text, 'Order'),
+      name:  field(text, 'Name'),
+      phone: field(text, 'Phone'),
+      total: firstNumber(field(text, 'Total')),
+      paid:  firstNumber(field(text, 'Paid now|Paid')),
+      items: items
+    };
+  }
+
+  $('#pasteBox').addEventListener('input', function () {
+    const msg = $('#pasteMsg');
+    const text = this.value.trim();
+
+    if (!text) { msg.hidden = true; return; }
+
+    const o = parseMessage(text);
+    const filled = [];
+
+    if (o.name)  { $('#fName').value  = o.name;  filled.push('name'); }
+    if (o.phone) { $('#fPhone').value = o.phone; filled.push('phone'); }
+    if (o.items) { $('#fItems').value = o.items; filled.push('items'); }
+    if (o.total) { $('#fTotal').value = o.total; filled.push('total'); }
+    if (o.paid)  { $('#fPaid').value  = o.paid;  filled.push('paid'); }
+    if (o.ref)   { $('#fRef').value   = o.ref;   filled.push('reference'); }
+
+    msg.hidden = false;
+
+    if (!filled.length) {
+      msg.className = 'paste__msg is-bad';
+      msg.textContent = 'Could not read that — it does not look like an order ' +
+                        'message. Fill the form in by hand.';
+      return;
+    }
+
+    const dupe = o.ref && book.find(b => b.ref === o.ref);
+    if (dupe) {
+      msg.className = 'paste__msg is-warn';
+      msg.textContent = 'Order ' + o.ref + ' is already in the book, logged ' +
+                        fmtDate(dupe.at) + '. Adding it again would double-count ' +
+                        'the money.';
+      return;
+    }
+
+    msg.className = 'paste__msg is-good';
+    msg.textContent = 'Filled in ' + filled.join(', ') +
+                      '. Check it against the screenshot, then Add order.';
+  });
+
   $('#orderForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const err = $('#formErr');
@@ -225,9 +312,14 @@
     if (!total) return fail('Enter the order total.', $('#fTotal'));
     if (paid > total) return fail('Paid cannot be more than the order total.', $('#fPaid'));
 
+    const ref = $('#fRef').value.trim();
+    if (ref && book.some(o => o.ref === ref)) {
+      return fail('Order ' + ref + ' is already in the book.', $('#fRef'));
+    }
+
     book.unshift({
       at: Date.now(),
-      ref: $('#fRef').value.trim() || makeRef(),
+      ref: ref || makeRef(),
       name: name,
       phone: phone,
       items: $('#fItems').value.trim(),
@@ -239,6 +331,8 @@
     save();
     render();
     e.target.reset();
+    $('#pasteBox').value = '';
+    $('#pasteMsg').hidden = true;
     $('#fName').focus();
   });
 

@@ -89,6 +89,39 @@
 }
 .adm__h { font-size: var(--fs-h3); font-weight: 700; margin-bottom: 14px; }
 
+/* Paste-to-fill. Deliberately set apart from the form below it: it is the
+   fast path, and the fields are the fallback for when it cannot read a
+   message. */
+.paste {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1px dashed var(--line);
+  background: var(--bg-soft);
+}
+.paste label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.paste label i { color: var(--green); }
+.paste__box {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.paste__msg {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.paste__msg.is-good { color: var(--green-700); }
+.paste__msg.is-warn { color: #92400E; font-weight: 600; }
+.paste__msg.is-bad  { color: #B91C1C; }
+
 .adm__form { display: grid; gap: 10px; }
 @media (min-width: 700px) {
   .adm__form { grid-template-columns: repeat(3, 1fr); align-items: end; }
