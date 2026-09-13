@@ -268,14 +268,26 @@ img.is-broken { display: none; }
   padding: 14px var(--pad);
 }
 
-.logo__text {
-  font-family: var(--f-head);
-  font-size: 17px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.02em;
+/* The wordmark is a transparent PNG, so it sits on any dark surface. Height
+   is fixed and the width follows, keeping the logo's proportions. */
+.logo__img {
+  height: 30px;
+  width: auto;
+  transition: opacity var(--tr);
 }
-.logo__accent { color: var(--green); }
+.logo:hover .logo__img { opacity: 0.85; }
+.logo__img--foot { height: 26px; }
+
+@media (min-width: 1200px) { .logo__img { height: 27px; } }
+
+.foot__tagline {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
 
 .nav__links { display: none; }
 
@@ -1145,7 +1157,7 @@ textarea.input { resize: vertical; min-height: 44px; }
   color: rgba(255, 255, 255, 0.7);
   font-size: var(--fs-xs);
 }
-.foot__brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+.foot__brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .foot__brand p { color: rgba(255, 255, 255, 0.6); }
 
 .foot__links { display: flex; flex-wrap: wrap; gap: 16px; }

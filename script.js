@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BrandName — site behaviour
+   WE3 — site behaviour
    Vanilla JS, no dependencies. Every enquiry path ends in a wa.me link;
    there is no backend and no form is ever POSTed anywhere.
    ========================================================================== */
@@ -11,8 +11,8 @@
      PLACEHOLDER values: replace all three.
      ------------------------------------------------------------------------ */
   const CONFIG = {
-    businessName: "BrandName",
-    email: "hello@brandname.com",          // PLACEHOLDER
+    businessName: "WE3",
+    email: "hello@we3agency.com",          // PLACEHOLDER
 
     // Two lines, split by what the enquiry is about. Country code + number,
     // digits only, no "+" and no spaces.
@@ -29,7 +29,7 @@
       // money can be sent to the wrong person by mistake.
       // ------------------------------------------------------------------
       id: "PLACEHOLDER@upi",
-      payeeName: "BrandName"               // name shown inside the UPI app
+      payeeName: "WE3"               // name shown inside the UPI app
     }
   };
 
@@ -463,7 +463,7 @@
      stamped with a reference and why the last step asks the customer to send
      it over — it is the only thing linking a payment to an order.
      ======================================================================== */
-  const CART_KEY = 'brandname.cart.v2';   // v1 could hold the retired domain item
+  const CART_KEY = 'we3.cart.v1';   // v1 could hold the retired domain item
   const MAX_QTY  = 20;
 
   let cart = [];
@@ -746,7 +746,7 @@
     // Short, readable, and unique enough for a small business's volume.
     const stamp = Date.now().toString(36).slice(-4).toUpperCase();
     const rand = Math.random().toString(36).slice(2, 4).toUpperCase();
-    return 'BN-' + stamp + rand;
+    return 'WE3-' + stamp + rand;
   }
 
   function buildUpiLink(amount, orderId) {
@@ -898,7 +898,7 @@
      this cannot follow someone to another phone — the panel says so plainly
      rather than implying a real order history exists behind it.
      ------------------------------------------------------------------------ */
-  const ORDERS_KEY = 'brandname.orders.v1';
+  const ORDERS_KEY = 'we3.orders.v1';
   const MAX_ORDERS = 25;
 
   let orders = [];
