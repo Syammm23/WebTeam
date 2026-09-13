@@ -151,15 +151,9 @@
     navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     document.body.classList.toggle('is-locked', open);
 
-    if (open) {
-      navScrim.hidden = false;
-      requestAnimationFrame(function () { navScrim.classList.add('is-open'); });
-    } else {
-      navScrim.classList.remove('is-open');
-      setTimeout(function () {
-        if (!navLinks.classList.contains('is-open')) navScrim.hidden = true;
-      }, 200);
-    }
+    // Nothing to fade any more — the scrim is transparent, so it only needs
+    // to be present while the drawer is open.
+    navScrim.hidden = !open;
   }
 
   navToggle.addEventListener('click', function () {

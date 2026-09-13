@@ -255,7 +255,12 @@ img.is-broken { display: none; }
 
 .nav {
   position: relative;
-  z-index: 3;
+  /* Above the drawer's click-catching scrim (190). The drawer lives inside
+     this element, and `position: relative` + z-index makes a stacking context
+     here — so anything lower than the scrim would trap the drawer beneath it
+     and its links would not be clickable. Stays under the modal (250) and
+     the cart (260). */
+  z-index: 210;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -324,15 +329,14 @@ img.is-broken { display: none; }
   .nav__drawer-cta { margin-top: 16px; }
 }
 
+/* Invisible click-catcher behind the drawer: tapping the page still closes
+   the menu, but opening it must not tint the page. */
 .nav__scrim {
   position: fixed;
   inset: 0;
   z-index: 190;
-  background: rgba(0, 0, 0, 0.55);
-  opacity: 0;
-  transition: opacity var(--tr);
+  background: transparent;
 }
-.nav__scrim.is-open { opacity: 1; }
 
 @media (min-width: 900px) {
   .nav__links {
