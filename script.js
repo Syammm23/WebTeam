@@ -989,7 +989,6 @@
   const ordersListEl = $('#ordersList');
   const ordersEmpty  = $('#ordersEmpty');
   const ordersNote   = $('#ordersNote');
-  const ordersCount  = $('#ordersCount');
 
   function loadOrders() {
     try {
@@ -1050,8 +1049,11 @@
   }
 
   function renderOrders() {
-    ordersCount.textContent = String(orders.length);
-    ordersCount.hidden = orders.length === 0;
+    // The count shows in the drawer's tab and in the header
+    $$('[data-orders-count]').forEach(function (badge) {
+      badge.textContent = String(orders.length);
+      badge.hidden = orders.length === 0;
+    });
 
     ordersEmpty.hidden = orders.length > 0;
     ordersNote.hidden  = orders.length === 0;
