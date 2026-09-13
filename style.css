@@ -2004,3 +2004,11 @@ textarea.input { resize: vertical; min-height: 44px; }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
   .btn--green:hover, .pkg:hover, .work:hover { transform: none; }
 }
+
+/* The bank's account name, so a customer expecting "WE3" is not surprised */
+.pay__account {
+  font-size: var(--fs-xs);
+  color: var(--body);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}

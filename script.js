@@ -22,20 +22,16 @@
     },
 
     upi: {
-      // ------------------------------------------------------------------
-      // PLACEHOLDER — REPLACE THIS BEFORE GOING LIVE.
-      // Put your real UPI ID here (e.g. "7990853947@ybl" or "name@okaxis").
-      // Until it is changed the Pay button refuses to open a UPI app, so no
-      // money can be sent to the wrong person by mistake.
-      // ------------------------------------------------------------------
-      id: "PLACEHOLDER@upi",
-      payeeName: "WE3",              // name shown inside the UPI app
+      id: "7990853947@kotakbank",
+      payeeName: "WE3",
 
-      // PLACEHOLDER — export your QR from any UPI app ("My QR code"), drop
-      // the file into assets/ and put its path here, e.g.
-      // "assets/we3-upi-qr.png". While this is empty the payment screen
-      // says so rather than showing something scannable.
-      qrImage: ""
+      // The name the bank has on the account. UPI apps show this, not
+      // payeeName, so the payment screen says so upfront — a customer
+      // expecting "WE3" and seeing a personal name would hesitate.
+      accountName: "Shyamkumar Prasad",
+
+      // Rebuild with: python3 tools/make-upi-qr.py 7990853947@kotakbank
+      qrImage: "assets/we3-upi-qr.png"
     }
   };
 
@@ -754,7 +750,9 @@
     // Built by hand rather than with URLSearchParams, which encodes spaces as
     // "+" — some UPI apps show that literally in the payment note.
     return 'upi://pay' +
-      '?pa=' + encodeURIComponent(CONFIG.upi.id) +
+      // "@" stays raw, as every bank-issued UPI link writes it — some apps
+      // do not un-escape %40 in the payee address.
+      '?pa=' + encodeURIComponent(CONFIG.upi.id).replace(/%40/g, '@') +
       '&pn=' + encodeURIComponent(CONFIG.upi.payeeName) +
       '&am=' + encodeURIComponent(amount.toFixed(2)) +
       '&cu=INR' +
@@ -836,6 +834,14 @@
       : 'Full payment';
     $('#payOrderId').textContent = order.id;
     $('#payUpiId').textContent = CONFIG.upi.id;
+
+    const acct = $('#payAccount');
+    if (acct) {
+      acct.textContent = CONFIG.upi.accountName
+        ? 'Your UPI app will show the account name ' + CONFIG.upi.accountName + '.'
+        : '';
+      acct.hidden = !CONFIG.upi.accountName;
+    }
 
     const qr = $('#payQr');
     qr.innerHTML = '';
