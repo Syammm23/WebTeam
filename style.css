@@ -49,21 +49,29 @@
   --r-pill: 999px;
   --tr: 160ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  --pad: 20px;   /* block padding */
+  --pad:   20px;   /* side padding inside a section */
+  --pad-y: 32px;   /* space above and below a section */
+  --wrap:  1200px; /* the column everything is centred in */
 }
 
-@media (min-width: 1200px) {
+/* Sections stack one under another on a big screen, so the type no longer
+   has to squeeze into narrow bento columns — it goes back to a comfortable
+   reading size. */
+@media (min-width: 900px) {
   :root {
-    --fs-xs:    10.5px;
-    --fs-sm:    11.5px;
-    --fs:       12.5px;
-    --fs-h3:    13px;
-    --fs-h2:    19px;
-    --fs-price: 25px;
-    --fs-hero:  38px;
-    --pad:      18px;
+    --fs-xs:    12px;
+    --fs-sm:    13.5px;
+    --fs:       15px;
+    --fs-h3:    17px;
+    --fs-h2:    30px;
+    --fs-price: 34px;
+    --fs-hero:  50px;
+    --pad:      32px;
+    --pad-y:    56px;
   }
-  body { line-height: 1.45; }
+}
+@media (min-width: 1200px) {
+  :root { --pad-y: 68px; }
 }
 
 /* --------------------------------------------------------------------------
@@ -133,15 +141,17 @@ legend { padding: 0; }
 .row { display: grid; }
 .row + .row { border-top: 1px solid var(--line); }
 
-.block { padding: var(--pad); min-width: 0; }
+.block {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: var(--pad-y) var(--pad);
+  min-width: 0;
+}
 
-/* Vertical rule between bento columns (only while they sit side by side) */
-@media (min-width: 1200px) {
-  .block--divide { border-left: 1px solid var(--line); }
-}
-@media (max-width: 1199px) {
-  .block + .block { border-top: 1px solid var(--line); }
-}
+/* Sections always stack, so they are separated by a rule above each one
+   rather than by vertical rules between columns. */
+.block + .block { border-top: 1px solid var(--line); }
 
 .h-sec {
   font-size: var(--fs-h2);
@@ -218,9 +228,7 @@ legend { padding: 0; }
    -------------------------------------------------------------------------- */
 .row--top { background: var(--dark); }
 
-@media (min-width: 1000px) {
-  .row--top { grid-template-columns: 1.38fr 1fr; }
-}
+
 
 /* ---- Hero ---- */
 .hero {
@@ -232,6 +240,7 @@ legend { padding: 0; }
   color: #fff;
   min-height: 300px;
 }
+@media (min-width: 900px) { .hero { min-height: 560px; } }
 .hero__bg {
   position: absolute;
   inset: 0;
@@ -255,6 +264,11 @@ img.is-broken { display: none; }
 
 .nav {
   position: relative;
+  /* Same centred column as the rest of the page, so the logo lines up with
+     the hero copy underneath it instead of hugging the window edge. */
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
   /* Above the drawer's click-catching scrim (190). The drawer lives inside
      this element, and `position: relative` + z-index makes a stacking context
      here — so anything lower than the scrim would trap the drawer beneath it
@@ -368,8 +382,23 @@ img.is-broken { display: none; }
 .hero__inner {
   position: relative;
   z-index: 2;
-  padding: 8px var(--pad) var(--pad);
-  max-width: 560px;
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: 8px var(--pad) var(--pad-y);
+}
+/* The hero box is full width now, so the words are held back on their own */
+.hero__title, .hero__sub { max-width: 18ch; }
+.hero__sub { max-width: 46ch; }
+
+@media (min-width: 900px) {
+  .hero__inner {
+    padding-block: 48px var(--pad-y);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+  }
 }
 
 .hero__eyebrow {
@@ -416,8 +445,8 @@ img.is-broken { display: none; }
 .scribble {
   display: none;
   position: absolute;
-  top: 58px;
-  right: 5%;
+  top: 42%;
+  right: 7%;
   z-index: 2;
   font-family: var(--f-hand);
   font-size: 21px;
@@ -432,7 +461,7 @@ img.is-broken { display: none; }
   color: var(--green);
   transform: rotate(-35deg) scaleX(-1);
 }
-@media (min-width: 1200px) { .scribble { display: block; } }
+@media (min-width: 1100px) { .scribble { display: block; } }
 
 /* ---- Services ---- */
 .services {
@@ -456,7 +485,14 @@ img.is-broken { display: none; }
     rgba(10, 16, 13, 0.9) 55%,
     rgba(10, 20, 14, 0.72) 100%);
 }
-.services__inner { position: relative; z-index: 2; padding: var(--pad); }
+.services__inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: var(--pad-y) var(--pad);
+}
 
 .services__title {
   font-size: var(--fs-h2);
@@ -509,9 +545,7 @@ img.is-broken { display: none; }
 /* --------------------------------------------------------------------------
    6. ROW 2 — PACKAGES + BUILDER
    -------------------------------------------------------------------------- */
-@media (min-width: 1200px) {
-  .row--mid { grid-template-columns: 1fr 1fr; }
-}
+
 
 .pkg-grid { display: grid; gap: 10px; margin-bottom: 12px; }
 @media (min-width: 560px)  { .pkg-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -842,9 +876,7 @@ textarea.input { resize: vertical; min-height: 44px; }
 /* --------------------------------------------------------------------------
    7. ROW 3 — WORK + PROCESS + WHY US
    -------------------------------------------------------------------------- */
-@media (min-width: 1200px) {
-  .row--three { grid-template-columns: 1.5fr 1.05fr 1fr; }
-}
+
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
@@ -1021,6 +1053,7 @@ textarea.input { resize: vertical; min-height: 44px; }
 /* ---- Why us ---- */
 .why-grid { display: grid; gap: 13px; margin-top: 4px; }
 @media (min-width: 420px) { .why-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .why-grid { grid-template-columns: repeat(4, 1fr); gap: 28px; } }
 
 .why { display: flex; gap: 10px; align-items: flex-start; }
 .why__ico { font-size: 19px; color: var(--green); margin-top: 2px; flex: none; }
@@ -1030,14 +1063,7 @@ textarea.input { resize: vertical; min-height: 44px; }
 /* --------------------------------------------------------------------------
    8. ROW 4 — FAQ + CONTACT + FORM + SIGN-OFF
    -------------------------------------------------------------------------- */
-@media (min-width: 1200px) {
-  .row--four { grid-template-columns: 1.55fr 1.2fr 1.35fr; }
-}
-/* The rotated sign-off needs real room, so it only appears once there is
-   enough width for it — below this it would push the page sideways. */
-@media (min-width: 1400px) {
-  .row--four { grid-template-columns: 1.55fr 1.2fr 1.35fr 0.55fr; }
-}
+
 
 .faq-cols { display: grid; gap: 6px; }
 @media (min-width: 1200px) { .faq-cols { grid-template-columns: 1fr 1fr; align-items: start; } }
@@ -1077,6 +1103,8 @@ textarea.input { resize: vertical; min-height: 44px; }
 
 /* ---- Reach ---- */
 .reach { display: grid; gap: 10px; }
+/* Three contact routes read better spread across a full-width section */
+@media (min-width: 700px) { .reach { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
 .reach li { display: flex; gap: 11px; align-items: flex-start; }
 .reach__ico {
   display: grid;
@@ -1103,7 +1131,8 @@ textarea.input { resize: vertical; min-height: 44px; }
 .reach__body em { font-size: var(--fs-xs); color: var(--muted); font-style: normal; }
 
 /* ---- Contact form ---- */
-.cform { display: grid; gap: 10px; }
+/* A form stretched to 1200px is unusable, so it keeps its own width */
+.cform { display: grid; gap: 10px; max-width: 760px; }
 .cform__grid { display: grid; gap: 8px; }
 @media (min-width: 480px) { .cform__grid { grid-template-columns: 1fr 1fr; } }
 .cf-row { display: grid; min-width: 0; }
@@ -1121,13 +1150,14 @@ textarea.input { resize: vertical; min-height: 44px; }
 
 /* ---- Sign-off ---- */
 .block--sign { display: none; }
-@media (min-width: 1400px) {
+@media (min-width: 900px) {
   .block--sign {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     gap: 4px;
+    border-top: 0;
+    padding-top: 0;
   }
 }
 .sign {
