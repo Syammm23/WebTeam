@@ -88,6 +88,12 @@
   <!-- Skip link for keyboard + screen reader users -->
   <a class="skip-link" href="#main">Skip to content</a>
 
+  <!-- Reading-progress bar, width driven from JS -->
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <!-- Site-wide film grain for depth -->
+  <div class="grain" aria-hidden="true"></div>
+
   <!-- ==========================================================
        1. STICKY NAVBAR
        ========================================================== -->
@@ -132,31 +138,76 @@
       <div class="hero__glow" aria-hidden="true"></div>
 
       <div class="container hero__inner">
-        <p class="eyebrow reveal">
-          <span class="eyebrow__dot" aria-hidden="true"></span>
-          Daman &nbsp;·&nbsp; Vapi &nbsp;·&nbsp; Gujarat
-        </p>
+        <div class="hero__copy">
+          <p class="pill-badge reveal">
+            <span class="pill-badge__pulse" aria-hidden="true"></span>
+            Taking on new projects &nbsp;·&nbsp; Daman &amp; Vapi
+          </p>
 
-        <h1 class="hero__title reveal">
-          Get your local business
-          <span class="grad-text">online</span> — properly.
-        </h1>
+          <h1 class="hero__title reveal" data-split>
+            Get your local business <span class="nowrap"><span class="grad-text">online</span>&nbsp;&mdash;</span> properly.
+          </h1>
 
-        <p class="hero__sub reveal">
-          We build custom websites from scratch, shoot Instagram reels that actually get watched,
-          and photograph your products and store. Made for coaching classes, salons, gyms, cafes,
-          clinics, shops and boutiques that deserve better than a template.
-        </p>
+          <p class="hero__sub reveal">
+            We build custom websites from scratch, shoot Instagram reels that actually get watched,
+            and photograph your products and store. Made for coaching classes, salons, gyms, cafes,
+            clinics, shops and boutiques that deserve better than a template.
+          </p>
 
-        <div class="hero__cta reveal">
+          <div class="hero__cta reveal">
           <button class="btn btn--primary btn--lg" data-wa-modal data-service="Not Sure">
             <i data-lucide="message-circle" aria-hidden="true"></i>
             Start Your Project
           </button>
-          <a class="btn btn--ghost btn--lg" href="#packages">
-            See Packages
-            <i data-lucide="arrow-down" aria-hidden="true"></i>
-          </a>
+            <a class="btn btn--ghost btn--lg" href="#packages">
+              See Packages
+              <i data-lucide="arrow-down" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Hero visual: an abstract site preview built entirely in CSS.
+             PLACEHOLDER: swap .mock for a real screenshot if you prefer. -->
+        <div class="hero__visual reveal" aria-hidden="true">
+          <div class="mock" data-tilt>
+            <div class="mock__bar">
+              <span class="mock__dot"></span>
+              <span class="mock__dot"></span>
+              <span class="mock__dot"></span>
+              <span class="mock__url">yourbusiness.com</span>
+            </div>
+            <div class="mock__body">
+              <div class="mock__nav">
+                <span class="mock__logo"></span>
+                <span class="mock__link"></span>
+                <span class="mock__link"></span>
+                <span class="mock__link"></span>
+                <span class="mock__btn"></span>
+              </div>
+              <div class="mock__hero">
+                <span class="mock__h1"></span>
+                <span class="mock__h1 mock__h1--short"></span>
+                <span class="mock__p"></span>
+                <span class="mock__p mock__p--short"></span>
+                <span class="mock__cta"></span>
+              </div>
+              <div class="mock__grid">
+                <span class="mock__tile"></span>
+                <span class="mock__tile"></span>
+                <span class="mock__tile"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating proof chips -->
+          <div class="float-chip float-chip--a">
+            <strong>3-4 days</strong>
+            <span>start to live</span>
+          </div>
+          <div class="float-chip float-chip--b">
+            <strong>&#8377;12,000</strong>
+            <span>combo package</span>
+          </div>
         </div>
 
         <!-- Trust stats — numbers count up on scroll into view -->
@@ -177,14 +228,37 @@
       </div>
     </section>
 
+    <!-- Scrolling keyword band — pauses on hover, hidden from screen readers
+         since it only repeats what the sections below already say. -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <div class="marquee__group">
+          <span>Custom Websites</span><span class="marquee__sep">&#9670;</span>
+          <span>Instagram Reels</span><span class="marquee__sep">&#9670;</span>
+          <span>Product Photography</span><span class="marquee__sep">&#9670;</span>
+          <span>No Templates</span><span class="marquee__sep">&#9670;</span>
+          <span>Unlimited Revisions</span><span class="marquee__sep">&#9670;</span>
+          <span>Daman &amp; Vapi</span><span class="marquee__sep">&#9670;</span>
+        </div>
+        <div class="marquee__group">
+          <span>Custom Websites</span><span class="marquee__sep">&#9670;</span>
+          <span>Instagram Reels</span><span class="marquee__sep">&#9670;</span>
+          <span>Product Photography</span><span class="marquee__sep">&#9670;</span>
+          <span>No Templates</span><span class="marquee__sep">&#9670;</span>
+          <span>Unlimited Revisions</span><span class="marquee__sep">&#9670;</span>
+          <span>Daman &amp; Vapi</span><span class="marquee__sep">&#9670;</span>
+        </div>
+      </div>
+    </div>
+
     <!-- ==========================================================
          3. SERVICES
          ========================================================== -->
     <section class="section" id="services">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>What we do</p>
-          <h2 class="section__title">Three things, done properly.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">01</span>What we do</p>
+          <h2 class="section__title" data-split>Three things, done properly.</h2>
           <p class="section__lede">
             No bloated retainers, no jargon. Pick what your business actually needs right now.
           </p>
@@ -236,8 +310,8 @@
     <section class="section section--alt" id="packages">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Pricing</p>
-          <h2 class="section__title">Straight pricing. No surprises.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">02</span>Pricing</p>
+          <h2 class="section__title" data-split>Straight pricing. No surprises.</h2>
           <p class="section__lede">
             One price, written down. What you see here is what you pay.
           </p>
@@ -347,8 +421,8 @@
     <section class="section" id="builder">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Build your quote</p>
-          <h2 class="section__title">Tick what you need. See the price instantly.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">03</span>Build your quote</p>
+          <h2 class="section__title" data-split>Tick what you need. See the price instantly.</h2>
           <p class="section__lede">
             No form to fill, no waiting for a callback. Pick your services and send the quote
             straight to us on WhatsApp.
@@ -503,8 +577,8 @@
     <section class="section section--alt" id="work">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Our work</p>
-          <h2 class="section__title">Recent projects.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">04</span>Our work</p>
+          <h2 class="section__title" data-split>Recent projects.</h2>
           <p class="section__lede">A young studio with a growing shelf. Here is what is live and what is on the way.</p>
         </header>
 
@@ -516,7 +590,7 @@
           <button class="chip" role="tab" aria-selected="false" data-filter="photography">Photography</button>
         </div>
 
-        <div class="grid grid--3 stagger" id="workGrid">
+        <div class="grid work-grid stagger" id="workGrid">
 
           <!-- REAL PROJECT -->
           <article class="card card--work reveal" data-category="websites">
@@ -524,6 +598,7 @@
                  replace this .thumb div with <img src="work/webofbags.jpg" alt="..."> -->
             <div class="thumb" aria-hidden="true">
               <span class="thumb__label">webofbags.com</span>
+              <span class="thumb__shine"></span>
             </div>
             <div class="card__body">
               <span class="tag">Website</span>
@@ -574,8 +649,8 @@
     <section class="section" id="process">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>How it works</p>
-          <h2 class="section__title">Five steps. Start to handover.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">05</span>How it works</p>
+          <h2 class="section__title" data-split>Five steps. Start to handover.</h2>
           <p class="section__lede">Everything runs on WhatsApp. No meetings you did not ask for.</p>
         </header>
 
@@ -615,8 +690,8 @@
     <section class="section section--alt" id="why">
       <div class="container">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Why us</p>
-          <h2 class="section__title">Why local businesses pick us.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">06</span>Why us</p>
+          <h2 class="section__title" data-split>Why local businesses pick us.</h2>
         </header>
 
         <div class="grid grid--4 stagger">
@@ -650,8 +725,8 @@
     <section class="section" id="faq">
       <div class="container container--narrow">
         <header class="section__head reveal">
-          <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>FAQ</p>
-          <h2 class="section__title">Questions we get asked.</h2>
+          <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">07</span>FAQ</p>
+          <h2 class="section__title" data-split>Questions we get asked.</h2>
         </header>
 
         <div class="accordion stagger" id="accordion">
@@ -766,8 +841,8 @@
         <div class="contact">
 
           <div class="contact__pitch reveal">
-            <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Let's talk</p>
-            <h2 class="section__title">Message us. We reply fast.</h2>
+            <p class="eyebrow"><span class="eyebrow__num" aria-hidden="true">08</span>Let's talk</p>
+            <h2 class="section__title" data-split>Message us. We reply fast.</h2>
             <p class="section__lede">
               Everything starts with a WhatsApp message — no forms to chase, no call centre.
               Tell us about your business and we will send you a quote the same day.

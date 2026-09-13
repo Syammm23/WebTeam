@@ -112,11 +112,35 @@
     link.addEventListener('click', function () { setNavOpen(false); });
   });
 
-  // Solid background once the page has scrolled past the hero top
+  const progressBar = $('#progress');
+  const heroGlow    = $('.hero__glow');
+  let scrollQueued  = false;
+
+  // One rAF-throttled handler drives the sticky nav, the reading-progress bar
+  // and the hero parallax, so scrolling only ever does one layout read.
   function onScroll() {
-    nav.classList.toggle('is-stuck', window.scrollY > 12);
+    const y = window.scrollY;
+
+    nav.classList.toggle('is-stuck', y > 12);
+
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = scrollable > 0
+      ? Math.min(y / scrollable, 1) * 100 + '%'
+      : '0%';
+
+    // Drift the hero light slightly slower than the page
+    if (heroGlow && !prefersReducedMotion && y < window.innerHeight * 1.5) {
+      heroGlow.style.transform = 'translate3d(0,' + (y * 0.18) + 'px,0)';
+    }
+
+    scrollQueued = false;
   }
-  window.addEventListener('scroll', onScroll, { passive: true });
+
+  window.addEventListener('scroll', function () {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    requestAnimationFrame(onScroll);
+  }, { passive: true });
   onScroll();
 
   /* ========================================================================
@@ -577,6 +601,72 @@
       if (err) err.hidden = true;
     });
   });
+
+  /* ========================================================================
+     6b. HEADLINE WORD REVEAL
+     Wraps each word in .word > span so the span can slide up behind the
+     clipped .word. Element children (e.g. the gradient span) are kept whole,
+     so the visible text and the accessibility tree are unchanged.
+     ======================================================================== */
+  function splitWords(heading) {
+    const pieces = [];
+
+    Array.from(heading.childNodes).forEach(function (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent.split(/([ \t\r\n]+)/).forEach(function (chunk) {
+          if (chunk.trim() === '') {
+            if (chunk) pieces.push(document.createTextNode(' '));
+          } else {
+            pieces.push(chunk);      // a plain word
+          }
+        });
+      } else {
+        pieces.push(node);           // keep elements intact
+      }
+    });
+
+    heading.textContent = '';
+    let index = 0;
+
+    pieces.forEach(function (piece) {
+      if (piece.nodeType === Node.TEXT_NODE) {
+        heading.appendChild(piece);  // preserve the spaces between words
+        return;
+      }
+      const outer = document.createElement('span');
+      outer.className = 'word';
+      outer.style.setProperty('--word-index', index++);
+
+      const inner = document.createElement('span');
+      if (typeof piece === 'string') {
+        inner.textContent = piece;
+      } else {
+        inner.appendChild(piece);
+      }
+      outer.appendChild(inner);
+      heading.appendChild(outer);
+    });
+  }
+
+  if (!prefersReducedMotion) {
+    $$('[data-split]').forEach(splitWords);
+  }
+
+  /* ========================================================================
+     6c. CARD SPOTLIGHT — a soft glow that tracks the pointer
+     One delegated listener rather than one per card.
+     ======================================================================== */
+  if (!prefersReducedMotion && window.matchMedia('(hover: hover)').matches) {
+    $$('.card').forEach(function (card) { card.classList.add('card--spotlight'); });
+
+    document.addEventListener('pointermove', function (e) {
+      const card = e.target.closest && e.target.closest('.card--spotlight');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    }, { passive: true });
+  }
 
   /* ========================================================================
      7. SCROLL REVEALS — staggered by child index
