@@ -465,10 +465,18 @@
       <div class="work-grid" id="workGrid">
         <article class="work" data-category="websites">
           <span class="work__thumb">
-            <!-- PLACEHOLDER IMAGE: swap for a real screenshot of the site -->
-            <img alt="Vaibhav Bags — non-woven bag manufacturer website"
-                 src="https://images.unsplash.com/photo-1597484662317-9bd7bdda2907?auto=format&fit=crop&w=500&q=80"
-                 data-fallback="https://picsum.photos/seed/vaibhavbags/500/380" />
+            <!-- Shown if the screenshot cannot be fetched, so the card never
+                 falls back to a stock photo pretending to be our work. -->
+            <span class="work__thumb-alt" aria-hidden="true">vaibhavbags.com</span>
+
+            <!-- A live screenshot of the real site, rendered on request.
+                 BETTER: take your own screenshot, commit it as
+                 work/vaibhavbags.jpg, and change src to "work/vaibhavbags.jpg"
+                 — it loads faster and you control exactly what is shown. -->
+            <img alt="Screenshot of the vaibhavbags.com website"
+                 loading="lazy"
+                 src="https://s.wordpress.com/mshots/v1/https%3A%2F%2Fvaibhavbags.com?w=600&amp;h=375"
+                 data-fallback="https://image.thum.io/get/width/600/crop/375/https://vaibhavbags.com/" />
           </span>
           <div class="work__body">
             <h3>vaibhavbags.com</h3>
