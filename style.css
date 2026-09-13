@@ -1805,3 +1805,95 @@ textarea.input { resize: vertical; min-height: 44px; }
   border-top: 1px solid var(--line);
   background: var(--bg-soft);
 }
+
+/* --------------------------------------------------------------------------
+   15. QR PAYMENT SCREEN
+   -------------------------------------------------------------------------- */
+.pay { display: flex; flex-direction: column; min-height: 0; }
+.pay__body { flex: 1; overflow-y: auto; padding: 18px 16px; text-align: center; }
+
+.pay__lead { font-size: var(--fs-sm); color: var(--body); }
+.pay__amount {
+  font-family: var(--f-head);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--green-700);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.pay__split { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 16px; }
+
+.pay__qr {
+  display: grid;
+  place-items: center;
+  width: min(230px, 68vw);
+  aspect-ratio: 1;
+  margin: 0 auto 16px;
+  padding: 10px;
+  border-radius: var(--r);
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.pay__qr img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Shown until a real QR is configured — never a fake code to scan */
+.pay__qr--empty {
+  border: 1.5px dashed var(--line);
+  background: var(--bg-soft);
+  padding: 18px;
+}
+.pay__qr-missing { font-size: var(--fs-xs); color: var(--muted); line-height: 1.5; }
+.pay__qr-missing strong { display: block; color: var(--ink); margin-bottom: 4px; }
+
+.pay__or {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 7px;
+}
+.pay .upi-id { margin-bottom: 12px; text-align: left; }
+
+.btn--outline-dark {
+  border-color: var(--line);
+  color: var(--ink);
+  background: #fff;
+}
+.btn--outline-dark:hover { border-color: var(--green); background: var(--green-soft); color: var(--green-700); }
+
+.pay__ref { font-size: var(--fs-xs); color: var(--muted); margin-top: 14px; }
+.pay__ref strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink);
+}
+
+.pay__note {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: var(--r-sm);
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  font-size: var(--fs-xs);
+  color: #92400E;
+  line-height: 1.5;
+  text-align: left;
+}
+.pay__note i { margin-top: 2px; flex: none; }
+
+.pay__foot {
+  flex: none;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+
+/* ---- Pending / verified / rejected ---- */
+.cart__done-ico--wait { color: #D97706; }
+.cart__done-meta dd.is-pending { color: #92400E; }
+
+.order__status--pending  { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+.order__status--verified { background: var(--green-soft); color: var(--green-700); border: 1px solid var(--green-line); }
+.order__status--rejected { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
