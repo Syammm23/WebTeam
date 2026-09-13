@@ -228,3 +228,85 @@
 .adm-order__wa:hover { background: var(--green-soft); }
 .adm-order__del { color: var(--muted); }
 .adm-order__del:hover { color: var(--danger); background: #FEF2F2; }
+
+
+/* ==========================================================================
+   THE LOCK SCREEN
+
+   Hiding the page is done in CSS, not JS, so the order book never paints
+   before the password is checked. A [hidden] lock overrides the grid below
+   it via the global [hidden] guard in style.css.
+   ========================================================================== */
+.adm.is-locked > *:not(.lock) { display: none; }
+
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--ink);
+}
+
+.lock__card {
+  width: 100%;
+  max-width: 340px;
+  padding: 28px 24px;
+  border-radius: var(--r-lg);
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+/* The wordmark is drawn for a dark background, so it gets one rather than
+   being colour-inverted into something that is not quite the brand green. */
+.lock__badge {
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 18px;
+  padding: 12px 18px;
+  border-radius: var(--r);
+  background: var(--ink);
+}
+.lock__logo { display: block; width: 84px; height: auto; }
+
+.lock__title {
+  font-family: var(--f-head);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lock__desc {
+  margin: 6px 0 18px;
+  font-size: var(--fs-sm);
+  color: var(--body);
+}
+
+.lock__field { position: relative; }
+.lock__field .input { width: 100%; padding-right: 42px; text-align: center; }
+
+.lock__eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  color: var(--body);
+  transition: color var(--tr), background var(--tr);
+}
+.lock__eye:hover { color: var(--ink); background: var(--bg-soft); }
+
+.lock__err {
+  margin-top: 10px;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: #B91C1C;
+}
+
+.lock__card .btn { margin-top: 14px; }
