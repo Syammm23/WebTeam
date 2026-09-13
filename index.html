@@ -49,7 +49,7 @@
     "description": "Digital services agency building custom websites, Instagram reels and photography for small businesses.",
     "url": "https://brandname.com/",
     "image": "https://brandname.com/og-image.jpg",
-    "telephone": "+91-98765-43210",
+    "telephone": "+91-79908-53947",
     "email": "hello@brandname.com",
     "priceRange": "₹1,000 - ₹12,000",
     "address": {
@@ -64,7 +64,7 @@
       { "@type": "City", "name": "Daman" },
       { "@type": "City", "name": "Vapi" }
     ],
-    "sameAs": ["https://instagram.com/brandname", "https://wa.me/919876543210"],
+    "sameAs": ["https://instagram.com/brandname", "https://wa.me/917990853947"],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
       "name": "Packages",
@@ -117,6 +117,10 @@
         </nav>
 
         <div class="nav__actions">
+          <button class="nav__cart" data-open-cart aria-label="Open cart">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            <span class="nav__cart-count" data-cart-count hidden>0</span>
+          </button>
           <button class="btn btn--green nav__cta" data-wa-modal data-service="Not Sure">
             <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
             Get Quote
@@ -238,7 +242,9 @@
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Unlimited revisions until approved</li>
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Domain + hosting charged separately</li>
           </ul>
-          <button class="btn btn--green btn--block" data-wa-package="Website Only" data-wa-price="5,000">Book This Package</button>
+          <button class="btn btn--green btn--block" data-add="website" data-name="Website Development" data-price="5000" data-kind="web">
+            <i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Add to Cart
+          </button>
         </article>
 
         <article class="pkg pkg--featured">
@@ -253,7 +259,9 @@
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Unlimited revisions</li>
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivery in 3-4 days</li>
           </ul>
-          <button class="btn btn--green btn--block" data-wa-package="Combo Package" data-wa-price="12,000">Book This Package</button>
+          <button class="btn btn--green btn--block" data-add="combo" data-name="Combo Package" data-price="12000" data-kind="web">
+            <i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Add to Cart
+          </button>
         </article>
 
         <article class="pkg">
@@ -264,7 +272,9 @@
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Trending audio and transitions</li>
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivered ready to post</li>
           </ul>
-          <button class="btn btn--green btn--block" data-wa-package="Reel Making" data-wa-price="2,000">Book This Package</button>
+          <button class="btn btn--green btn--block" data-add="reel" data-name="Reel Making" data-price="2000" data-kind="media">
+            <i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Add to Cart
+          </button>
         </article>
 
         <article class="pkg">
@@ -275,7 +285,9 @@
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Edited and color-corrected</li>
             <li><i class="fa-solid fa-check" aria-hidden="true"></i>Delivered in web and print formats</li>
           </ul>
-          <button class="btn btn--green btn--block" data-wa-package="Photo Shoot" data-wa-price="1,000">Book This Package</button>
+          <button class="btn btn--green btn--block" data-add="photo" data-name="Photo Shoot" data-price="1000" data-kind="media">
+            <i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Add to Cart
+          </button>
         </article>
       </div>
 
@@ -287,8 +299,8 @@
           <p>Keep your website updated and running smoothly.</p>
         </div>
         <div class="addon__opts">
-          <button class="addon__opt" data-wa-package="Maintenance — 6 Months" data-wa-price="2,000">6 Months — ₹2,000</button>
-          <button class="addon__opt" data-wa-package="Maintenance — 1 Year" data-wa-price="4,000">1 Year — ₹4,000</button>
+          <button class="addon__opt" data-add="maint6" data-name="Maintenance — 6 Months" data-price="2000" data-kind="web">6 Months — ₹2,000</button>
+          <button class="addon__opt" data-add="maint12" data-name="Maintenance — 1 Year" data-price="4000" data-kind="web">1 Year — ₹4,000</button>
         </div>
         <ul class="addon__list">
           <li><i class="fa-solid fa-check" aria-hidden="true"></i>Content updates</li>
@@ -416,10 +428,10 @@
           </div>
 
           <button type="button" class="btn btn--green btn--block" id="builderSend">
-            <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
-            Send on WhatsApp
+            <i class="fa-solid fa-cart-plus" aria-hidden="true"></i>
+            Add to Cart
           </button>
-          <p class="est__fine">50% advance, 50% on delivery</p>
+          <p class="est__fine">Pay 50% advance or in full — your choice at checkout.</p>
 
           <p class="est__tip" id="comboNote">
             <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
@@ -627,21 +639,19 @@
 
       <ul class="reach">
         <li>
-          <span class="reach__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+          <span class="reach__ico" aria-hidden="true"><i class="fa-solid fa-display"></i></span>
           <span class="reach__body">
-            <strong>Chat on WhatsApp</strong>
-            <!-- PLACEHOLDER: phone number -->
-            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">+91 98765 43210</a>
-            <em>Quick response</em>
+            <strong>Website Development</strong>
+            <a href="https://wa.me/917990853947" target="_blank" rel="noopener noreferrer">+91 79908 53947</a>
+            <em>WhatsApp or call</em>
           </span>
         </li>
         <li>
-          <span class="reach__ico reach__ico--alt" aria-hidden="true"><i class="fa-solid fa-phone"></i></span>
+          <span class="reach__ico" aria-hidden="true"><i class="fa-solid fa-camera"></i></span>
           <span class="reach__body">
-            <strong>Call Us</strong>
-            <!-- PLACEHOLDER: phone number -->
-            <a href="tel:+919876543210">+91 98765 43210</a>
-            <em>Mon - Sat, 10AM - 7PM</em>
+            <strong>Reels &amp; Photography</strong>
+            <a href="https://wa.me/917990487721" target="_blank" rel="noopener noreferrer">+91 79904 87721</a>
+            <em>WhatsApp or call</em>
           </span>
         </li>
         <li>
@@ -745,6 +755,139 @@
     <p class="foot__copy">&copy; <span id="year">2024</span> BrandName. All rights reserved.</p>
   </footer>
 
+
+  <!-- ======================================================================
+       FLOATING CART BUTTON — always reachable, since the nav scrolls away
+       ====================================================================== -->
+  <button class="cart-fab" id="cartFab" data-open-cart hidden aria-label="Open cart">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+    <span class="cart-fab__count" data-cart-count>0</span>
+  </button>
+
+  <!-- ======================================================================
+       CART + UPI CHECKOUT
+       ====================================================================== -->
+  <div class="cart" id="cart" hidden>
+    <div class="cart__backdrop" data-close-cart></div>
+
+    <aside class="cart__panel" role="dialog" aria-modal="true" aria-labelledby="cartTitle" tabindex="-1">
+      <header class="cart__head">
+        <h2 id="cartTitle">Your Cart</h2>
+        <button class="cart__close" data-close-cart aria-label="Close cart">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <!-- ---------- SCREEN 1: cart + checkout ---------- -->
+      <div class="cart__screen" id="cartScreen">
+        <div class="cart__body">
+          <p class="cart__empty" id="cartEmpty">
+            Your cart is empty. Add a package above, or build your own.
+          </p>
+
+          <ul class="cart__items" id="cartItems"></ul>
+
+          <!-- Shown when the separate items would cost more than the combo -->
+          <p class="cart__tip" id="cartTip" hidden>
+            <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+            <span id="cartTipText"></span>
+          </p>
+        </div>
+
+        <div class="cart__foot" id="cartFoot" hidden>
+          <div class="cart__line">
+            <span>Subtotal</span>
+            <strong id="cartSubtotal">₹0</strong>
+          </div>
+
+          <fieldset class="split">
+            <legend>How much do you want to pay now?</legend>
+            <label class="split__opt">
+              <input type="radio" name="paySplit" value="half" checked />
+              <span class="split__box">
+                <strong>50% Advance</strong>
+                <em id="halfAmt">₹0</em>
+                <small>Balance on delivery</small>
+              </span>
+            </label>
+            <label class="split__opt">
+              <input type="radio" name="paySplit" value="full" />
+              <span class="split__box">
+                <strong>Full Payment</strong>
+                <em id="fullAmt">₹0</em>
+                <small>Pay everything now</small>
+              </span>
+            </label>
+          </fieldset>
+
+          <div class="cart__fields">
+            <div class="cf-row">
+              <label for="cartName">Your Name <span class="req">*</span></label>
+              <input class="input" type="text" id="cartName" autocomplete="name" placeholder="Enter your name" />
+            </div>
+            <div class="cf-row">
+              <label for="cartPhone">Phone Number <span class="req">*</span></label>
+              <input class="input" type="tel" id="cartPhone" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile number" />
+            </div>
+          </div>
+          <p class="cf-err" id="cartErr" hidden></p>
+
+          <div class="cart__line cart__line--total">
+            <span>Paying now</span>
+            <strong id="payNow">₹0</strong>
+          </div>
+
+          <button class="btn btn--green btn--block btn--lg" id="payBtn">
+            <span class="btn__ico" aria-hidden="true"><i class="fa-solid fa-indian-rupee-sign"></i></span>
+            <span id="payBtnLabel">Pay via UPI</span>
+          </button>
+
+          <!-- Desktop has no UPI app to hand off to, so the ID is always shown -->
+          <div class="upi-manual">
+            <p class="upi-manual__lead">
+              On a computer? Send the amount to this UPI ID from any UPI app:
+            </p>
+            <div class="upi-id">
+              <code id="upiIdText">—</code>
+              <button type="button" id="copyUpi" class="upi-id__copy">
+                <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy
+              </button>
+            </div>
+          </div>
+
+          <p class="est__fine">
+            GPay, PhonePe, Paytm — any UPI app works. No card details are ever entered on this site.
+          </p>
+        </div>
+      </div>
+
+      <!-- ---------- SCREEN 2: after the UPI app is opened ---------- -->
+      <div class="cart__screen cart__done" id="cartDone" hidden>
+        <i class="fa-solid fa-circle-check cart__done-ico" aria-hidden="true"></i>
+        <h3>Payment started</h3>
+
+        <dl class="cart__done-meta">
+          <div><dt>Order</dt><dd id="doneOrderId">—</dd></div>
+          <div><dt>Amount</dt><dd id="doneAmount">—</dd></div>
+        </dl>
+
+        <p class="cart__done-note">
+          A UPI payment only tells us that money arrived — not who sent it or what
+          they ordered. Send us your order so we can match the two and start work.
+        </p>
+
+        <button class="btn btn--green btn--block btn--lg" id="sendOrderBtn">
+          <span class="btn__ico" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+          Send my order details
+        </button>
+
+        <button class="btn btn--plain btn--block" id="backToCart">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to cart
+        </button>
+      </div>
+    </aside>
+  </div>
+
   <!-- ======================================================================
        WHATSAPP MODAL
        ====================================================================== -->
@@ -758,11 +901,6 @@
 
       <h2 class="modal__title" id="modalTitle">Start on WhatsApp</h2>
       <p class="modal__desc" id="modalDesc">Pick what you are interested in and we will take it from there.</p>
-
-      <div class="modal__booking" id="modalBooking" hidden>
-        <i class="fa-solid fa-box-open" aria-hidden="true"></i>
-        <span id="modalBookingText"></span>
-      </div>
 
       <fieldset class="modal__picker" id="modalPicker">
         <legend class="fld__label">I'm interested in</legend>
