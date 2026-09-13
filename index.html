@@ -32,7 +32,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Icon set via CDN. Font Awesome's webfont build draws icons from a font
        file, so no SVG is used anywhere on the page. -->
@@ -942,6 +942,26 @@
           <div><dt>Status</dt><dd class="is-pending">Pending</dd></div>
         </dl>
 
+        <!-- This order lives in localStorage and nowhere else, so a cleared
+             browser or a different phone loses it. A screenshot is the only
+             copy the customer actually controls — hence the prominence, and
+             hence Hindi alongside English. -->
+        <div class="shot">
+          <i class="fa-solid fa-camera shot__ico" aria-hidden="true"></i>
+          <p class="shot__en">
+            <strong>Take a screenshot of this screen and keep it safe.</strong>
+            It is your proof of payment. This order is stored only in this
+            browser — clear your browser data, or open the site on another
+            phone, and it will not be here.
+          </p>
+          <p class="shot__hi" lang="hi">
+            <strong>इस स्क्रीन का स्क्रीनशॉट लेकर संभालकर रखें।</strong>
+            यही आपके पेमेंट का सबूत है। यह ऑर्डर सिर्फ़ इसी ब्राउज़र में सेव रहता
+            है — ब्राउज़र का डेटा क्लियर करने पर या दूसरे फ़ोन पर साइट खोलने पर
+            यह नहीं मिलेगा।
+          </p>
+        </div>
+
         <p class="cart__done-note">
           <strong>Please send us the payment screenshot on WhatsApp.</strong>
           A UPI transfer only tells us money arrived, not who sent it — the
@@ -973,8 +993,15 @@
             3 hours. Send the payment screenshot on WhatsApp to speed that up.
             <br /><br />
             These orders are saved on this device only. Open the site on another
-            phone, or clear your browser data, and they will not be here — ask
-            us on WhatsApp any time and we will pull up your order.
+            phone, or clear your browser data, and they will not be here — so
+            keep your screenshots. You can ask us on WhatsApp any time and we
+            will pull up your order.
+          </p>
+
+          <p class="orders__note orders__note--hi" id="ordersNoteHi" lang="hi" hidden>
+            ये ऑर्डर सिर्फ़ इसी डिवाइस पर सेव हैं। दूसरे फ़ोन पर साइट खोलने या
+            ब्राउज़र का डेटा क्लियर करने पर ये नहीं दिखेंगे — इसलिए स्क्रीनशॉट
+            संभालकर रखें। कभी भी WhatsApp पर पूछ लीजिए, हम आपका ऑर्डर निकाल देंगे।
           </p>
         </div>
 
