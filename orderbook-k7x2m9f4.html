@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Solid icons only; Font Awesome Free ships an incomplete regular set. -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="admin.css" />
@@ -17,24 +18,29 @@
 
 <body class="adm is-locked">
 
-  <!-- The gate. Everything else on the page stays hidden behind CSS until the
-       password checks out, so nothing flashes on screen first.
+  <!-- The gate. Everything else stays hidden behind CSS until an admin is
+       signed in, so no customer data paints first.
 
-       Worth being clear about what this is: the check runs in the browser, in
-       code anyone can read, so it stops a curious visitor and not a determined
-       one. The password itself is never here — only a PBKDF2 hash of it. -->
-  <div class="lock" id="lock">
+       Unlike the password this page used to carry, this one is real: the
+       sign-in is Supabase's, and the order rows are only readable by an
+       account whose profile says is_admin. Editing this file gets nobody in. -->
+  <div class="lock" id="lock" hidden>
     <form class="lock__card" id="lockForm">
       <span class="lock__badge">
         <img class="lock__logo" src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
       </span>
       <h1 class="lock__title">Order Book</h1>
-      <p class="lock__desc">Enter the team password to continue.</p>
+      <p class="lock__desc">Sign in with your WE3 account.</p>
 
       <div class="lock__field">
+        <input class="input" type="text" id="lockUser" autocomplete="username"
+               autocapitalize="none" spellcheck="false" placeholder="Username" />
+      </div>
+
+      <div class="lock__field pw">
         <input class="input" type="password" id="lockPw" autocomplete="current-password"
-               placeholder="Password" aria-label="Password" autofocus />
-        <button class="lock__eye" type="button" id="lockEye" aria-label="Show password">
+               placeholder="Password" />
+        <button class="pw__eye" type="button" id="lockEye" aria-label="Show password">
           <i class="fa-solid fa-eye" aria-hidden="true"></i>
         </button>
       </div>
@@ -42,7 +48,7 @@
       <p class="lock__err" id="lockErr" hidden></p>
 
       <button class="btn btn--green btn--block" type="submit" id="lockBtn">
-        <i class="fa-solid fa-unlock" aria-hidden="true"></i> Unlock
+        <i class="fa-solid fa-unlock" aria-hidden="true"></i> Sign in
       </button>
     </form>
   </div>
@@ -53,131 +59,75 @@
       <span>Order Book</span>
     </a>
     <div class="adm__top-actions">
-      <button class="btn btn--outline-dark btn--sm" id="exportBtn">
-        <i class="fa-solid fa-download" aria-hidden="true"></i> Export
+      <span class="adm__who" id="whoami"></span>
+      <button class="btn btn--outline-dark btn--sm" id="refreshBtn">
+        <i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh
       </button>
-      <label class="btn btn--outline-dark btn--sm" for="importFile">
-        <i class="fa-solid fa-upload" aria-hidden="true"></i> Import
-      </label>
-      <input type="file" id="importFile" accept="application/json" hidden />
       <a class="btn btn--green btn--sm" href="index.html">
         <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Website
       </a>
-      <button class="btn btn--outline-dark btn--sm" id="lockBackBtn">
-        <i class="fa-solid fa-lock" aria-hidden="true"></i> Lock
+      <button class="btn btn--outline-dark btn--sm" id="signOutBtn">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
       </button>
     </div>
   </header>
 
-  <!-- This is stated up front rather than buried: the page cannot reach a
-       customer's phone, so nobody assumes marking an order here tells them. -->
+  <!-- Stated up front so nobody assumes more than this page does. -->
   <p class="adm__notice">
     <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
     <span>
-      This order book lives in <strong>this browser only</strong>. Marking an order
-      verified here does not change what the customer sees on their phone — tell
-      them on WhatsApp. Use <strong>Export</strong> to share the book with the team.
+      Orders arrive here on their own. Marking one <strong>verified</strong> or
+      <strong>rejected</strong> changes what the customer sees under My Orders
+      straight away — but it does not message them, so send the WhatsApp too.
+      A note you save here is shown to them.
     </span>
   </p>
 
   <main class="adm__main">
-    <section class="adm__stats" aria-label="Summary">
-      <article class="stat-tile">
+
+    <div class="adm__stats">
+      <div class="stat-tile">
         <span class="stat-tile__label">Orders</span>
         <strong class="stat-tile__value" id="statTotal">0</strong>
-      </article>
-      <article class="stat-tile stat-tile--pending">
+      </div>
+      <div class="stat-tile stat-tile--pending">
         <span class="stat-tile__label">Pending</span>
         <strong class="stat-tile__value" id="statPending">0</strong>
-      </article>
-      <article class="stat-tile stat-tile--ok">
+      </div>
+      <div class="stat-tile stat-tile--ok">
         <span class="stat-tile__label">Verified</span>
         <strong class="stat-tile__value" id="statVerified">0</strong>
-      </article>
-      <article class="stat-tile stat-tile--money">
+      </div>
+      <div class="stat-tile">
         <span class="stat-tile__label">Received (verified)</span>
         <strong class="stat-tile__value" id="statMoney">₹0</strong>
-      </article>
-      <article class="stat-tile stat-tile--due">
+      </div>
+      <div class="stat-tile">
         <span class="stat-tile__label">Balance due</span>
         <strong class="stat-tile__value" id="statDue">₹0</strong>
-      </article>
-    </section>
-
-    <section class="adm__panel" aria-labelledby="addTitle">
-      <h2 class="adm__h" id="addTitle">Log an order</h2>
-      <!-- The customer's "I have paid" message is generated from a fixed
-           template, so it can be read back apart. This is as close to a
-           connection as the site gets without a server: they paste, the form
-           fills, nobody retypes an amount wrong. -->
-      <div class="paste">
-        <label for="pasteBox">
-          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
-          Paste their WhatsApp message here
-        </label>
-        <textarea class="input paste__box" id="pasteBox" rows="3"
-          placeholder="Copy the customer's &quot;I have paid&quot; message from WhatsApp and paste it here. The form below fills itself in."></textarea>
-        <p class="paste__msg" id="pasteMsg" hidden></p>
       </div>
-
-      <form class="adm__form" id="orderForm" novalidate>
-        <div class="cf-row">
-          <label for="fBusiness">Business / shop</label>
-          <input class="input" id="fBusiness" placeholder="Business name" />
-        </div>
-        <div class="cf-row">
-          <label for="fName">Customer name <span class="req">*</span></label>
-          <input class="input" id="fName" required placeholder="Customer name" />
-        </div>
-        <div class="cf-row">
-          <label for="fPhone">Phone <span class="req">*</span></label>
-          <input class="input" id="fPhone" required inputmode="numeric" placeholder="Phone number" />
-        </div>
-        <div class="cf-row">
-          <label for="fItems">What they ordered</label>
-          <input class="input" id="fItems" placeholder="What they ordered" />
-        </div>
-        <div class="cf-row">
-          <label for="fTotal">Order total ₹ <span class="req">*</span></label>
-          <input class="input" id="fTotal" required inputmode="numeric" placeholder="Order total" />
-        </div>
-        <div class="cf-row">
-          <label for="fPaid">Paid now ₹ <span class="req">*</span></label>
-          <input class="input" id="fPaid" required inputmode="numeric" placeholder="Paid now" />
-        </div>
-        <div class="cf-row">
-          <label for="fRef">Order reference</label>
-          <input class="input" id="fRef" placeholder="From their screen" />
-        </div>
-        <div class="cf-row cf-row--wide">
-          <label for="fNote">Note</label>
-          <input class="input" id="fNote" placeholder="UTR number, or anything worth remembering" />
-        </div>
-        <p class="cf-err" id="formErr" hidden></p>
-        <button class="btn btn--green btn--block" type="submit">
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add order
-        </button>
-      </form>
-    </section>
+    </div>
 
     <section class="adm__panel" aria-labelledby="listTitle">
       <div class="adm__list-head">
         <h2 class="adm__h" id="listTitle">Orders</h2>
         <div class="chips" role="tablist" aria-label="Filter orders">
-          <button class="chip is-active" role="tab" aria-selected="true" data-status="all">All</button>
+          <button class="chip is-active" role="tab" aria-selected="true"  data-status="all">All</button>
           <button class="chip" role="tab" aria-selected="false" data-status="pending">Pending</button>
           <button class="chip" role="tab" aria-selected="false" data-status="verified">Verified</button>
           <button class="chip" role="tab" aria-selected="false" data-status="rejected">Rejected</button>
         </div>
       </div>
 
-      <input class="input adm__search" id="search" placeholder="Search name, phone or reference…" />
+      <input class="input adm__search" id="search" placeholder="Search name, business, phone or reference…" />
 
-      <p class="adm__empty" id="listEmpty">No orders yet. Log one above as soon as a payment screenshot arrives.</p>
+      <p class="adm__state" id="loadState" hidden></p>
+      <p class="adm__empty" id="listEmpty">No orders yet. They appear here the moment a customer places one.</p>
       <ul class="adm__orders" id="orderList"></ul>
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
   <script src="admin.js" defer></script>
 </body>
 </html>

@@ -89,46 +89,6 @@
 }
 .adm__h { font-size: var(--fs-h3); font-weight: 700; margin-bottom: 14px; }
 
-/* Paste-to-fill. Deliberately set apart from the form below it: it is the
-   fast path, and the fields are the fallback for when it cannot read a
-   message. */
-.paste {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  border-radius: var(--r);
-  border: 1px dashed var(--line);
-  background: var(--bg-soft);
-}
-.paste label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--ink);
-}
-.paste label i { color: var(--green); }
-.paste__box {
-  width: 100%;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.5;
-}
-.paste__msg {
-  margin-top: 8px;
-  font-size: var(--fs-sm);
-  line-height: 1.45;
-}
-.paste__msg.is-good { color: var(--green-700); }
-.paste__msg.is-warn { color: #92400E; font-weight: 600; }
-.paste__msg.is-bad  { color: #B91C1C; }
-
-.adm__form { display: grid; gap: 10px; }
-@media (min-width: 700px) {
-  .adm__form { grid-template-columns: repeat(3, 1fr); align-items: end; }
-  .adm__form .cf-row--wide { grid-column: 1 / -1; }
-  .adm__form .cf-err, .adm__form button { grid-column: 1 / -1; }
-}
-
 .adm__list-head {
   display: flex;
   flex-wrap: wrap;
@@ -285,22 +245,10 @@
 }
 
 .lock__field { position: relative; }
-.lock__field .input { width: 100%; padding-right: 42px; text-align: center; }
+.lock__field { margin-bottom: 10px; }
+.lock__field .input { width: 100%; text-align: center; }
+.lock__field.pw .input { padding-right: 42px; }
 
-.lock__eye {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
-  color: var(--body);
-  transition: color var(--tr), background var(--tr);
-}
-.lock__eye:hover { color: var(--ink); background: var(--bg-soft); }
 
 .lock__err {
   margin-top: 10px;
@@ -310,3 +258,53 @@
 }
 
 .lock__card .btn { margin-top: 14px; }
+
+
+/* ---- signed-in identity, load state, and the per-order note ---- */
+.adm__who {
+  margin-right: 4px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--body);
+}
+
+.adm__state {
+  margin: 10px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--body);
+}
+.adm__state.is-bad { color: #B91C1C; font-weight: 600; }
+
+.adm-order__brief {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--body);
+}
+.adm-order__brief strong { color: var(--ink); }
+
+/* The note goes to the customer, so it sits with the order rather than in a
+   separate admin-only panel. */
+.adm-order__noterow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.adm-order__noterow .input { flex: 1 1 200px; font-size: var(--fs-sm); }
+.adm-order__notesave {
+  padding: 7px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color var(--tr), background var(--tr), color var(--tr);
+}
+.adm-order__notesave:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green-700);
+}
+.adm-order__notesave:disabled { opacity: 0.5; }
