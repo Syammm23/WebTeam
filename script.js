@@ -53,9 +53,13 @@
     // A year of domain + hosting is bundled into every website package
     // rather than being sold separately.
     website: 4999,
-    reel: 1999,          // per reel
+    // First reel 1,999, every one after it 2,000. The odd extra rupee is
+    // deliberate: it lands every reel total on a 999 — 1,999 / 3,999 / 5,999
+    // / 7,999 / 9,999 — instead of the 3,998 a flat per-unit price gives.
+    reel: 1999,
+    reelExtra: 2000,
     video: 999,          // editing footage the customer shot themselves
-    shopShoot: 298,      // add-on: we shoot the shop for their own site
+    shopShoot: 299,      // add-on: we shoot the shop for their own site
     maintenance: { "none": 0, "6 Months": 2999, "1 Year": 4999 }
   };
 
@@ -85,6 +89,26 @@
   /** 12000 -> "₹12,000" */
   function formatINR(amount) {
     return '₹' + Number(amount).toLocaleString('en-IN');
+  }
+
+  /** What `qty` reels cost, on the 1,999-then-2,000 ladder. */
+  function reelTotal(qty) {
+    return qty > 0 ? PRICES.reel + (qty - 1) * PRICES.reelExtra : 0;
+  }
+
+  /**
+   * What one cart line costs.
+   *
+   * Most lines are simply price x quantity. A line carrying `step` prices the
+   * first one at `price` and every one after it at `step` — reels, so their
+   * totals stay on a 999. Everything that touches money goes through here so
+   * the cart, the UPI amount, the WhatsApp message and the email cannot drift
+   * apart.
+   */
+  function lineTotal(item) {
+    const qty = Math.max(0, Number(item.qty) || 0);
+    if (!qty) return 0;
+    return item.step ? item.price + (qty - 1) * item.step : item.price * qty;
   }
 
   /**
@@ -315,7 +339,7 @@
   function priceSelection(sel) {
     const alaCarte =
       (sel.website ? PRICES.website : 0) +
-      (sel.reel ? sel.reels * PRICES.reel : 0) +
+      (sel.reel ? reelTotal(sel.reels) : 0) +
       (sel.video ? PRICES.video : 0);
 
     const allThree = sel.website && sel.reel && sel.video;
@@ -325,9 +349,9 @@
 
     if (allThree) {
       const reels = Math.max(sel.reels, COMBO.reelsIncluded);
-      comboTotal = COMBO.price + (reels - COMBO.reelsIncluded) * PRICES.reel;
+      comboTotal = COMBO.price + (reels - COMBO.reelsIncluded) * PRICES.reelExtra;
       // What the combo's own contents would cost bought separately
-      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.video;
+      comboListPrice = PRICES.website + reelTotal(reels) + PRICES.video;
       comboApplies = comboTotal < comboListPrice;
     }
 
@@ -351,7 +375,7 @@
 
     // Reel price in the option list tracks the quantity
     const reelPriceEl = $('[data-price-for="reel"]');
-    if (reelPriceEl) reelPriceEl.textContent = formatINR(sel.reels * PRICES.reel);
+    if (reelPriceEl) reelPriceEl.textContent = formatINR(reelTotal(sel.reels));
 
     // Sub-fields stay in place (as in the design) but go dim and inert until
     // their service is ticked, so the "(if X selected)" hints are actionable.
@@ -369,7 +393,7 @@
     // Every row is always shown; unselected ones read as a dash.
     const rows = [
       ['Website',          sel.website ? formatINR(PRICES.website) : '–'],
-      ['Reels (' + sel.reels + ')', sel.reel ? formatINR(sel.reels * PRICES.reel) : '–'],
+      ['Reels (' + sel.reels + ')', sel.reel ? formatINR(reelTotal(sel.reels)) : '–'],
       ['Video Editing',    sel.video ? formatINR(PRICES.video) : '–'],
       ['Domain + Hosting (1 yr)', (sel.website || q.comboApplies) ? 'included free' : '–'],
       ['Store Photos',     sel.shopShootPrice ? formatINR(sel.shopShootPrice) : '–'],
@@ -437,7 +461,10 @@
       addToCart({ id: 'combo', name: 'Combo Package', price: COMBO.price, kind: 'web' });
       const extraReels = Math.max(sel.reels, COMBO.reelsIncluded) - COMBO.reelsIncluded;
       if (extraReels > 0) {
-        addToCart({ id: 'reel', name: 'Reel Making', price: PRICES.reel, kind: 'media', qty: extraReels });
+        addToCart({
+          id: 'reel', name: 'Reel Making', price: PRICES.reel,
+          step: PRICES.reelExtra, kind: 'media', qty: extraReels
+        });
       }
     } else {
       if (sel.website) {
@@ -449,7 +476,7 @@
       if (sel.reel) {
         addToCart({
           id: 'reel', name: 'Reel Making', price: PRICES.reel,
-          kind: 'media', qty: sel.reels
+          step: PRICES.reelExtra, kind: 'media', qty: sel.reels
         });
       }
       if (sel.video) {
@@ -542,7 +569,7 @@
 
   /* ---- maths ---- */
   function cartSubtotal() {
-    return cart.reduce(function (sum, i) { return sum + i.price * i.qty; }, 0);
+    return cart.reduce(function (sum, i) { return sum + lineTotal(i); }, 0);
   }
   function cartCount() {
     return cart.reduce(function (n, i) { return n + i.qty; }, 0);
@@ -574,6 +601,9 @@
     const existing = cart.find(function (i) { return i.id === item.id; });
     if (existing) {
       existing.max = max;
+      // A cart saved before the ladder existed has no step; adopt it so an
+      // old basket reprices the same way a new one does.
+      existing.step = item.step || existing.step || 0;
       existing.qty = Math.min(max, existing.qty + (item.qty || 1));
       if (item.note) existing.note = item.note;
       if (item.name) existing.name = item.name;
@@ -582,6 +612,7 @@
         id: item.id,
         name: item.name,
         price: item.price,
+        step: item.step || 0,   // price of each one after the first, if different
         kind: item.kind || 'web',
         qty: Math.min(max, item.qty || 1),
         max: max,
@@ -639,7 +670,7 @@
       // "each" only earns its place once there is more than one of something
       const unitBits = [];
       if (item.note) unitBits.push(item.note);
-      if (item.qty > 1) unitBits.push(formatINR(item.price) + ' each');
+      if (item.qty > 1 && !item.step) unitBits.push(formatINR(item.price) + ' each');
       if (unitBits.length) {
         const unit = document.createElement('div');
         unit.className = 'cart__item-unit';
@@ -649,7 +680,7 @@
 
       const price = document.createElement('div');
       price.className = 'cart__item-price';
-      price.textContent = formatINR(item.price * item.qty);
+      price.textContent = formatINR(lineTotal(item));
 
       const controls = document.createElement('div');
       controls.className = 'cart__item-controls';
@@ -750,7 +781,7 @@
     // What the combo would replace, keeping anything it does not cover.
     const replaced = cart.filter(function (i) {
       return COMBO_COVERS.indexOf(i.id) > -1;
-    }).reduce(function (sum, i) { return sum + i.price * i.qty; }, 0);
+    }).reduce(function (sum, i) { return sum + lineTotal(i); }, 0);
 
     const saving = replaced - COMBO.price;
     if (saving <= 0) {
@@ -810,6 +841,7 @@
         id: btn.dataset.add,
         name: btn.dataset.name,
         price: parseInt(btn.dataset.price, 10),
+        step: btn.dataset.step ? parseInt(btn.dataset.step, 10) : 0,
         kind: btn.dataset.kind,
         max: btn.dataset.max ? parseInt(btn.dataset.max, 10) : undefined
       });
@@ -1053,7 +1085,7 @@
       'Email': order.email || '—',
       'What they need': order.brief || '—',
       'Ordered': order.items.map(function (i) {
-        return i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty);
+        return i.name + ' x' + i.qty + ' — ' + formatINR(lineTotal(i));
       }).join('\n'),
       'Order total': formatINR(order.subtotal),
       'Paid now': formatINR(order.amount) +
@@ -1194,7 +1226,7 @@
     if (order.email) lines.push('Email: ' + order.email);
     lines.push('');
     order.items.forEach(function (i) {
-      lines.push('• ' + i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty));
+      lines.push('• ' + i.name + ' x' + i.qty + ' — ' + formatINR(lineTotal(i)));
     });
     lines.push('');
     lines.push('Total: ' + formatINR(order.subtotal));
@@ -1260,7 +1292,7 @@
       itemsEl.className = 'order__items';
       order.items.forEach(function (i) {
         const row = document.createElement('span');
-        row.textContent = i.name + ' x' + i.qty + ' — ' + formatINR(i.price * i.qty);
+        row.textContent = i.name + ' x' + i.qty + ' — ' + formatINR(lineTotal(i));
         itemsEl.appendChild(row);
       });
 
