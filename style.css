@@ -1424,8 +1424,7 @@ textarea.input { resize: vertical; min-height: 44px; }
   .nav__cart--orders { display: none; }
 }
 
-.nav__cart-count,
-.cart-fab__count {
+.nav__cart-count {
   position: absolute;
   top: -5px;
   right: -5px;
@@ -1441,25 +1440,77 @@ textarea.input { resize: vertical; min-height: 44px; }
   text-align: center;
 }
 
-/* The nav scrolls away with the hero, so the cart also gets a fixed button */
-.cart-fab {
+/* The cart bar. Adding something shows this instead of opening the drawer,
+   so a visitor can keep adding and go to the cart when they mean to. */
+.cartbar {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 150;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--r-pill);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 62%, transparent);
+}
+.cartbar__btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 11px 14px;
+  border-radius: var(--r);
   background: var(--green-600);
   color: #fff;
-  font-size: 18px;
-  box-shadow: 0 10px 26px -8px rgba(22, 163, 74, 0.7);
-  transition: transform var(--tr), background var(--tr);
+  text-align: left;
+  box-shadow: 0 12px 30px -10px rgba(22, 163, 74, 0.75);
+  transition: background var(--tr);
 }
-.cart-fab:hover { transform: scale(1.06); background: var(--green-700); }
-.cart-fab__count { top: -2px; right: -2px; border: 2px solid #fff; height: 20px; line-height: 16px; }
+.cartbar__btn:hover { background: var(--green-700); }
+
+.cartbar__ico {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 13px;
+}
+.cartbar__meta { display: grid; flex: 1; line-height: 1.25; }
+.cartbar__meta strong { font-size: var(--fs-sm); font-weight: 600; }
+.cartbar__meta em {
+  font-style: normal;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cartbar__cta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.cartbar__cta i { font-size: 11px; }
+
+/* Room for the bar, so it never sits on top of the last line of the page.
+   The height is measured and set by script.js; the fallback covers the moment
+   before that runs. */
+body.has-cartbar { padding-bottom: calc(var(--cartbar-h, 78px) + 12px); }
+
+/* The drawer and the dialogs cover it anyway; hiding it keeps it out of the
+   tab order while they are open. */
+body.is-locked .cartbar { visibility: hidden; }
+
+/* "Added" on an Add to Cart button, since the cart no longer opens to say so */
+.btn.is-added, .addon__opt.is-added {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  color: #fff;
+}
 
 /* ---- Drawer ---- */
 .cart { position: fixed; inset: 0; z-index: 260; }

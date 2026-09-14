@@ -71,9 +71,9 @@
       "@type": "OfferCatalog",
       "name": "Packages",
       "itemListElement": [
-        { "@type": "Offer", "name": "Combo Package", "price": "9000", "priceCurrency": "INR" },
-        { "@type": "Offer", "name": "Website Only", "price": "5000", "priceCurrency": "INR" },
-        { "@type": "Offer", "name": "Reel Making", "price": "2000", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Combo Package", "price": "8999", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Website Only", "price": "4999", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Reel Making", "price": "1999", "priceCurrency": "INR" },
         { "@type": "Offer", "name": "Video Editing", "price": "999", "priceCurrency": "INR" }
       ]
     }
@@ -830,12 +830,24 @@
 
 
   <!-- ======================================================================
-       FLOATING CART BUTTON — always reachable, since the nav scrolls away
+       CART BAR
+
+       Adding something never yanks the cart open over what you were reading.
+       The bar appears along the bottom instead, so you can keep adding and
+       go to the cart when you are actually done.
        ====================================================================== -->
-  <button class="cart-fab" id="cartFab" data-open-cart hidden aria-label="Open cart">
-    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-    <span class="cart-fab__count" data-cart-count>0</span>
-  </button>
+  <div class="cartbar" id="cartBar" hidden>
+    <button class="cartbar__btn" data-open-cart>
+      <span class="cartbar__ico" aria-hidden="true"><i class="fa-solid fa-cart-shopping"></i></span>
+      <span class="cartbar__meta">
+        <strong id="cartBarCount">0 items</strong>
+        <em id="cartBarTotal">₹0</em>
+      </span>
+      <span class="cartbar__cta">
+        Go to Cart <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </span>
+    </button>
+  </div>
 
   <!-- ======================================================================
        CART + UPI CHECKOUT
