@@ -104,7 +104,7 @@
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
       this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-      this.innerHTML = '<i class="fa-regular fa-eye' + (show ? '-slash' : '') +
+      this.innerHTML = '<i class="fa-solid fa-eye' + (show ? '-slash' : '') +
                        '" aria-hidden="true"></i>';
       input.focus();
     });

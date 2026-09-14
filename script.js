@@ -22,18 +22,6 @@
       main: "917990853947"
     },
 
-    // Where an order lands as an email. Web3Forms takes the POST and
-    // forwards it; the site stays a plain static site with no server.
-    //
-    // PLACEHOLDER: paste the access key from web3forms.com here. While it is
-    // empty no email is sent and nothing breaks — the WhatsApp message still
-    // carries every one of these details.
-    orderEmail: {
-      accessKey: "",
-      endpoint: "https://api.web3forms.com/submit",
-      subject: "New paid order — WE3"
-    },
-
     // Accounts and the shared order book. Both values are meant to sit in
     // public JavaScript — the database's own rules decide what this key can
     // do, and they allow registering, signing in, and reading or creating a
@@ -451,7 +439,7 @@
     const show = authPass.type === 'password';
     authPass.type = show ? 'text' : 'password';
     this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-    this.innerHTML = '<i class="fa-regular fa-eye' + (show ? '-slash' : '') +
+    this.innerHTML = '<i class="fa-solid fa-eye' + (show ? '-slash' : '') +
                      '" aria-hidden="true"></i>';
     authPass.focus();
   });
@@ -614,7 +602,7 @@
     navAccount.classList.toggle('is-in', inUser);
     navAccount.innerHTML = inUser
       ? '<i class="fa-solid fa-user" aria-hidden="true"></i>'
-      : '<i class="fa-regular fa-user" aria-hidden="true"></i>';
+      : '<i class="fa-solid fa-user" aria-hidden="true"></i>';
   }
 
   navAccount.addEventListener('click', function () {
@@ -1450,7 +1438,7 @@
     navigator.clipboard.writeText(CONFIG.upi.id).then(function () {
       btn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> Copied';
       setTimeout(function () {
-        btn.innerHTML = '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy';
+        btn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i> Copy';
       }, 1800);
     }, function () { /* ignore */ });
   });
@@ -1460,67 +1448,12 @@
     showCartScreen();
   });
 
-  /**
-   * Emails the order so the team learns who paid and what they want.
-   *
-   * A UPI transfer carries a name and an amount and nothing else — no
-   * business name, no brief, no way to tell two Rameshes apart. This is how
-   * that information actually arrives.
-   *
-   * It never blocks or fails the customer: if the key is missing, the network
-   * is down, or the service is having a bad day, the order still goes through
-   * and the WhatsApp message carries the same details as a backup.
-   */
-  function emailOrder(order) {
-    const cfg = CONFIG.orderEmail;
-    if (!cfg || !cfg.accessKey) return;
-
-    const body = {
-      access_key: cfg.accessKey,
-      subject: cfg.subject + ' — ' + order.business,
-      from_name: order.business + ' (' + order.name + ')',
-      // Replying to the email goes straight to the customer when they left
-      // an address; otherwise the team has their phone number below.
-      replyto: order.email || '',
-
-      'Order reference': order.id,
-      'Business': order.business,
-      'Contact person': order.name,
-      'Phone': order.phone,
-      'Email': order.email || '—',
-      'What they need': order.brief || '—',
-      'Ordered': order.items.map(function (i) {
-        return i.name + ' x' + i.qty + ' — ' + formatINR(lineTotal(i));
-      }).join('\n'),
-      'Order total': formatINR(order.subtotal),
-      'Paid now': formatINR(order.amount) +
-                  (order.split === 'half' ? ' (50% advance)' : ' (full payment)'),
-      'Balance on delivery': formatINR(order.subtotal - order.amount),
-      'Placed at': new Date().toLocaleString('en-IN'),
-
-      // Web3Forms drops anything that fills this in; a person never sees it.
-      botcheck: ''
-    };
-
-    // keepalive so the send survives the customer navigating away, and a
-    // catch so a failure stays invisible to them.
-    try {
-      fetch(cfg.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body),
-        keepalive: true
-      }).catch(function () { /* WhatsApp is the backup */ });
-    } catch (e) { /* WhatsApp is the backup */ }
-  }
-
   /* ---- "I have paid" — the order goes into the book as pending ---- */
   $('#payDoneBtn').addEventListener('click', function () {
     if (!lastOrder) return;
 
     lastOrder.status = 'pending';
     recordOrder(lastOrder);
-    emailOrder(lastOrder);
 
     // Now that the order is placed the cart starts fresh; the items live on
     // in the order history rather than lingering as a half-finished basket.
@@ -1576,7 +1509,6 @@
   const ordersEmpty  = $('#ordersEmpty');
   const ordersNote   = $('#ordersNote');
   const ordersNoteHi = $('#ordersNoteHi');
-  const ordersShot   = $('#ordersShot');
 
   function loadLocalOrders() {
     try {
@@ -1723,7 +1655,6 @@
     ordersEmpty.hidden = orders.length > 0;
     ordersNote.hidden  = orders.length === 0;
     ordersNoteHi.hidden = orders.length === 0;
-    ordersShot.hidden   = orders.length === 0;
     ordersListEl.innerHTML = '';
 
     orders.forEach(function (order) {
