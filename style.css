@@ -1463,6 +1463,10 @@ textarea.input { resize: vertical; min-height: 44px; }
 
 /* ---- Drawer ---- */
 .cart { position: fixed; inset: 0; z-index: 260; }
+
+/* The account dialog is the one modal opened from inside the cart, so it has
+   to sit above it. The WhatsApp modal never is, and stays at 250. */
+#authModal { z-index: 270; }
 .cart[hidden] { display: none; }
 
 /* Invisible click-catcher, like the menu's: tapping outside closes the cart
@@ -2204,3 +2208,73 @@ textarea.input { resize: vertical; min-height: 44px; }
 .flash.is-good { background: var(--green-soft); border-color: var(--green-line); color: var(--green-700); }
 .flash.is-bad  { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
 .flash.is-wait { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+
+
+/* ==========================================================================
+   19. ACCOUNT — sign in / register
+   ========================================================================== */
+.auth__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border-radius: var(--r);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+.auth__tab {
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--body);
+  transition: background var(--tr), color var(--tr);
+}
+.auth__tab.is-on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+.auth .cf-row { text-align: left; margin-bottom: 12px; }
+.auth .cf-row label { display: block; margin-bottom: 5px; font-size: var(--fs-sm); font-weight: 600; }
+
+.auth__hint {
+  margin-top: 5px;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--body);
+}
+.auth__hint.is-good { color: var(--green-700); font-weight: 600; }
+.auth__hint.is-bad  { color: #B91C1C; }
+.auth__hint.is-info { color: var(--ink); }
+
+/* Shared by the password fields here and on the order book's lock screen. */
+.pw { position: relative; }
+.pw .input { width: 100%; padding-right: 42px; }
+.pw__eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  color: var(--body);
+  transition: color var(--tr), background var(--tr);
+}
+.pw__eye:hover { color: var(--ink); background: var(--bg-soft); }
+
+.auth__foot {
+  margin-top: 14px;
+  font-size: var(--fs-sm);
+  color: var(--body);
+}
+.linkish {
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Signed in, the header icon fills in — a small, quiet "you are known here". */
+.nav__cart--user.is-in { border-color: var(--green); color: var(--green); }
