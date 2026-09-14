@@ -66,10 +66,20 @@
     $('#lock').hidden = false;
   }
 
+  /**
+   * What the team calls each other, rather than what the column is called.
+   * is_owner stays the flag the database checks; this is only the label.
+   */
+  function roleLabel(p) {
+    if (p.is_owner) return 'Founder';
+    if (p.is_admin) return 'Co-founder';
+    return '';
+  }
+
   function showUnlocked() {
     document.body.classList.remove('is-locked');
     $('#lock').hidden = true;
-    $('#whoami').textContent = '@' + me.username + (me.is_owner ? ' · owner' : '');
+    $('#whoami').textContent = '@' + me.username + ' · ' + roleLabel(me);
   }
 
   function fmtWhen(value) {
@@ -98,7 +108,12 @@
           lockErr('That account is not an admin. Ask someone to switch it on for you.');
           return client.auth.signOut().then(function () { return false; });
         }
-        me = { id: user.id, username: row.username, is_owner: Boolean(row.is_owner) };
+        me = {
+          id: user.id,
+          username: row.username,
+          is_admin: true,
+          is_owner: Boolean(row.is_owner)
+        };
         showUnlocked();
         load();
         return true;
@@ -146,6 +161,98 @@
     this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     this.innerHTML = '<i class="fa-solid fa-eye' + (show ? '-slash' : '') + '" aria-hidden="true"></i>';
     el.focus();
+  });
+
+  /* ---- my account -------------------------------------------------------
+     Small on purpose: an admin needs to change their own password and fix
+     their own phone number, and nothing else belongs to them here. */
+  const meModal = $('#meModal');
+
+  function meNote(el, text, cls) {
+    el.hidden = !text;
+    el.textContent = text || '';
+    el.className = 'me__msg ' + (cls || '');
+  }
+
+  function openMe() {
+    const mine = people.find(function (p) { return p.username === me.username; }) || {};
+    $('#meUser').textContent = '@' + me.username;
+    $('#meRole').textContent = roleLabel(me);
+    $('#meRole').className = 'person__tag' + (me.is_owner ? ' person__tag--owner' : '');
+    $('#meSince').textContent = mine.joined ? 'With WE3 since ' + fmtDate(mine.joined) : '';
+    $('#meLast').textContent = mine.last_login ? 'Last signed in ' + fmtWhen(mine.last_login) : '';
+    $('#meName').value = mine.full_name || '';
+    $('#mePhone').value = mine.phone || '';
+    meNote($('#meMsg'), '');
+    meNote($('#mePassMsg'), '');
+    $('#mePass').value = '';
+    meModal.hidden = false;
+    $('.modal__dialog', meModal).focus({ preventScroll: true });
+  }
+
+  function closeMe() { meModal.hidden = true; }
+
+  $('#meBtn').addEventListener('click', openMe);
+  $$('[data-close-me]', meModal).forEach(function (el) {
+    el.addEventListener('click', closeMe);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !meModal.hidden) closeMe();
+  });
+
+  $('#meSave').addEventListener('click', function () {
+    const msg = $('#meMsg');
+    const phone = $('#mePhone').value.trim();
+    if (phone && phone.replace(/\D/g, '').length < 10) {
+      meNote(msg, 'That phone number does not look right.', 'is-bad');
+      return;
+    }
+    const btn = this;
+    btn.disabled = true;
+    meNote(msg, 'Saving…', '');
+    client.from('profiles').update({
+      full_name: $('#meName').value.trim() || null,
+      phone: phone || null
+    }).eq('id', me.id).then(function (res) {
+      btn.disabled = false;
+      if (res.error) { meNote(msg, 'Could not save. (' + res.error.message + ')', 'is-bad'); return; }
+      meNote(msg, 'Saved.', 'is-good');
+      loadPeople();
+    }, function () {
+      btn.disabled = false;
+      meNote(msg, 'Could not reach the server.', 'is-bad');
+    });
+  });
+
+  $('#meEye').addEventListener('click', function () {
+    const el = $('#mePass');
+    const show = el.type === 'password';
+    el.type = show ? 'text' : 'password';
+    this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    this.innerHTML = '<i class="fa-solid fa-eye' + (show ? '-slash' : '') + '" aria-hidden="true"></i>';
+    el.focus();
+  });
+
+  $('#mePassBtn').addEventListener('click', function () {
+    const msg = $('#mePassMsg');
+    const el = $('#mePass');
+    if (el.value.length < 8) {
+      meNote(msg, 'Use a password of at least 8 characters.', 'is-bad');
+      el.focus();
+      return;
+    }
+    const btn = this;
+    btn.disabled = true;
+    meNote(msg, 'Changing…', '');
+    client.auth.updateUser({ password: el.value }).then(function (res) {
+      btn.disabled = false;
+      if (res.error) { meNote(msg, 'Could not change it. (' + res.error.message + ')', 'is-bad'); return; }
+      el.value = '';
+      meNote(msg, 'Password changed. Use the new one next time you sign in.', 'is-good');
+    }, function () {
+      btn.disabled = false;
+      meNote(msg, 'Could not reach the server.', 'is-bad');
+    });
   });
 
   $('#signOutBtn').addEventListener('click', function () {
@@ -231,15 +338,11 @@
       name.textContent = '@' + p.username;
       head.appendChild(name);
 
-      if (p.is_owner) {
+      const role = roleLabel(p);
+      if (role) {
         const tag = document.createElement('span');
-        tag.className = 'person__tag person__tag--owner';
-        tag.textContent = 'owner';
-        head.appendChild(tag);
-      } else if (p.is_admin) {
-        const tag = document.createElement('span');
-        tag.className = 'person__tag';
-        tag.textContent = 'admin';
+        tag.className = 'person__tag' + (p.is_owner ? ' person__tag--owner' : '');
+        tag.textContent = role;
         head.appendChild(tag);
       }
 
