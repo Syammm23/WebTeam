@@ -308,3 +308,109 @@
   color: var(--green-700);
 }
 .adm-order__notesave:disabled { opacity: 0.5; }
+
+
+/* ==========================================================================
+   HISTORY, THE LOCK, AND PEOPLE
+   ========================================================================== */
+
+/* Every change to an order, oldest at the bottom. Written by a database
+   trigger, so this is a record rather than a claim. */
+.hist {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  list-style: none;
+}
+.hist li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: var(--fs-xs);
+  color: var(--body);
+}
+.hist strong { color: var(--ink); font-weight: 600; }
+.hist__when { margin-left: auto; color: var(--body); font-variant-numeric: tabular-nums; }
+.hist__to { font-style: normal; font-weight: 700; }
+.hist__to--verified { color: var(--green-700); }
+.hist__to--rejected { color: #B91C1C; }
+.hist__to--pending  { color: #B45309; }
+
+.adm-order__locked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  color: #92400E;
+}
+.adm-order__locked i { font-size: 10px; }
+
+.mark:disabled { opacity: 0.4; cursor: not-allowed; }
+.mark:disabled:hover { border-color: var(--line); background: #fff; }
+.mark.is-on:disabled { opacity: 1; cursor: default; }
+
+/* ---- People ---- */
+.people { display: grid; gap: 10px; list-style: none; }
+.person {
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  background: #fff;
+}
+.person--admin { border-left-color: var(--green); }
+
+.person__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.person__name { font-weight: 700; color: var(--ink); }
+.person__tag {
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  border: 1px solid var(--green-line);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--green-700);
+}
+.person__tag--owner { background: var(--ink); border-color: var(--ink); color: #fff; }
+.person__last {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--body);
+  font-variant-numeric: tabular-nums;
+}
+
+.person__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: var(--fs-xs);
+  color: var(--body);
+}
+.person__meta strong { color: var(--ink); font-weight: 600; }
+
+.person__orders {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--body);
+}
+.person__orders li { display: flex; align-items: center; gap: 7px; }
+.person__orders .order__status { font-size: 10px; padding: 1px 7px; }

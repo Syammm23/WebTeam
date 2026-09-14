@@ -39,7 +39,9 @@
   let orders = [];
   let filter = 'all';
   let query = '';
-  let me = null;          // { id, username }
+  let me = null;          // { id, username, is_owner }
+  let history = {};       // order ref -> [ change, ... ]
+  let people = [];
 
   /* ---- connection ------------------------------------------------------ */
   function connect() {
@@ -67,7 +69,16 @@
   function showUnlocked() {
     document.body.classList.remove('is-locked');
     $('#lock').hidden = true;
-    $('#whoami').textContent = '@' + me.username;
+    $('#whoami').textContent = '@' + me.username + (me.is_owner ? ' · owner' : '');
+  }
+
+  function fmtWhen(value) {
+    try {
+      return new Date(value).toLocaleString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      });
+    } catch (e) { return ''; }
   }
 
   /**
@@ -78,7 +89,7 @@
    * order list they would see is empty anyway because the policies say so.
    */
   function afterSignIn(user) {
-    return client.from('profiles').select('username, is_admin').eq('id', user.id).limit(1)
+    return client.from('profiles').select('username, is_admin, is_owner').eq('id', user.id).limit(1)
       .then(function (res) {
         if (res.error) { lockErr('Could not check your account. (' + res.error.message + ')'); return false; }
         const row = (res.data || [])[0];
@@ -87,7 +98,7 @@
           lockErr('That account is not an admin. Ask someone to switch it on for you.');
           return client.auth.signOut().then(function () { return false; });
         }
-        me = { id: user.id, username: row.username };
+        me = { id: user.id, username: row.username, is_owner: Boolean(row.is_owner) };
         showUnlocked();
         load();
         return true;
@@ -151,7 +162,8 @@
   }
 
   function load() {
-    setStatusLine('Loading orders…');
+    setStatusLine('Loading…');
+
     client.from('orders').select('*').order('created_at', { ascending: false }).limit(500)
       .then(function (res) {
         if (res.error) {
@@ -164,6 +176,114 @@
       }, function () {
         setStatusLine('Could not reach the server.', true);
       });
+
+    loadHistory();
+    loadPeople();
+  }
+
+  function loadHistory() {
+    client.from('order_events').select('*').order('at', { ascending: false }).limit(1000)
+      .then(function (res) {
+        if (res.error) return;          // the list is still usable without it
+        history = {};
+        (res.data || []).forEach(function (e) {
+          (history[e.order_ref] = history[e.order_ref] || []).push(e);
+        });
+        render();
+      }, function () { /* ignore */ });
+  }
+
+  function loadPeople() {
+    client.rpc('admin_people').then(function (res) {
+      if (res.error) {
+        $('#peopleState').hidden = false;
+        $('#peopleState').textContent = 'Could not load people. (' + res.error.message + ')';
+        return;
+      }
+      $('#peopleState').hidden = true;
+      people = res.data || [];
+      renderPeople();
+    }, function () { /* ignore */ });
+  }
+
+  /**
+   * An order is decided once. After that only the owner may move it — the
+   * database enforces that, and this greys the buttons so nobody finds out
+   * by being refused.
+   */
+  function canChangeStatus(order) {
+    return order.status === 'pending' || me.is_owner;
+  }
+
+  function renderPeople() {
+    const list = $('#peopleList');
+    list.innerHTML = '';
+    $('#peopleEmpty').hidden = people.length > 0;
+
+    people.forEach(function (p) {
+      const li = document.createElement('li');
+      li.className = 'person' + (p.is_admin ? ' person--admin' : '');
+
+      const head = document.createElement('div');
+      head.className = 'person__head';
+      const name = document.createElement('span');
+      name.className = 'person__name';
+      name.textContent = '@' + p.username;
+      head.appendChild(name);
+
+      if (p.is_owner) {
+        const tag = document.createElement('span');
+        tag.className = 'person__tag person__tag--owner';
+        tag.textContent = 'owner';
+        head.appendChild(tag);
+      } else if (p.is_admin) {
+        const tag = document.createElement('span');
+        tag.className = 'person__tag';
+        tag.textContent = 'admin';
+        head.appendChild(tag);
+      }
+
+      const last = document.createElement('span');
+      last.className = 'person__last';
+      last.textContent = p.last_login ? 'Last login ' + fmtWhen(p.last_login) : 'Never signed in';
+      head.appendChild(last);
+      li.appendChild(head);
+
+      const meta = document.createElement('div');
+      meta.className = 'person__meta';
+      [
+        ['Name', p.full_name || '—'],
+        ['Business', p.business || '—'],
+        ['Phone', p.phone || '—'],
+        ['Joined', fmtDate(p.joined)],
+        ['Orders', String(p.orders)],
+        ['Paid (verified)', money(p.paid)]
+      ].forEach(function (pair) {
+        const span = document.createElement('span');
+        span.innerHTML = pair[0] + ' <strong></strong>';
+        span.querySelector('strong').textContent = pair[1];
+        meta.appendChild(span);
+      });
+      li.appendChild(meta);
+
+      // Their own orders, so one person's whole history is in one place.
+      const mine = orders.filter(function (o) { return o.phone === p.phone && p.phone; });
+      if (mine.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'person__orders';
+        mine.forEach(function (o) {
+          const row = document.createElement('li');
+          row.innerHTML = '<span class="order__status order__status--' + (o.status || 'pending') + '"></span>';
+          row.querySelector('span').textContent = o.status || 'pending';
+          row.appendChild(document.createTextNode(
+            ' ' + o.ref + ' · ' + fmtDate(o.created_at) + ' · ' + money(o.paid) + ' of ' + money(o.total)));
+          ul.appendChild(row);
+        });
+        li.appendChild(ul);
+      }
+
+      list.appendChild(li);
+    });
   }
 
   $('#refreshBtn').addEventListener('click', load);
@@ -219,10 +339,11 @@
         if (res.error) {
           Object.assign(order, before);    // put it back; it did not happen
           render();
-          setStatusLine('Could not save that change. (' + res.error.message + ')', true);
+          setStatusLine(res.error.message, true);
           return false;
         }
         setStatusLine('');
+        loadHistory();                     // the trigger just wrote a row
         return true;
       }, function () {
         Object.assign(order, before);
@@ -235,13 +356,41 @@
   function statusButton(order, status, label, icon) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'mark mark--' + status + (order.status === status ? ' is-on' : '');
+    const on = order.status === status;
+    b.className = 'mark mark--' + status + (on ? ' is-on' : '');
     b.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i> ' + label;
+    b.disabled = !on && !canChangeStatus(order);
+    if (b.disabled) {
+      b.title = 'Already ' + order.status + '. Only the owner can change it now.';
+    }
     b.addEventListener('click', function () {
       if (order.status === status) return;
       patchOrder(order, { status: status });
     });
     return b;
+  }
+
+  /** One line of an order's history: who moved it where, and when. */
+  function eventLine(e) {
+    const li = document.createElement('li');
+    const when = document.createElement('span');
+    when.className = 'hist__when';
+    when.textContent = fmtWhen(e.at);
+
+    const what = document.createElement('span');
+    if (e.from_status !== e.to_status) {
+      what.innerHTML = '<strong></strong> marked it <em></em>';
+      what.querySelector('strong').textContent = '@' + (e.actor || 'someone');
+      what.querySelector('em').textContent = e.to_status;
+      what.querySelector('em').className = 'hist__to hist__to--' + e.to_status;
+    } else {
+      what.innerHTML = '<strong></strong> changed the note';
+      what.querySelector('strong').textContent = '@' + (e.actor || 'someone');
+    }
+
+    li.appendChild(what);
+    li.appendChild(when);
+    return li;
   }
 
   function render() {
@@ -322,6 +471,23 @@
       noteRow.appendChild(note);
       noteRow.appendChild(saveNote);
       li.appendChild(noteRow);
+
+      const events = history[order.ref] || [];
+      if (events.length) {
+        const hist = document.createElement('ul');
+        hist.className = 'hist';
+        events.forEach(function (e) { hist.appendChild(eventLine(e)); });
+        li.appendChild(hist);
+      }
+
+      if (!canChangeStatus(order)) {
+        const lockNote = document.createElement('p');
+        lockNote.className = 'adm-order__locked';
+        lockNote.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i> ';
+        lockNote.appendChild(document.createTextNode(
+          'Already ' + order.status + '. Only the owner can change it now.'));
+        li.appendChild(lockNote);
+      }
 
       const foot = document.createElement('div');
       foot.className = 'adm-order__foot';
