@@ -605,8 +605,16 @@
         msg.indexOf('for security purposes') > -1) {
       return 'Too many tries — wait a minute and try again. (' + raw + ')';
     }
-    if (msg.indexOf('signups not allowed') > -1 || msg.indexOf('disabled') > -1) {
+    // Two different switches, two different fixes, so they are told apart:
+    // "Allow new users to sign up" being off, versus the Email provider
+    // itself being off.
+    if (msg.indexOf('signups not allowed') > -1) {
       return 'New accounts are switched off at the moment. Message us on WhatsApp ' +
+             'and we will sort it out. (' + raw + ')';
+    }
+    if (msg.indexOf('logins are disabled') > -1 || msg.indexOf('provider is not enabled') > -1 ||
+        msg.indexOf('disabled') > -1) {
+      return 'Sign-in is switched off at the moment. Message us on WhatsApp ' +
              'and we will sort it out. (' + raw + ')';
     }
     if (msg.indexOf('fetch') > -1 || msg.indexOf('network') > -1) {
