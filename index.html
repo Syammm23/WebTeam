@@ -35,7 +35,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Icon set via CDN. Font Awesome's webfont build draws icons from a font
-       file, so no SVG is used anywhere on the page. -->
+       file, so no SVG is used anywhere on the page.
+
+       Only the SOLID style is used. Font Awesome Free ships a complete solid
+       set but only a subset of regular, and asking for a regular icon that is
+       Pro-only renders an empty box instead — which is what fa-regular
+       fa-clock-rotate-left was doing on the My Orders tab. Solid always has
+       the glyph, so nothing can silently go missing. -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
   <link rel="stylesheet" href="style.css" />
@@ -133,7 +139,7 @@
             <span class="nav__cart-count" data-orders-count hidden>0</span>
           </button>
           <button class="nav__cart nav__cart--user" id="navAccount" aria-label="Sign in" hidden>
-            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
           </button>
           <button class="nav__cart" data-open-cart aria-label="Open cart">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
@@ -588,7 +594,7 @@
 
       <div class="why-grid">
         <article data-reveal class="why">
-          <i class="fa-regular fa-gem why__ico" aria-hidden="true"></i>
+          <i class="fa-solid fa-gem why__ico" aria-hidden="true"></i>
           <div>
             <h3>Every Website<br />Is Unique</h3>
             <p>No templates, ever. Custom design for every client.</p>
@@ -743,17 +749,17 @@
         <div class="cform__grid">
           <div class="cf-row">
             <label for="cfName">Your Name <span class="req">*</span></label>
-            <input class="input" type="text" id="cfName" name="name" autocomplete="name" placeholder="Enter your name" required />
+            <input class="input" type="text" id="cfName" name="name" autocomplete="name" placeholder="Your name" required />
             <p class="cf-err" id="cfNameErr" hidden>Please enter your name.</p>
           </div>
           <div class="cf-row">
             <label for="cfBusiness">Business Name <span class="req">*</span></label>
-            <input class="input" type="text" id="cfBusiness" name="business" autocomplete="organization" placeholder="Enter business name" required />
+            <input class="input" type="text" id="cfBusiness" name="business" autocomplete="organization" placeholder="Business name" required />
             <p class="cf-err" id="cfBusinessErr" hidden>Please enter your business name.</p>
           </div>
           <div class="cf-row">
             <label for="cfPhone">Phone Number <span class="req">*</span></label>
-            <input class="input" type="tel" id="cfPhone" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Enter phone number" required />
+            <input class="input" type="tel" id="cfPhone" name="phone" autocomplete="tel" inputmode="numeric" placeholder="Phone number" required />
             <p class="cf-err" id="cfPhoneErr" hidden>Please enter a valid phone number.</p>
           </div>
           <div class="cf-row">
@@ -860,7 +866,7 @@
         <h2 id="cartTitle">Your Cart</h2>
         <div class="cart__head-actions">
           <button class="cart__tab" id="ordersTab" data-show-orders>
-            <i class="fa-regular fa-clock-rotate-left" aria-hidden="true"></i>
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
             My Orders <span class="cart__tab-count" data-orders-count hidden>0</span>
           </button>
           <button class="cart__close" data-close-cart aria-label="Close cart">
@@ -914,19 +920,19 @@
           <div class="cart__fields">
             <div class="cf-row">
               <label for="cartName">Your Name <span class="req">*</span></label>
-              <input class="input" type="text" id="cartName" autocomplete="name" placeholder="Enter your name" />
+              <input class="input" type="text" id="cartName" autocomplete="name" placeholder="Your name" />
             </div>
             <div class="cf-row">
               <label for="cartPhone">Phone Number <span class="req">*</span></label>
-              <input class="input" type="tel" id="cartPhone" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile number" />
+              <input class="input" type="tel" id="cartPhone" autocomplete="tel" inputmode="numeric" placeholder="Phone number" />
             </div>
             <div class="cf-row">
               <label for="cartBusiness">Business / Shop Name <span class="req">*</span></label>
-              <input class="input" type="text" id="cartBusiness" autocomplete="organization" placeholder="Sharma Coaching Classes" />
+              <input class="input" type="text" id="cartBusiness" autocomplete="organization" placeholder="Business name" />
             </div>
             <div class="cf-row">
               <label for="cartEmail">Email <span class="opt-lbl">(optional)</span></label>
-              <input class="input" type="email" id="cartEmail" autocomplete="email" placeholder="you@example.com" />
+              <input class="input" type="email" id="cartEmail" autocomplete="email" placeholder="Email address" />
             </div>
             <div class="cf-row cf-row--wide">
               <label for="cartBrief">What do you need? <span class="opt-lbl">(optional)</span></label>
@@ -968,7 +974,7 @@
           <div class="upi-id">
             <code id="payUpiId">—</code>
             <button type="button" id="payCopyUpi" class="upi-id__copy">
-              <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy
+              <i class="fa-solid fa-copy" aria-hidden="true"></i> Copy
             </button>
           </div>
 
@@ -982,7 +988,7 @@
           <p class="pay__ref">Order reference <strong id="payOrderId">—</strong></p>
 
           <p class="pay__note">
-            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+            <i class="fa-solid fa-clock" aria-hidden="true"></i>
             After paying, tap the button below. We check every payment by hand and
             get back to you within 3 hours.
           </p>
@@ -1001,7 +1007,7 @@
 
       <!-- ---------- SCREEN 3: waiting on verification ---------- -->
       <div class="cart__screen cart__done" id="cartDone" hidden>
-        <i class="fa-regular fa-hourglass-half cart__done-ico cart__done-ico--wait" aria-hidden="true"></i>
+        <i class="fa-solid fa-hourglass-half cart__done-ico cart__done-ico--wait" aria-hidden="true"></i>
         <h3>Payment pending verification</h3>
 
         <dl class="cart__done-meta">
@@ -1010,34 +1016,14 @@
           <div><dt>Status</dt><dd class="is-pending">Pending</dd></div>
         </dl>
 
-        <!-- This order lives in localStorage and nowhere else, so a cleared
-             browser or a different phone loses it. A screenshot is the only
-             copy the customer actually controls — hence the prominence, and
-             hence Hindi alongside English. -->
-        <div class="shot">
-          <i class="fa-solid fa-camera shot__ico" aria-hidden="true"></i>
-          <p class="shot__en">
-            <strong>Take a screenshot of this screen and keep it safe.</strong>
-            It is your proof of payment. This order is stored only in this
-            browser — clear your browser data, or open the site on another
-            phone, and it will not be here.
-          </p>
-          <p class="shot__hi" lang="hi">
-            <strong>इस स्क्रीन का स्क्रीनशॉट लेकर संभालकर रखें।</strong>
-            यही आपके पेमेंट का सबूत है। यह ऑर्डर सिर्फ़ इसी ब्राउज़र में सेव रहता
-            है — ब्राउज़र का डेटा क्लियर करने पर या दूसरे फ़ोन पर साइट खोलने पर
-            यह नहीं मिलेगा।
-          </p>
-        </div>
-
         <p class="cart__done-note">
           <strong>Please send us the payment screenshot on WhatsApp.</strong>
           A UPI transfer only tells us money arrived, not who sent it — the
           screenshot is how we match it to your order.
           <br /><br />
-          We check every payment by hand, usually within 3 hours. Once it is
-          confirmed <strong>we message you on WhatsApp</strong> with a link —
-          open it and this order will show as paid.
+          We check every payment by hand, usually within 3 hours. This order is
+          saved to your account, so the status updates here — on any phone you
+          sign in from.
         </p>
 
         <button class="btn btn--green btn--block btn--lg" id="sendOrderBtn">
@@ -1062,41 +1048,22 @@
             No orders yet. Once you place one it will show up here.
           </p>
 
-          <!-- The same warning as the pending screen, repeated on purpose and
-               at the top rather than the foot. This list is exactly where a
-               customer would otherwise assume the site is keeping their
-               orders safe for them, and it is not. -->
-          <div class="shot" id="ordersShot" hidden>
-            <i class="fa-solid fa-camera shot__ico" aria-hidden="true"></i>
-            <p class="shot__en">
-              <strong>Keep a screenshot of every order.</strong>
-              These are stored only in this browser — clear your browser data,
-              or open the site on another phone, and they will not be here.
-              Your screenshot is your proof of payment.
-            </p>
-            <p class="shot__hi" lang="hi">
-              <strong>हर ऑर्डर का स्क्रीनशॉट संभालकर रखें।</strong>
-              ये सिर्फ़ इसी ब्राउज़र में सेव रहते हैं — ब्राउज़र का डेटा क्लियर करने
-              पर या दूसरे फ़ोन पर साइट खोलने पर ये नहीं मिलेंगे। स्क्रीनशॉट ही
-              आपके पेमेंट का सबूत है।
-            </p>
-          </div>
-
           <ul class="orders__list" id="ordersList"></ul>
 
           <p class="orders__note" id="ordersNote" hidden>
-            Every payment is checked by hand, so a new order stays
-            <strong>pending</strong> until we have confirmed it — usually within
-            3 hours. We tell you on WhatsApp when it is done, with a link that
-            updates this page. Sending the payment screenshot speeds that up.
+            Your orders are saved to your account, so they are here on any
+            phone you sign in from. Every payment is checked by hand, so a new
+            order stays <strong>pending</strong> until we have confirmed it —
+            usually within 3 hours. Sending the payment screenshot on WhatsApp
+            speeds that up.
           </p>
 
           <p class="orders__note orders__note--hi" id="ordersNoteHi" lang="hi" hidden>
-            हर पेमेंट हम खुद चेक करते हैं, इसलिए नया ऑर्डर तब तक
-            <strong>pending</strong> रहता है जब तक हम उसे कन्फर्म न कर दें —
-            आमतौर पर 3 घंटे के अंदर। हो जाने पर हम WhatsApp पर एक लिंक भेजेंगे,
-            उसे खोलते ही यहाँ स्टेटस अपडेट हो जाएगा। स्क्रीनशॉट भेज देने से
-            जल्दी हो जाता है।
+            आपके ऑर्डर आपके अकाउंट में सेव हैं, इसलिए किसी भी फ़ोन पर लॉगिन
+            करने पर यहीं मिलेंगे। हर पेमेंट हम खुद चेक करते हैं, इसलिए नया ऑर्डर
+            तब तक <strong>pending</strong> रहता है जब तक हम उसे कन्फर्म न कर दें
+            — आमतौर पर 3 घंटे के अंदर। WhatsApp पर पेमेंट का स्क्रीनशॉट भेज देने
+            से जल्दी हो जाता है।
           </p>
         </div>
 
@@ -1136,7 +1103,7 @@
 
       <div class="cf-row">
         <label for="modalName">Your name <span class="opt-lbl">(optional)</span></label>
-        <input class="input" type="text" id="modalName" autocomplete="name" placeholder="Enter your name" />
+        <input class="input" type="text" id="modalName" autocomplete="name" placeholder="Your name" />
       </div>
 
       <button class="btn btn--green btn--block" id="modalContinue">
@@ -1170,14 +1137,14 @@
         <div class="cf-row">
           <label for="authUser">Username <span class="req">*</span></label>
           <input class="input" type="text" id="authUser" autocomplete="username"
-                 autocapitalize="none" spellcheck="false" placeholder="ramesh_patel" />
+                 autocapitalize="none" spellcheck="false" placeholder="Username" />
           <p class="auth__hint" id="userHint" hidden></p>
         </div>
 
         <div class="cf-row" id="rowPhone" hidden>
           <label for="authPhone">Phone Number <span class="req">*</span></label>
           <input class="input" type="tel" id="authPhone" autocomplete="tel" inputmode="numeric"
-                 placeholder="10-digit mobile number" />
+                 placeholder="Phone number" />
           <p class="auth__hint">If you ever forget your password, this is how we know it is you.</p>
         </div>
 
@@ -1187,7 +1154,7 @@
             <input class="input" type="password" id="authPass" autocomplete="current-password"
                    placeholder="Password" />
             <button class="pw__eye" type="button" id="authEye" aria-label="Show password">
-              <i class="fa-regular fa-eye" aria-hidden="true"></i>
+              <i class="fa-solid fa-eye" aria-hidden="true"></i>
             </button>
           </div>
         </div>
