@@ -505,8 +505,8 @@
 
     const phone = authPhone.value.trim();
     if (reg && phone.replace(/\D/g, '').length < 10) {
-      authNote(authErr, 'Enter your 10-digit mobile number — it is how we check it ' +
-                        'is you if you forget your password.');
+      authNote(authErr, 'Enter the mobile number you use on WhatsApp — it is how ' +
+                        'we reach you about this order.');
       authPhone.focus();
       return;
     }
@@ -534,13 +534,23 @@
 
     request.then(function (res) {
       done();
-      if (res.error) { authNote(authErr, authErrorText(res.error, reg)); return; }
+      if (res.error) {
+        // Left readable in the console as well, so a screenshot of devtools
+        // says exactly what went wrong.
+        if (window.console && console.warn) console.warn('[WE3 auth]', res.error);
+        authNote(authErr, authErrorText(res.error, reg));
+        return;
+      }
       if (!res.data || !res.data.session) {
-        // Only happens if email confirmation is left switched on, where the
-        // session waits for a mail that can never arrive at an internal
-        // address. Worth naming rather than showing a blank screen.
-        authNote(authErr, 'The account was made but could not be signed in. ' +
-                          'Message us on WhatsApp and we will sort it out.');
+        // The account exists but there is no session, which means Supabase is
+        // waiting on an email confirmation — and the address it would go to is
+        // internal, so that mail can never arrive. Naming it exactly is the
+        // difference between a two-minute fix and a mystery.
+        authNote(authErr, reg
+          ? 'Your account was created but we could not sign you in. Email ' +
+            'confirmation is still switched on for this site — tell us on ' +
+            'WhatsApp and we will turn it off, then your account will work.'
+          : 'Signed in, but no session came back. Please try again.');
         return;
       }
       onSignedIn(res.data.session.user, username);
@@ -554,25 +564,53 @@
     });
   });
 
-  /** Supabase phrases errors for developers; these are for customers. */
+  /**
+   * Supabase phrases errors for developers; these are for customers.
+   *
+   * Anything unrecognised keeps its original text on a second line. A generic
+   * "please try again" with the real cause thrown away is unfixable — for the
+   * person stuck on it and for whoever they tell about it.
+   */
   function authErrorText(error, registering) {
-    const msg = String((error && error.message) || '').toLowerCase();
+    const raw = String((error && error.message) || '');
+    const msg = raw.toLowerCase();
+
     if (msg.indexOf('already registered') > -1 || msg.indexOf('already been registered') > -1 ||
-        msg.indexOf('duplicate') > -1 || msg.indexOf('profiles_username_key') > -1) {
+        msg.indexOf('duplicate') > -1 || msg.indexOf('profiles_username_key') > -1 ||
+        msg.indexOf('user already') > -1) {
       return 'That username is already taken — try another.';
     }
     if (msg.indexOf('invalid login') > -1) {
       return 'Wrong username or password.';
     }
-    if (msg.indexOf('username_format') > -1) {
+    if (msg.indexOf('username_format') > -1 || msg.indexOf('check constraint') > -1) {
       return 'Use only letters, numbers and _ — no spaces.';
     }
-    if (msg.indexOf('password') > -1) {
+    if (msg.indexOf('password') > -1 && msg.indexOf('least') > -1) {
       return 'Use a password of at least 8 characters.';
     }
-    return registering
+    // Supabase says this when a trigger on auth.users throws — in practice,
+    // the setup SQL has not been run, so there is no profiles table for the
+    // new account to land in.
+    if (msg.indexOf('database error') > -1) {
+      return 'Accounts are not finished being set up on our side. Please send ' +
+             'your order on WhatsApp and we will take it from there. (' + raw + ')';
+    }
+    if (msg.indexOf('rate limit') > -1 || msg.indexOf('too many') > -1) {
+      return 'Too many tries. Wait a minute and try again.';
+    }
+    if (msg.indexOf('signups not allowed') > -1 || msg.indexOf('disabled') > -1) {
+      return 'New accounts are switched off at the moment. Message us on WhatsApp ' +
+             'and we will sort it out. (' + raw + ')';
+    }
+    if (msg.indexOf('fetch') > -1 || msg.indexOf('network') > -1) {
+      return 'Could not reach the server. Check your connection and try again.';
+    }
+
+    return (registering
       ? 'Could not create the account. Please try again, or message us on WhatsApp.'
-      : 'Could not sign in. Please try again, or message us on WhatsApp.';
+      : 'Could not sign in. Please try again, or message us on WhatsApp.') +
+      (raw ? ' (' + raw + ')' : '');
   }
 
   function onSignedIn(user, username) {
