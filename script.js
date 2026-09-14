@@ -39,11 +39,11 @@
     // do, and they allow registering, signing in, and reading or creating a
     // row the signed-in user owns. Nothing else.
     //
-    // PLACEHOLDER: the Project URL from Supabase → Settings → API.
-    // While it is empty the site runs exactly as it did before, on this
-    // browser's own storage, with no accounts.
+    // If either value is blanked, or the library fails to load, the site
+    // falls back to this browser's own storage with no accounts rather than
+    // breaking.
     supabase: {
-      url: "",
+      url: "https://bakvwxkkvzklgnkeqpfi.supabase.co",
       anonKey: "sb_publishable_j8QUhuHa8IfYlmLc8OxI2w_6BElktA7",
 
       // Supabase always stores an email. A username signs up under this
@@ -900,7 +900,7 @@
   const cartFootEl   = $('#cartFoot');
   const cartTipEl    = $('#cartTip');
   const cartTipText  = $('#cartTipText');
-  const cartFab      = $('#cartFab');
+  const cartBar      = $('#cartBar');
   const cartScreen   = $('#cartScreen');
   const cartDone     = $('#cartDone');
   const subtotalEl   = $('#cartSubtotal');
@@ -999,7 +999,15 @@
       badge.textContent = String(count);
       badge.hidden = count === 0;
     });
-    cartFab.hidden = count === 0;
+    // Blinkit-style: the bar is the only thing that appears when something is
+    // added, so adding never covers the page someone is reading.
+    cartBar.hidden = count === 0;
+    document.body.classList.toggle('has-cartbar', count > 0);
+    if (count > 0) {
+      $('#cartBarCount').textContent = count + (count === 1 ? ' item' : ' items');
+      $('#cartBarTotal').textContent = formatINR(subtotal);
+    }
+    syncCartBarSpace();
 
     cartEmptyEl.hidden = count > 0;
     cartFootEl.hidden  = count === 0;
@@ -1183,8 +1191,42 @@
   });
 
   /* ---- "Add to Cart" buttons ---- */
+  /**
+   * Reserves exactly as much room at the foot of the page as the bar takes.
+   *
+   * Measured rather than guessed: the bar is taller on a phone with a home
+   * indicator, and a hard-coded number left the last line of the footer
+   * underneath it.
+   */
+  function syncCartBarSpace() {
+    const h = cartBar.hidden ? 0 : Math.ceil(cartBar.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--cartbar-h', h + 'px');
+  }
+
+  window.addEventListener('resize', syncCartBarSpace);
+
+  /**
+   * Says "Added" on the button for a moment.
+   *
+   * Adding no longer opens the cart, so without this the click has no visible
+   * answer beyond a bar at the bottom of the screen that may be nowhere near
+   * the thumb that pressed it.
+   */
+  const addedTimers = new WeakMap();
+  function flashAdded(btn) {
+    if (!addedTimers.has(btn)) btn.dataset.label = btn.innerHTML;
+    clearTimeout(addedTimers.get(btn));
+    btn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> Added';
+    btn.classList.add('is-added');
+    addedTimers.set(btn, setTimeout(function () {
+      btn.innerHTML = btn.dataset.label;
+      btn.classList.remove('is-added');
+    }, 1500));
+  }
+
   $$('[data-add]').forEach(function (btn) {
     btn.addEventListener('click', function () {
+      const before = cartCount();
       addToCart({
         id: btn.dataset.add,
         name: btn.dataset.name,
@@ -1193,7 +1235,9 @@
         kind: btn.dataset.kind,
         max: btn.dataset.max ? parseInt(btn.dataset.max, 10) : undefined
       });
-      openCart();
+      // A one-per-order add-on already at its limit changes nothing, and
+      // saying "Added" then would be a lie.
+      if (cartCount() > before) flashAdded(btn);
     });
   });
 
