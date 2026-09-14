@@ -52,15 +52,25 @@
   const PRICES = {
     // A year of domain + hosting is bundled into every website package
     // rather than being sold separately.
-    website: 5000,
-    reel: 2000,          // per reel
-    photo: 1000,
-    maintenance: { "none": 0, "6 Months": 2000, "1 Year": 4000 }
+    website: 4999,
+    reel: 1999,          // per reel
+    video: 999,          // editing footage the customer shot themselves
+    shopShoot: 298,      // add-on: we shoot the shop for their own site
+    maintenance: { "none": 0, "6 Months": 2999, "1 Year": 4999 }
   };
 
+  // The store photoshoot and maintenance are sold as add-ons to a website,
+  // not on their own. One list, so the cart and the builder agree.
+  const WEB_ADDONS = ['shopshoot', 'maint6', 'maint12'];
+  // What counts as "a website is being built".
+  const WEB_BASE = ['website', 'combo'];
+
   const COMBO = {
-    price: 9000,         // Combo Package headline price — ₹1,000 under à la carte
-    reelsIncluded: 2     // reels bundled into the combo
+    // Website 4,999 + 2 reels at 1,999 + video editing 999 = 9,996 bought
+    // separately, so the bundle saves 997.
+    price: 8999,
+    reelsIncluded: 2,    // reels bundled into the combo
+    videoIncluded: true  // one edited video is part of the bundle
   };
 
   const prefersReducedMotion =
@@ -268,21 +278,28 @@
   const REEL_MAX = 5;
   let reelQty = 2;
 
-  const TIP_DEFAULT = 'Select Website + Reel + Photo Shoot to get the ₹9,000 combo!';
+  const TIP_DEFAULT = 'Select Website + Reel + Video Editing to get the ' +
+                      formatINR(COMBO.price) + ' combo!';
 
   function readSelection() {
     const checked = $$('input[name="service"]:checked', builderForm)
       .map(function (i) { return i.value; });
+    const website = checked.indexOf('website') > -1;
     const maint = $('#maintenance').value;
 
+    // Both add-ons ride along with a website. Ticked without one they are
+    // simply not charged, which is also what the cart does.
+    const shopShoot = website && $('#shopShoot').checked;
+
     return {
-      website: checked.indexOf('website') > -1,
+      website: website,
       reel:    checked.indexOf('reel') > -1,
-      photo:   checked.indexOf('photo') > -1,
+      video:   checked.indexOf('video') > -1,
       businessType: $('#businessType').value,
-      photoType: ($('input[name="photoType"]:checked', builderForm) || {}).value || 'Product Photos',
-      maintenance: maint,
-      maintenancePrice: PRICES.maintenance[maint] || 0,
+      shopShoot: shopShoot,
+      shopShootPrice: shopShoot ? PRICES.shopShoot : 0,
+      maintenance: website ? maint : 'none',
+      maintenancePrice: website ? (PRICES.maintenance[maint] || 0) : 0,
       reels: reelQty
     };
   }
@@ -290,18 +307,18 @@
   /**
    * Price a selection.
    *
-   * The Combo Package bundles a website, two reels, a photo shoot and a year
-   * of domain + hosting for a flat ₹12,000. It is only substituted when it
-   * actually costs the visitor less than the same items bought separately —
-   * a "discount" that raised the price would not be one.
+   * The Combo Package bundles a website, two reels, one edited video and a
+   * year of domain + hosting. It is only substituted when it actually costs
+   * the visitor less than the same items bought separately — a "discount"
+   * that raised the price would not be one.
    */
   function priceSelection(sel) {
     const alaCarte =
       (sel.website ? PRICES.website : 0) +
       (sel.reel ? sel.reels * PRICES.reel : 0) +
-      (sel.photo ? PRICES.photo : 0);
+      (sel.video ? PRICES.video : 0);
 
-    const allThree = sel.website && sel.reel && sel.photo;
+    const allThree = sel.website && sel.reel && sel.video;
     let comboApplies = false;
     let comboTotal = 0;
     let comboListPrice = 0;
@@ -310,7 +327,7 @@
       const reels = Math.max(sel.reels, COMBO.reelsIncluded);
       comboTotal = COMBO.price + (reels - COMBO.reelsIncluded) * PRICES.reel;
       // What the combo's own contents would cost bought separately
-      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.photo;
+      comboListPrice = PRICES.website + reels * PRICES.reel + PRICES.video;
       comboApplies = comboTotal < comboListPrice;
     }
 
@@ -322,7 +339,8 @@
       comboTotal: comboTotal,
       comboListPrice: comboListPrice,
       alaCarte: alaCarte,
-      total: servicesTotal + sel.maintenancePrice
+      addons: sel.shopShootPrice + sel.maintenancePrice,
+      total: servicesTotal + sel.shopShootPrice + sel.maintenancePrice
     };
   }
 
@@ -337,7 +355,8 @@
 
     // Sub-fields stay in place (as in the design) but go dim and inert until
     // their service is ticked, so the "(if X selected)" hints are actionable.
-    [['#subWebsite', sel.website], ['#subReel', sel.reel], ['#subPhoto', sel.photo]]
+    // The two add-ons hang off the website, not off a service of their own.
+    [['#subWebsite', sel.website], ['#subReel', sel.reel], ['#subShoot', sel.website]]
       .forEach(function (pair) {
         const field = $(pair[0]);
         if (!field) return;
@@ -351,8 +370,9 @@
     const rows = [
       ['Website',          sel.website ? formatINR(PRICES.website) : '–'],
       ['Reels (' + sel.reels + ')', sel.reel ? formatINR(sel.reels * PRICES.reel) : '–'],
-      ['Photo Shoot',      sel.photo ? formatINR(PRICES.photo) : '–'],
+      ['Video Editing',    sel.video ? formatINR(PRICES.video) : '–'],
       ['Domain + Hosting (1 yr)', (sel.website || q.comboApplies) ? 'included free' : '–'],
+      ['Store Photos',     sel.shopShootPrice ? formatINR(sel.shopShootPrice) : '–'],
       ['Maintenance',      sel.maintenancePrice ? formatINR(sel.maintenancePrice) : '–']
     ];
 
@@ -373,14 +393,15 @@
     grandTotalEl.textContent = formatINR(q.total);
 
     if (q.comboApplies) {
-      strikeTotal.textContent = formatINR(q.comboListPrice + sel.maintenancePrice);
+      strikeTotal.textContent = formatINR(q.comboListPrice + q.addons);
       strikeTotal.hidden = false;
       comboText.textContent = 'Combo discount applied — you save ' +
         formatINR(q.comboListPrice - q.comboTotal) + '.';
     } else {
       strikeTotal.hidden = true;
       comboText.textContent = q.allThree
-        ? 'Combo Package is ₹12,000 and includes 1-year domain + hosting.'
+        ? 'Combo Package is ' + formatINR(COMBO.price) +
+          ' and includes 1-year domain + hosting.'
         : TIP_DEFAULT;
     }
 
@@ -406,7 +427,7 @@
     const sel = readSelection();
     const q = priceSelection(sel);
 
-    if (!sel.website && !sel.reel && !sel.photo && !sel.maintenancePrice) {
+    if (!sel.website && !sel.reel && !sel.video && !sel.maintenancePrice && !sel.shopShootPrice) {
       openCart();          // nothing ticked — just show them the cart
       return;
     }
@@ -431,12 +452,21 @@
           kind: 'media', qty: sel.reels
         });
       }
-      if (sel.photo) {
+      if (sel.video) {
         addToCart({
-          id: 'photo', name: 'Photo Shoot', price: PRICES.photo,
-          kind: 'media', note: sel.photoType
+          id: 'video', name: 'Video Editing', price: PRICES.video,
+          kind: 'media'
         });
       }
+    }
+
+    // Add-ons last, so the website they depend on is already in the cart and
+    // the gate in addToCart lets them through.
+    if (sel.shopShootPrice > 0) {
+      addToCart({
+        id: 'shopshoot', name: 'Store Photoshoot', price: PRICES.shopShoot,
+        kind: 'media', max: 1
+      });
     }
 
     if (sel.maintenancePrice > 0) {
@@ -527,7 +557,17 @@
   }
 
   /* ---- mutations ---- */
+  /** Is a website package — on its own or as the combo — in the cart? */
+  function hasWebBase() {
+    return cart.some(function (i) { return WEB_BASE.indexOf(i.id) > -1; });
+  }
+
   function addToCart(item) {
+    // The store photoshoot and maintenance are sold with a website, never on
+    // their own. The buttons for them are disabled without one, so this is
+    // the backstop rather than the thing a visitor normally meets.
+    if (WEB_ADDONS.indexOf(item.id) > -1 && !hasWebBase()) return;
+
     // A maintenance plan is bought once, so it carries max: 1 and clicking
     // its button again cannot push the quantity past one.
     const max = item.max || MAX_QTY;
@@ -568,6 +608,11 @@
 
   /* ---- rendering ---- */
   function renderCart() {
+    // Taking the website out orphans its add-ons, so they come out with it.
+    const removed = pruneOrphanAddons();
+    if (removed.length) saveCart();
+    syncAddonGates();
+
     const count = cartCount();
     const subtotal = cartSubtotal();
 
@@ -666,18 +711,34 @@
     payNowEl.textContent = formatINR(due);
     payBtnLabel.textContent = 'Proceed to Pay ' + formatINR(due);
 
-    renderComboTip(subtotal);
+    renderComboTip(removed);
   }
 
+  // What the Combo Package stands in for.
+  const COMBO_COVERS = ['website', 'reel', 'video'];
+
   /**
-   * Only suggest the Combo Package when swapping to it genuinely costs less.
-   * At the current prices it does not, so this stays quiet — which is the
-   * point: it must never talk someone into paying more.
+   * Only suggest the Combo Package when swapping to it genuinely costs less,
+   * and say so when an add-on had to come out of the cart.
+   *
+   * The combo tip must never talk someone into paying more, so it is priced
+   * against what they actually have rather than assumed to be a saving.
    */
-  function renderComboTip(subtotal) {
+  function renderComboTip(removed) {
+    // A removal note outranks the upsell: it explains something that just
+    // changed under them.
+    if (removed && removed.length) {
+      cartTipText.textContent =
+        (removed.length === 1 ? removed[0] + ' was removed' : 'Add-ons were removed') +
+        ' — ' + (removed.length === 1 ? 'it goes' : 'they go') +
+        ' with a website package, and there is no longer one in your cart.';
+      cartTipEl.hidden = false;
+      return;
+    }
+
     const hasCombo = cart.some(function (i) { return i.id === 'combo'; });
     const ids = cart.map(function (i) { return i.id; });
-    const coversCombo = ['website', 'reel', 'photo'].every(function (id) {
+    const coversCombo = COMBO_COVERS.every(function (id) {
       return ids.indexOf(id) > -1;
     });
 
@@ -688,7 +749,7 @@
 
     // What the combo would replace, keeping anything it does not cover.
     const replaced = cart.filter(function (i) {
-      return ['website', 'reel', 'photo'].indexOf(i.id) > -1;
+      return COMBO_COVERS.indexOf(i.id) > -1;
     }).reduce(function (sum, i) { return sum + i.price * i.qty; }, 0);
 
     const saving = replaced - COMBO.price;
@@ -755,6 +816,36 @@
       openCart();
     });
   });
+
+  /**
+   * Keeps the add-on buttons honest about whether they can be used.
+   *
+   * Without this a visitor could buy six months of maintenance for a site
+   * that does not exist, or take the disabled button as the site being
+   * broken. The note under each block says which it is.
+   */
+  function syncAddonGates() {
+    const unlocked = hasWebBase();
+    $$('[data-needs-web]').forEach(function (el) {
+      if (el.tagName === 'BUTTON') el.disabled = !unlocked;
+      else el.classList.toggle('is-locked', !unlocked);
+    });
+    $$('[data-gate-note]').forEach(function (note) { note.hidden = unlocked; });
+  }
+
+  /**
+   * Drops add-ons when the website they hang off is taken out of the cart.
+   *
+   * Returns the names removed so the cart can say what happened — silently
+   * deleting a line someone paid attention to is worse than the mistake.
+   */
+  function pruneOrphanAddons() {
+    if (hasWebBase()) return [];
+    const orphans = cart.filter(function (i) { return WEB_ADDONS.indexOf(i.id) > -1; });
+    if (!orphans.length) return [];
+    cart = cart.filter(function (i) { return WEB_ADDONS.indexOf(i.id) === -1; });
+    return orphans.map(function (i) { return i.name; });
+  }
 
   /* ---- UPI ---- */
   function upiConfigured() {
