@@ -14,7 +14,17 @@ begin;
 
 -- The owner. A plain admin decides an order once; the owner can always
 -- change it afterwards, which is the whole point of the distinction.
-alter table public.profiles add column if not exists is_owner boolean not null default false;
+-- Every column the page reads, added here rather than assumed. This script
+-- has to stand on its own: it cannot know which of the earlier ones ran.
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists business  text;
+alter table public.profiles add column if not exists email     text;
+alter table public.profiles add column if not exists is_owner  boolean not null default false;
+
+-- A customer may edit these four and nothing else. The narrow grant is what
+-- stops someone writing is_admin on their own row.
+revoke update on public.profiles from authenticated;
+grant update (phone, full_name, business, email) on public.profiles to authenticated;
 
 create or replace function public.is_owner()
 returns boolean language sql stable security definer set search_path = public as $$
