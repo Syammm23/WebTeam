@@ -29,6 +29,11 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+-- Saved contact details, so a repeat customer does not retype them.
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists business  text;
+alter table public.profiles add column if not exists email     text;
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "read own profile" on public.profiles;
@@ -43,7 +48,7 @@ create policy "update own profile" on public.profiles
 -- A customer may edit their phone number and nothing else. Without this they
 -- could set is_admin on their own row and read every order in the table.
 revoke update on public.profiles from authenticated;
-grant update (phone) on public.profiles to authenticated;
+grant update (phone, full_name, business, email) on public.profiles to authenticated;
 
 -- The profile is created by the database as part of the signup, so a taken
 -- username fails the whole signup instead of leaving a half-made account.

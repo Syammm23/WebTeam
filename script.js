@@ -628,13 +628,180 @@
   }
 
   function onSignedIn(user, username) {
+    const meta = user.user_metadata || {};
     db.user = {
       id: user.id,
-      username: username || (user.user_metadata && user.user_metadata.username) || ''
+      username: username || meta.username || '',
+      // Held until the profile row arrives, so a slow fetch does not leave
+      // checkout with nothing to prefill.
+      full_name: meta.full_name || '',
+      business: meta.business || '',
+      phone: meta.phone || '',
+      email: meta.email || '',
+      since: user.created_at || null
     };
     renderAccount();
+    loadProfile();
     loadOrders();
   }
+
+  /** The saved details, so checkout can fill itself in. */
+  function loadProfile() {
+    if (!db.ready || !db.user) return;
+    db.client.from('profiles')
+      .select('username, full_name, business, phone, email, created_at')
+      .eq('id', db.user.id)
+      .limit(1)
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        const row = res.data[0];
+        db.user.username  = row.username || db.user.username;
+        db.user.full_name = row.full_name || db.user.full_name;
+        db.user.business  = row.business || db.user.business;
+        db.user.phone     = row.phone || db.user.phone;
+        db.user.email     = row.email || db.user.email;
+        db.user.since     = row.created_at || db.user.since;
+        renderProfile();
+        prefillCheckout();
+      }, function () { /* the metadata copy stands */ });
+  }
+
+  /**
+   * Fills the checkout fields from the profile.
+   *
+   * Only ever fills a field the customer has left empty — overwriting what
+   * someone is in the middle of typing would be worse than not helping.
+   */
+  function prefillCheckout() {
+    if (!db.user) return;
+    [['#cartName', db.user.full_name], ['#cartBusiness', db.user.business],
+     ['#cartPhone', db.user.phone], ['#cartEmail', db.user.email]]
+      .forEach(function (pair) {
+        const el = $(pair[0]);
+        if (el && !el.value && pair[1]) el.value = pair[1];
+      });
+  }
+
+  function profNote(el, text, cls) {
+    el.hidden = !text;
+    el.textContent = text || '';
+    el.className = 'prof__msg ' + (cls || '');
+  }
+
+  function renderProfile() {
+    if (!db.user) return;
+    const u = db.user.username || '';
+    $('#profAvatar').textContent = (u[0] || '?').toUpperCase();
+    $('#profUser').textContent = '@' + u;
+    $('#profSince').textContent = db.user.since
+      ? 'With us since ' + formatDate(Date.parse(db.user.since))
+      : '';
+
+    $('#profName').value     = db.user.full_name || '';
+    $('#profBusiness').value = db.user.business || '';
+    $('#profPhone').value    = db.user.phone || '';
+    $('#profEmail').value    = db.user.email || '';
+
+    // Only money we have actually confirmed is counted; a pending claim is
+    // not a payment yet.
+    const verified = orders.filter(function (o) { return o.status === 'verified'; });
+    $('#profOrders').textContent = String(orders.length);
+    $('#profPaid').textContent = formatINR(
+      verified.reduce(function (sum, o) { return sum + Number(o.amount || 0); }, 0));
+  }
+
+  $('#profSave').addEventListener('click', function () {
+    if (!db.ready || !db.user) return;
+    const msg = $('#profMsg');
+    const email = $('#profEmail').value.trim();
+    const phone = $('#profPhone').value.trim();
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      profNote(msg, 'That email address does not look right.', 'is-bad');
+      return;
+    }
+    if (phone && phone.replace(/\D/g, '').length < 10) {
+      profNote(msg, 'That phone number does not look right.', 'is-bad');
+      return;
+    }
+
+    const patch = {
+      full_name: $('#profName').value.trim() || null,
+      business: $('#profBusiness').value.trim() || null,
+      phone: phone || null,
+      email: email || null
+    };
+
+    const btn = this;
+    btn.disabled = true;
+    profNote(msg, 'Saving…', '');
+
+    db.client.from('profiles').update(patch).eq('id', db.user.id)
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.error) {
+          if (window.console && console.warn) console.warn('[WE3 profile]', res.error);
+          profNote(msg, 'Could not save. (' + res.error.message + ')', 'is-bad');
+          return;
+        }
+        db.user.full_name = patch.full_name || '';
+        db.user.business = patch.business || '';
+        db.user.phone = patch.phone || '';
+        db.user.email = patch.email || '';
+        prefillCheckout();
+        profNote(msg, 'Saved.', 'is-good');
+      }, function () {
+        btn.disabled = false;
+        profNote(msg, 'Could not reach the server.', 'is-bad');
+      });
+  });
+
+  $('#profEye').addEventListener('click', function () {
+    const el = $('#profPass');
+    const show = el.type === 'password';
+    el.type = show ? 'text' : 'password';
+    this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    this.innerHTML = '<i class="fa-solid fa-eye' + (show ? '-slash' : '') +
+                     '" aria-hidden="true"></i>';
+    el.focus();
+  });
+
+  $('#profPassBtn').addEventListener('click', function () {
+    if (!db.ready || !db.user) return;
+    const msg = $('#profPassMsg');
+    const el = $('#profPass');
+    const pw = el.value;
+
+    if (pw.length < 8) {
+      profNote(msg, 'Use a password of at least 8 characters.', 'is-bad');
+      el.focus();
+      return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    profNote(msg, 'Changing…', '');
+
+    db.client.auth.updateUser({ password: pw }).then(function (res) {
+      btn.disabled = false;
+      if (res.error) {
+        profNote(msg, 'Could not change it. (' + res.error.message + ')', 'is-bad');
+        return;
+      }
+      el.value = '';
+      profNote(msg, 'Password changed. Use the new one next time you sign in.', 'is-good');
+    }, function () {
+      btn.disabled = false;
+      profNote(msg, 'Could not reach the server.', 'is-bad');
+    });
+  });
+
+  $('#profSignOut').addEventListener('click', function () {
+    if (confirm('Sign out of @' + (db.user ? db.user.username : '') + '?')) {
+      signOut();
+      closeCart();
+    }
+  });
 
   function signOut() {
     if (!db.ready) return;
@@ -644,6 +811,15 @@
       renderAccount();
       renderOrders();
     }, function () { /* leaving them signed in is the safe failure */ });
+  }
+
+  // Defined here, used by renderProfile above — both live inside the same
+  // closure, so the declaration hoists.
+  function formatDate(ms) {
+    try {
+      return new Date(ms).toLocaleDateString('en-IN',
+        { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return ''; }
   }
 
   function renderAccount() {
@@ -659,7 +835,8 @@
 
   navAccount.addEventListener('click', function () {
     if (!db.user) { openAuth({ mode: 'signin' }); return; }
-    if (confirm('Signed in as ' + db.user.username + '. Sign out?')) signOut();
+    openCart();
+    showProfileScreen();
   });
 
   // Pick a session back up on load, so a returning customer is already in.
@@ -1289,12 +1466,14 @@
     cartDone.hidden = true;
     payScreen.hidden = true;
     if (ordersScreen) ordersScreen.hidden = true;
+    if (profileScreen) profileScreen.hidden = true;
   }
   function showDoneScreen() {
     cartScreen.hidden = true;
     cartDone.hidden = false;
     payScreen.hidden = true;
     if (ordersScreen) ordersScreen.hidden = true;
+    if (profileScreen) profileScreen.hidden = true;
   }
 
   $$('[data-open-cart]').forEach(function (el) {
@@ -1547,6 +1726,7 @@
     cartScreen.hidden = true;
     cartDone.hidden = true;
     if (ordersScreen) ordersScreen.hidden = true;
+    if (profileScreen) profileScreen.hidden = true;
     payScreen.hidden = false;
   }
 
@@ -1631,6 +1811,7 @@
   let orders = [];
 
   const ordersScreen = $('#ordersScreen');
+  const profileScreen = $('#profileScreen');
   const ordersListEl = $('#ordersList');
   const ordersEmpty  = $('#ordersEmpty');
   const ordersNote   = $('#ordersNote');
@@ -1717,6 +1898,20 @@
       paid: full.amount,
       pay_mode: full.split
     }).then(function () { /* stored */ }, function () { /* local copy stands */ });
+
+    // Keep the profile in step with what they just typed, so the next order
+    // fills itself in. Best effort — an order must never fail over this.
+    db.client.from('profiles').update({
+      full_name: full.name || null,
+      business: full.business || null,
+      phone: full.phone || null,
+      email: full.email || null
+    }).eq('id', db.user.id).then(function () {
+      db.user.full_name = full.name || '';
+      db.user.business = full.business || '';
+      db.user.phone = full.phone || '';
+      db.user.email = full.email || '';
+    }, function () { /* ignore */ });
   }
 
   function markOrderShared(id) {
@@ -1879,13 +2074,28 @@
   function showOrdersScreen() {
     cartScreen.hidden = true;
     cartDone.hidden = true;
+    profileScreen.hidden = true;
     ordersScreen.hidden = false;
+  }
+
+  function showProfileScreen() {
+    cartScreen.hidden = true;
+    cartDone.hidden = true;
+    ordersScreen.hidden = true;
+    profileScreen.hidden = false;
+    renderProfile();
   }
 
   $$('[data-show-orders]').forEach(function (el) {
     el.addEventListener('click', function () {
       if (cartEl.hidden) openCart();
       showOrdersScreen();
+    });
+  });
+  $$('[data-show-profile]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      if (cartEl.hidden) openCart();
+      showProfileScreen();
     });
   });
   $$('[data-show-cart]').forEach(function (el) {

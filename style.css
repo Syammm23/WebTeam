@@ -2350,3 +2350,90 @@ body.is-locked .cartbar { visibility: hidden; }
   font-size: var(--fs-xs);
 }
 .selfcheck code { background: rgba(255,255,255,0.12); padding: 1px 5px; border-radius: 4px; }
+
+
+/* ==========================================================================
+   21. PROFILE  (fifth screen in the drawer)
+   ========================================================================== */
+.prof { display: flex; flex-direction: column; min-height: 0; }
+.prof__body { flex: 1; overflow-y: auto; padding: 16px; }
+.prof__foot {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+.prof__id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.prof__avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: var(--green);
+  color: #fff;
+  font-family: var(--f-head);
+  font-size: 20px;
+  font-weight: 700;
+}
+.prof__id strong { display: block; font-size: var(--fs-h3); color: var(--ink); }
+.prof__id em { font-style: normal; font-size: var(--fs-xs); color: var(--body); }
+
+.prof__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.prof__stats > div {
+  padding: 10px 12px;
+  border-radius: var(--r);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+.prof__stats dt { font-size: var(--fs-xs); color: var(--body); }
+.prof__stats dd {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.prof__h {
+  margin: 20px 0 2px;
+  font-family: var(--f-head);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--ink);
+}
+.prof__h:first-of-type { margin-top: 0; }
+.prof__sub { margin-bottom: 12px; font-size: var(--fs-xs); color: var(--body); }
+
+.prof .cf-row { margin-bottom: 10px; }
+.prof .cf-row label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.prof .input { width: 100%; }
+
+.prof__msg {
+  margin: 4px 0 10px;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--body);
+}
+.prof__msg.is-good { color: var(--green-700); font-weight: 600; }
+.prof__msg.is-bad  { color: #B91C1C; }

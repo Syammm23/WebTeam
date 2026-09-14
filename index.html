@@ -1068,8 +1068,82 @@
         </div>
 
         <div class="orders__foot">
+          <button class="btn btn--outline-dark btn--block" data-show-profile>
+            <i class="fa-solid fa-user" aria-hidden="true"></i> My Profile
+          </button>
           <button class="btn btn--plain btn--block" data-show-cart>
             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to cart
+          </button>
+        </div>
+      </div>
+
+      <!-- ---------- SCREEN 5: profile ---------- -->
+      <div class="cart__screen prof" id="profileScreen" hidden>
+        <div class="prof__body">
+
+          <div class="prof__id">
+            <span class="prof__avatar" id="profAvatar" aria-hidden="true">?</span>
+            <div>
+              <strong id="profUser">—</strong>
+              <em id="profSince">—</em>
+            </div>
+          </div>
+
+          <div class="prof__stats">
+            <div><dt>Orders</dt><dd id="profOrders">0</dd></div>
+            <div><dt>Paid so far</dt><dd id="profPaid">₹0</dd></div>
+          </div>
+
+          <!-- Saved here so the next order does not mean typing it all again. -->
+          <h3 class="prof__h">Your details</h3>
+          <p class="prof__sub">We fill these in for you at checkout.</p>
+
+          <div class="cf-row">
+            <label for="profName">Your name</label>
+            <input class="input" type="text" id="profName" autocomplete="name" placeholder="Your name" />
+          </div>
+          <div class="cf-row">
+            <label for="profBusiness">Business / shop name</label>
+            <input class="input" type="text" id="profBusiness" autocomplete="organization" placeholder="Business name" />
+          </div>
+          <div class="cf-row">
+            <label for="profPhone">Phone number</label>
+            <input class="input" type="tel" id="profPhone" autocomplete="tel" inputmode="numeric" placeholder="Phone number" />
+          </div>
+          <div class="cf-row">
+            <label for="profEmail">Email <span class="opt-lbl">(optional)</span></label>
+            <input class="input" type="email" id="profEmail" autocomplete="email" placeholder="Email address" />
+          </div>
+
+          <p class="prof__msg" id="profMsg" hidden></p>
+
+          <button class="btn btn--green btn--block" id="profSave">
+            <i class="fa-solid fa-check" aria-hidden="true"></i> Save details
+          </button>
+
+          <h3 class="prof__h">Password</h3>
+          <div class="cf-row">
+            <label for="profPass">New password</label>
+            <div class="pw">
+              <input class="input" type="password" id="profPass" autocomplete="new-password"
+                     placeholder="At least 8 characters" />
+              <button class="pw__eye" type="button" id="profEye" aria-label="Show password">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <p class="prof__msg" id="profPassMsg" hidden></p>
+          <button class="btn btn--outline-dark btn--block" id="profPassBtn">
+            <i class="fa-solid fa-key" aria-hidden="true"></i> Change password
+          </button>
+        </div>
+
+        <div class="prof__foot">
+          <button class="btn btn--outline-dark btn--block" data-show-orders>
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> My Orders
+          </button>
+          <button class="btn btn--plain btn--block" id="profSignOut">
+            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
           </button>
         </div>
       </div>
