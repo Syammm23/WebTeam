@@ -636,7 +636,58 @@ img.is-broken { display: none; }
   color: var(--ink);
   transition: border-color var(--tr), background var(--tr), color var(--tr);
 }
-.addon__opt:hover { border-color: var(--green); background: var(--green-soft); color: var(--green-700); }
+.addon__opt:hover:not(:disabled) { border-color: var(--green); background: var(--green-soft); color: var(--green-700); }
+
+/* A locked add-on has to look unavailable rather than broken — the note
+   inside each block says why. */
+.addon__opt:disabled { opacity: 0.45; cursor: not-allowed; }
+.addon.is-locked { opacity: 0.72; }
+.addon__gate {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: #92400E;
+}
+.addon__gate i { font-size: 10px; }
+
+.addon-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 8px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.addon-head i { color: var(--green); font-size: 12px; }
+.addon + .addon { margin-top: 10px; }
+
+/* The store-photos tick in the builder, matching the service checkboxes
+   above it rather than inventing a second control. */
+.chk { display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: var(--fs-sm); }
+.chk input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chk__box {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex: none;
+  border-radius: 4px;
+  border: 1.5px solid #CBD0D8;
+  background: #fff;
+  color: transparent;
+  font-size: 9px;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+}
+.chk input:checked ~ .chk__box {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.chk input:focus-visible ~ .chk__box { outline: 2px solid var(--green-600); outline-offset: 2px; }
+.chk input:disabled ~ .chk__box { opacity: 0.5; }
 
 .addon__list { display: grid; gap: 3px; font-size: var(--fs-xs); }
 .addon__list li { display: flex; align-items: center; gap: 6px; }
