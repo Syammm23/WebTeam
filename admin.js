@@ -516,9 +516,38 @@
     }
     b.addEventListener('click', function () {
       if (order.status === status) return;
+      if (!confirmStatus(order, status)) return;
       patchOrder(order, { status: status });
     });
     return b;
+  }
+
+  /**
+   * Asks before moving money.
+   *
+   * The amount and the customer are in the question because "are you sure?"
+   * on its own is answered yes by reflex. For anyone but the founder this is
+   * also the last chance to change it, so the message says so.
+   */
+  function confirmStatus(order, status) {
+    const balance = Math.max(0, Number(order.total || 0) - Number(order.paid || 0));
+    const lines = [
+      status === 'verified' ? 'Mark this payment as RECEIVED?'
+        : status === 'rejected' ? 'Mark this payment as NOT received?'
+        : 'Put this order back to pending?',
+      '',
+      order.ref + ' — ' + (order.business || order.customer_name),
+      (order.customer_name || '') + ' · ' + (order.phone || ''),
+      'Paid ' + money(order.paid) + ' of ' + money(order.total) +
+        (balance > 0 ? '  (balance ' + money(balance) + ')' : ''),
+      ''
+    ];
+
+    lines.push(me.is_owner
+      ? 'The customer sees this straight away.'
+      : 'You can only decide this once. After this, only the founder can change it.');
+
+    return confirm(lines.join('\n'));
   }
 
   /** One line of an order's history: who moved it where, and when. */
