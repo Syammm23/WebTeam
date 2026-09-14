@@ -2295,3 +2295,58 @@ body.is-locked .cartbar { visibility: hidden; }
 
 /* Signed in, the header icon fills in — a small, quiet "you are known here". */
 .nav__cart--user.is-in { border-color: var(--green); color: var(--green); }
+
+
+/* ==========================================================================
+   20. SETUP CHECK  (?check=1)
+
+   A diagnostic panel, not part of the site. Plain and high-contrast, because
+   the only thing it has to do is be readable in a screenshot.
+   ========================================================================== */
+.selfcheck {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  overflow-y: auto;
+  padding: 24px 16px;
+  background: var(--ink);
+  color: #E6EAF0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+.selfcheck h2 {
+  max-width: 620px;
+  margin: 0 auto 14px;
+  font-family: var(--f-head);
+  font-size: 20px;
+  color: #fff;
+}
+.selfcheck ol {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.selfcheck li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  word-break: break-word;
+}
+.selfcheck li.is-ok  { border-left-color: var(--green); }
+.selfcheck li.is-bad { border-left-color: #F87171; }
+.selfcheck li strong { color: #fff; font-weight: 600; }
+.selfcheck li.is-ok span  { color: #86EFAC; }
+.selfcheck li.is-bad span { color: #FCA5A5; }
+.selfcheck__foot {
+  max-width: 620px;
+  margin: 14px auto 0;
+  color: rgba(230, 234, 240, 0.7);
+  font-size: var(--fs-xs);
+}
+.selfcheck code { background: rgba(255,255,255,0.12); padding: 1px 5px; border-radius: 4px; }

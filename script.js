@@ -466,7 +466,12 @@
     db.client.rpc('username_available', { p_username: username })
       .then(function (res) {
         if (seq !== checkSeq) return;          // a newer keystroke won
-        if (res.error) { authNote(userHint, '', ''); return; }
+        if (res.error) {
+          if (window.console && console.warn) console.warn('[WE3 auth] username check', res.error);
+          authNote(userHint, 'Could not check that name right now — you can ' +
+                             'still try it.', '');
+          return;
+        }
         authNote(userHint,
           res.data ? '\u201C' + username + '\u201D is available.'
                    : '\u201C' + username + '\u201D is taken — try another.',
@@ -596,8 +601,9 @@
       return 'Accounts are not finished being set up on our side. Please send ' +
              'your order on WhatsApp and we will take it from there. (' + raw + ')';
     }
-    if (msg.indexOf('rate limit') > -1 || msg.indexOf('too many') > -1) {
-      return 'Too many tries. Wait a minute and try again.';
+    if (msg.indexOf('rate limit') > -1 || msg.indexOf('too many') > -1 ||
+        msg.indexOf('for security purposes') > -1) {
+      return 'Too many tries — wait a minute and try again. (' + raw + ')';
     }
     if (msg.indexOf('signups not allowed') > -1 || msg.indexOf('disabled') > -1) {
       return 'New accounts are switched off at the moment. Message us on WhatsApp ' +
@@ -658,6 +664,80 @@
   } else {
     renderAccount();
   }
+
+  /* ------------------------------------------------------------------------
+     SETUP CHECK  —  add ?check=1 to the address
+
+     A private page cannot be reached from here, so this asks the project the
+     four questions that matter and prints the raw answers. It is quicker than
+     guessing from an error message, and it is the only way to tell "the SQL
+     was not run" apart from "the SQL ran but one statement failed".
+     ------------------------------------------------------------------------ */
+  function runSetupCheck() {
+    const box = document.createElement('div');
+    box.className = 'selfcheck';
+    box.innerHTML = '<h2>WE3 setup check</h2><ol id="scList"></ol>' +
+      '<p class="selfcheck__foot">Screenshot this and send it over. ' +
+      'Remove <code>?check=1</code> from the address to go back to the site.</p>';
+    document.body.appendChild(box);
+    const list = box.querySelector('#scList');
+
+    function line(label) {
+      const li = document.createElement('li');
+      li.innerHTML = '<strong></strong><span>running…</span>';
+      li.querySelector('strong').textContent = label;
+      list.appendChild(li);
+      return function (ok, detail) {
+        li.className = ok ? 'is-ok' : 'is-bad';
+        li.querySelector('span').textContent = (ok ? 'OK' : 'FAILED') +
+                                               (detail ? ' — ' + detail : '');
+      };
+    }
+
+    const lib = line('1. Client library loaded');
+    lib(Boolean(window.supabase && window.supabase.createClient),
+        window.supabase ? '' : 'the CDN did not load');
+
+    const conf = line('2. Project URL and key set');
+    conf(db.ready, db.ready ? CONFIG.supabase.url : 'not configured');
+    if (!db.ready) return;
+
+    const rpc = line('3. username_available function exists');
+    db.client.rpc('username_available', { p_username: 'setupcheck' })
+      .then(function (r) {
+        rpc(!r.error, r.error ? r.error.message : 'answered ' + JSON.stringify(r.data));
+      }, function (e) { rpc(false, String(e)); });
+
+    const tbl = line('4. orders table reachable');
+    db.client.from('orders').select('ref').limit(1)
+      .then(function (r) {
+        // An empty result is a pass: the table is there and the rules let a
+        // signed-out visitor see none of it, which is exactly right.
+        tbl(!r.error, r.error ? r.error.message : 'table is there');
+      }, function (e) { tbl(false, String(e)); });
+
+    // A throwaway account, so the real signup error appears without burning a
+    // username someone wants.
+    const sign = line('5. A test signup');
+    const throwaway = 'chk' + Date.now().toString(36).slice(-6);
+    db.client.auth.signUp({
+      email: authEmail(throwaway),
+      password: 'CheckOnly!' + Date.now(),
+      options: { data: { username: throwaway, phone: '0000000000' } }
+    }).then(function (r) {
+      if (r.error) { sign(false, r.error.message); return; }
+      if (!r.data || !r.data.session) {
+        sign(false, 'account made but no session — email confirmation is still ON');
+        return;
+      }
+      sign(true, 'signed up and signed in as ' + throwaway);
+      db.client.auth.signOut();
+    }, function (e) { sign(false, String(e)); });
+  }
+
+  try {
+    if (new URLSearchParams(location.search).get('check') === '1') runSetupCheck();
+  } catch (e) { /* ignore */ }
 
   /* ========================================================================
      4. QUOTE BUILDER — live estimate
