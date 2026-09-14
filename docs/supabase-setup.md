@@ -37,107 +37,14 @@ values and I write the code.
 
 ## Step 3 — Create the tables
 
-**SQL Editor**, paste all of this, **Run**.
+Open **SQL Editor** in the left sidebar. Copy the whole of
+[`supabase-setup.sql`](supabase-setup.sql), paste it in, press **Run**.
 
-```sql
--- ---------------------------------------------------------------- profiles
--- One row per customer. The username lives here; auth.users holds only the
--- internal address and the password hash.
-create table public.profiles (
-  id         uuid primary key references auth.users(id) on delete cascade,
-  username   text not null unique,
-  phone      text,
-  is_admin   boolean not null default false,
-  created_at timestamptz not null default now(),
-  constraint username_format check (username ~ '^[a-z0-9_]{3,20}$')
-);
+It is safe to run more than once, and it runs as a single transaction — if a
+line fails, nothing is left half-made, so you can fix and re-run.
 
-alter table public.profiles enable row level security;
-
-create policy "read own profile" on public.profiles
-  for select to authenticated using (id = auth.uid());
-
-create policy "update own profile" on public.profiles
-  for update to authenticated
-  using (id = auth.uid()) with check (id = auth.uid());
-
--- A customer may edit their phone number and nothing else. Without this they
--- could set is_admin on their own row and read every order in the table.
-revoke update on public.profiles from authenticated;
-grant update (phone) on public.profiles to authenticated;
-
--- The profile is created by the database as part of the signup, so a taken
--- username fails the whole signup instead of leaving a half-made account.
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles (id, username, phone)
-  values (new.id,
-          lower(new.raw_user_meta_data->>'username'),
-          new.raw_user_meta_data->>'phone');
-  return new;
-end;
-$$;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- "Is this username free?" for the registration screen. A function rather
--- than a plain select, so nobody can pull down the whole customer list.
-create or replace function public.username_available(p_username text)
-returns boolean language sql security definer set search_path = public as $$
-  select not exists (
-    select 1 from public.profiles where username = lower(p_username)
-  );
-$$;
-grant execute on function public.username_available(text) to anon, authenticated;
-
-create or replace function public.is_admin()
-returns boolean language sql stable security definer set search_path = public as $$
-  select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
-$$;
-
--- ------------------------------------------------------------------ orders
-create table public.orders (
-  ref           text primary key,          -- WE3-7K2M, the code the customer sees
-  user_id       uuid not null references auth.users(id) on delete cascade,
-  created_at    timestamptz not null default now(),
-  customer_name text    not null,
-  business      text    not null,
-  phone         text    not null,
-  email         text,
-  brief         text,
-  items         jsonb   not null,          -- [{ name, qty, price }]
-  total         integer not null,
-  paid          integer not null,
-  pay_mode      text    not null,          -- 'half' or 'full'
-  status        text    not null default 'pending',
-  note          text,                      -- your message back to the customer
-  updated_at    timestamptz not null default now()
-);
-
-create index orders_user_idx on public.orders (user_id, created_at desc);
-
-alter table public.orders enable row level security;
-
-create policy "read own orders" on public.orders
-  for select to authenticated using (user_id = auth.uid());
-
--- A customer places an order as themselves, always pending. The status check
--- is the important half: without it the browser could post an order that
--- already claims to be verified.
-create policy "place own order" on public.orders
-  for insert to authenticated
-  with check (user_id = auth.uid() and status = 'pending' and note is null);
-
-create policy "admin reads every order" on public.orders
-  for select to authenticated using (public.is_admin());
-
-create policy "admin updates orders" on public.orders
-  for update to authenticated
-  using (public.is_admin()) with check (public.is_admin());
-```
+When it finishes it prints five rows. **Every one must say `true`.** If any says
+`false`, or you get a red error instead of a result, send me what it says.
 
 ## Step 4 — Register yourselves, then become admins
 
