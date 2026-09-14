@@ -985,8 +985,11 @@
         <p class="cart__done-note">
           <strong>Please send us the payment screenshot on WhatsApp.</strong>
           A UPI transfer only tells us money arrived, not who sent it — the
-          screenshot is how we match it to your order. We will verify it and
-          connect with you within 3 hours.
+          screenshot is how we match it to your order.
+          <br /><br />
+          We check every payment by hand, usually within 3 hours. Once it is
+          confirmed <strong>we message you on WhatsApp</strong> with a link —
+          open it and this order will show as paid.
         </p>
 
         <button class="btn btn--green btn--block btn--lg" id="sendOrderBtn">
@@ -1002,6 +1005,11 @@
       <!-- ---------- SCREEN 4: past orders (this device) ---------- -->
       <div class="cart__screen orders" id="ordersScreen" hidden>
         <div class="orders__body">
+
+          <!-- Filled in when the customer arrives on a status link the team
+               sent them. Hidden the rest of the time. -->
+          <div class="flash" id="orderFlash" hidden></div>
+
           <p class="orders__empty" id="ordersEmpty">
             No orders yet. Once you place one it will show up here.
           </p>
@@ -1031,15 +1039,16 @@
           <p class="orders__note" id="ordersNote" hidden>
             Every payment is checked by hand, so a new order stays
             <strong>pending</strong> until we have confirmed it — usually within
-            3 hours. Send the payment screenshot on WhatsApp to speed that up,
-            and ask us there any time if something looks wrong.
+            3 hours. We tell you on WhatsApp when it is done, with a link that
+            updates this page. Sending the payment screenshot speeds that up.
           </p>
 
           <p class="orders__note orders__note--hi" id="ordersNoteHi" lang="hi" hidden>
             हर पेमेंट हम खुद चेक करते हैं, इसलिए नया ऑर्डर तब तक
             <strong>pending</strong> रहता है जब तक हम उसे कन्फर्म न कर दें —
-            आमतौर पर 3 घंटे के अंदर। WhatsApp पर पेमेंट का स्क्रीनशॉट भेज दीजिए
-            तो जल्दी हो जाएगा, और कुछ गड़बड़ लगे तो वहीं पूछ लीजिए।
+            आमतौर पर 3 घंटे के अंदर। हो जाने पर हम WhatsApp पर एक लिंक भेजेंगे,
+            उसे खोलते ही यहाँ स्टेटस अपडेट हो जाएगा। स्क्रीनशॉट भेज देने से
+            जल्दी हो जाता है।
           </p>
         </div>
 

@@ -2113,3 +2113,43 @@ textarea.input { resize: vertical; min-height: 44px; }
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
+
+
+/* ==========================================================================
+   18. THE STATUS FLASH
+
+   Shown at the top of My Orders when the customer opens a link the team
+   sent them after checking a payment. Colour carries the verdict, so it
+   reads before the words do.
+   ========================================================================== */
+.flash {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--r);
+  border: 1px solid;
+}
+.flash__ico { grid-row: 1 / span 3; margin-top: 2px; font-size: 16px; }
+.flash p { font-size: var(--fs-sm); line-height: 1.55; }
+.flash__hi {
+  font-family: var(--f-hi);
+  font-size: calc(var(--fs-sm) - 0.5px);
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid currentColor;
+  /* The rule is a divider, not a line of text — the border inherits the
+     copy colour, so it is faded back to sit behind it. */
+  border-top-color: color-mix(in srgb, currentColor 25%, transparent);
+}
+.flash__note {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  opacity: 0.85;
+}
+
+.flash.is-good { background: var(--green-soft); border-color: var(--green-line); color: var(--green-700); }
+.flash.is-bad  { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.flash.is-wait { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }

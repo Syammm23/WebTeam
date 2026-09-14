@@ -329,6 +329,18 @@
             ' and are checking the payment of ' + money(order.paid) + '. We will confirm shortly.';
     }
 
+    // The link is what actually tells the customer. Opening it flips the
+    // order in their own My Orders from "Pending verification" to the status
+    // set here, which is the only way that screen can ever change without a
+    // server. Built from this page's own address so it is right on the live
+    // site and right on a test server, with nothing to configure.
+    if (order.ref) {
+      const url = new URL('index.html', location.href);
+      url.searchParams.set('order', order.ref);
+      url.searchParams.set('status', order.status || 'pending');
+      msg += '\n\nSee it on the site: ' + url.href;
+    }
+
     window.open('https://wa.me/91' + digits + '?text=' + encodeURIComponent(msg),
                 '_blank', 'noopener,noreferrer');
   }
