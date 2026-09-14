@@ -12,7 +12,7 @@
      ------------------------------------------------------------------------ */
   const CONFIG = {
     businessName: "WE3",
-    email: "hello@we3agency.com",          // PLACEHOLDER
+    email: "hello.we3agency@gmail.com",
 
     // Every enquiry from the site lands on this one line; the team passes
     // work along from there. The reel and photography numbers are still
