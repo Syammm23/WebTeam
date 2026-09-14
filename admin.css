@@ -455,3 +455,37 @@
 }
 .person__orders li { display: flex; align-items: center; gap: 7px; }
 .person__orders .order__status { font-size: 10px; padding: 1px 7px; }
+
+
+/* Granting or removing admin. Shown only to the founder, and only against
+   somebody else. */
+.person__grant {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--green);
+  background: var(--green-soft);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--green-700);
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+}
+.person__grant i { font-size: 10px; }
+.person__grant:hover:not(:disabled) { background: var(--green); color: #fff; }
+.person__grant:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.person__grant--off {
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #991B1B;
+}
+.person__grant--off:hover:not(:disabled) { background: #991B1B; border-color: #991B1B; color: #fff; }
+
+/* When the button takes the right-hand slot, the last-login line steps back
+   so the two do not fight over it. */
+.person__head:has(.person__grant) .person__last { margin-left: 0; }
+
+.hist--roles { margin-top: 14px; }
