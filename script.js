@@ -2045,6 +2045,16 @@
         totals.appendChild(balRow);
       }
 
+      // Whatever the team wrote on this order — usually why it was rejected,
+      // or when work starts. It is written to be read here.
+      let noteEl = null;
+      if (order.note) {
+        noteEl = document.createElement('p');
+        noteEl.className = 'order__note order__note--' + (order.status || 'pending');
+        noteEl.innerHTML = '<i class="fa-solid fa-comment-dots" aria-hidden="true"></i> ';
+        noteEl.appendChild(document.createTextNode(order.note));
+      }
+
       const resend = document.createElement('button');
       resend.type = 'button';
       resend.className = 'order__resend';
@@ -2066,6 +2076,7 @@
       li.appendChild(status);
       li.appendChild(itemsEl);
       li.appendChild(totals);
+      if (noteEl) li.appendChild(noteEl);
       li.appendChild(resend);
       ordersListEl.appendChild(li);
     });
@@ -2102,110 +2113,7 @@
     el.addEventListener('click', showCartScreen);
   });
 
-  /* ---- a status link flips an order to verified or rejected --------------
-
-     Without a server this browser can never learn what the team decided, so
-     the team carries the decision instead: the order book builds a link,
-     sends it on WhatsApp, and opening it updates the order here.
-
-     This is not a security boundary and is not trying to be one. A customer
-     could edit the address bar and mark their own order verified in their own
-     browser. It gains them nothing — the team's order book is the record, and
-     the money is reconciled against that, not against this.                */
-  const STATUSES = ['verified', 'rejected', 'pending'];
-
-  function applyStatusLink() {
-    let params;
-    try { params = new URLSearchParams(location.search); } catch (e) { return; }
-
-    const id = (params.get('order') || '').trim().toUpperCase();
-    const status = (params.get('status') || '').trim().toLowerCase();
-    if (!id || STATUSES.indexOf(status) === -1) return;
-
-    // Take it out of the address bar, so a reload does not replay it and a
-    // forwarded link does not carry someone else's status.
-    try {
-      history.replaceState(null, '', location.pathname + location.hash);
-    } catch (e) { /* ignore */ }
-
-    const found = orders.find(function (o) { return o.id === id; });
-    if (found) {
-      found.status = status;
-      saveOrders();
-    }
-    renderOrders();
-    showStatusBanner(id, status, !!found);
-
-    openCart();
-    showOrdersScreen();
-  }
-
-  function showStatusBanner(id, status, onThisDevice) {
-    const box = $('#orderFlash');
-    if (!box) return;
-
-    const COPY = {
-      verified: {
-        cls: 'is-good',
-        icon: 'fa-circle-check',
-        en: 'Payment confirmed for order ' + id + '. We have started work — ' +
-            'we will be in touch on WhatsApp.',
-        hi: 'ऑर्डर ' + id + ' का पेमेंट कन्फर्म हो गया है। हमने काम शुरू कर दिया ' +
-            'है — WhatsApp पर आपसे बात करते रहेंगे।'
-      },
-      rejected: {
-        cls: 'is-bad',
-        icon: 'fa-circle-exclamation',
-        en: 'We could not find the payment for order ' + id + ' yet. Please ' +
-            'send us the payment screenshot on WhatsApp and we will check again.',
-        hi: 'ऑर्डर ' + id + ' का पेमेंट अभी हमें नहीं मिला है। कृपया WhatsApp पर ' +
-            'पेमेंट का स्क्रीनशॉट भेज दीजिए, हम दोबारा चेक करेंगे।'
-      },
-      pending: {
-        cls: 'is-wait',
-        icon: 'fa-hourglass-half',
-        en: 'Order ' + id + ' is still being checked. We confirm every payment ' +
-            'by hand, usually within 3 hours.',
-        hi: 'ऑर्डर ' + id + ' अभी चेक हो रहा है। हर पेमेंट हम खुद देखते हैं, ' +
-            'आमतौर पर 3 घंटे के अंदर।'
-      }
-    };
-    const c = COPY[status];
-
-    box.className = 'flash ' + c.cls;
-    box.innerHTML = '';
-
-    const icon = document.createElement('i');
-    icon.className = 'fa-solid ' + c.icon + ' flash__ico';
-    icon.setAttribute('aria-hidden', 'true');
-    box.appendChild(icon);
-
-    const en = document.createElement('p');
-    en.className = 'flash__en';
-    en.textContent = c.en;
-    box.appendChild(en);
-
-    const hi = document.createElement('p');
-    hi.className = 'flash__hi';
-    hi.lang = 'hi';
-    hi.textContent = c.hi;
-    box.appendChild(hi);
-
-    // The order itself was placed on another phone, or the browser was
-    // cleared. Say so rather than leaving them hunting for it in the list.
-    if (!onThisDevice) {
-      const note = document.createElement('p');
-      note.className = 'flash__note';
-      note.textContent = 'This order was placed on a different phone, so it is ' +
-                         'not in the list below.';
-      box.appendChild(note);
-    }
-
-    box.hidden = false;
-  }
-
   loadOrders();
-  applyStatusLink();
 
   /* ========================================================================
      5. WORK FILTER
