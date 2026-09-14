@@ -34,6 +34,25 @@
       subject: "New paid order — WE3"
     },
 
+    // Accounts and the shared order book. Both values are meant to sit in
+    // public JavaScript — the database's own rules decide what this key can
+    // do, and they allow registering, signing in, and reading or creating a
+    // row the signed-in user owns. Nothing else.
+    //
+    // PLACEHOLDER: the Project URL from Supabase → Settings → API.
+    // While it is empty the site runs exactly as it did before, on this
+    // browser's own storage, with no accounts.
+    supabase: {
+      url: "",
+      anonKey: "sb_publishable_j8QUhuHa8IfYlmLc8OxI2w_6BElktA7",
+
+      // Supabase always stores an email. A username signs up under this
+      // domain so nobody has to have one; no mail is ever sent to it, and
+      // the customer never sees it. It must never be a domain that could
+      // receive mail.
+      userDomain: "we3users.app"
+    },
+
     upi: {
       id: "7990853947@kotakbank",
       payeeName: "WE3",
@@ -79,6 +98,51 @@
 
   const prefersReducedMotion =
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ========================================================================
+     ACCOUNTS + SHARED ORDERS (Supabase)
+
+     Everything here degrades rather than breaks. With no project configured,
+     or the library blocked, or the network down, `db.ready` stays false and
+     the site behaves exactly as it did before this existed: orders live in
+     this browser and nothing asks anyone to sign in.
+     ======================================================================== */
+  const db = {
+    client: null,
+    ready: false,
+    user: null,       // { id, username }
+  };
+
+  (function initDb() {
+    const cfg = CONFIG.supabase;
+    if (!cfg.url || !cfg.anonKey) return;
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') return;
+    try {
+      db.client = window.supabase.createClient(cfg.url, cfg.anonKey);
+      db.ready = true;
+    } catch (e) {
+      db.ready = false;
+    }
+  }());
+
+  /** username -> the internal address Supabase Auth files it under. */
+  function authEmail(username) {
+    return String(username).trim().toLowerCase() + '@' + CONFIG.supabase.userDomain;
+  }
+
+  // Same rule as the database's own CHECK constraint, so the browser and the
+  // server agree on what a username is instead of the server rejecting
+  // something the form accepted.
+  const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+
+  function usernameProblem(raw) {
+    const u = String(raw || '').trim().toLowerCase();
+    if (!u) return 'Pick a username.';
+    if (u.length < 3) return 'Usernames are at least 3 characters.';
+    if (u.length > 20) return 'Usernames are at most 20 characters.';
+    if (!USERNAME_RE.test(u)) return 'Use only letters, numbers and _ — no spaces.';
+    return '';
+  }
 
   /* ------------------------------------------------------------------------
      UTILITIES
@@ -245,6 +309,9 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    // The account dialog sits above this one and handles its own keys.
+    if (!$('#authModal').hidden) return;
+
     if (e.key === 'Escape') {
       if (!modal.hidden) { closeModal(); return; }
       if (navLinks.classList.contains('is-open')) setNavOpen(false);
@@ -284,6 +351,287 @@
     openWhatsApp(message, numberForService(service));
     closeModal();
   });
+
+  /* ========================================================================
+     3b. ACCOUNT — sign in / register
+
+     Username and password only. Supabase Auth files each account under an
+     internal address built from the username, so nobody needs an email.
+     ======================================================================== */
+  const authModal   = $('#authModal');
+  const authDialog  = $('.modal__dialog', authModal);
+  const authForm    = $('#authForm');
+  const authUser    = $('#authUser');
+  const authPhone   = $('#authPhone');
+  const authPass    = $('#authPass');
+  const authErr     = $('#authErr');
+  const userHint    = $('#userHint');
+  const navAccount  = $('#navAccount');
+
+  let authMode = 'signin';          // or 'register'
+  let afterAuth = null;             // what to run once they are in
+  let lastAuthFocus = null;
+  let checkSeq = 0;                 // guards against out-of-order RPC replies
+
+  function authNote(el, text, cls) {
+    el.hidden = !text;
+    el.textContent = text || '';
+    el.className = (el === authErr ? 'cf-err ' : 'auth__hint ') + (cls || '');
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    const reg = mode === 'register';
+
+    $('#tabSignIn').classList.toggle('is-on', !reg);
+    $('#tabRegister').classList.toggle('is-on', reg);
+    $('#tabSignIn').setAttribute('aria-selected', String(!reg));
+    $('#tabRegister').setAttribute('aria-selected', String(reg));
+
+    $('#authTitle').textContent = reg ? 'Create your account' : 'Sign in';
+    $('#authDesc').textContent = reg
+      ? 'Pick a username. No email, no OTP.'
+      : 'Your orders follow your account, on any phone.';
+    $('#authSubmitLabel').textContent = reg ? 'Create account' : 'Sign in';
+    $('#rowPhone').hidden = !reg;
+    authPass.setAttribute('autocomplete', reg ? 'new-password' : 'current-password');
+    authPass.placeholder = reg ? 'At least 8 characters' : 'Password';
+    $('#authFoot').hidden = reg;
+
+    authNote(authErr, '');
+    authNote(userHint, '');
+  }
+
+  function openAuth(options) {
+    const opts = options || {};
+    setNavOpen(false);
+    lastAuthFocus = document.activeElement;
+    afterAuth = opts.then || null;
+
+    setAuthMode(opts.mode || 'signin');
+    if (opts.reason) authNote(userHint, opts.reason, 'is-info');
+
+    authModal.hidden = false;
+    document.body.classList.add('is-locked');
+    authDialog.focus({ preventScroll: true });
+  }
+
+  function closeAuth() {
+    authModal.hidden = true;
+    // The cart may still be open behind it and needs the scroll lock kept.
+    if (cartEl.hidden && modal.hidden) document.body.classList.remove('is-locked');
+    if (lastAuthFocus && typeof lastAuthFocus.focus === 'function') {
+      lastAuthFocus.focus({ preventScroll: true });
+    }
+  }
+
+  $$('[data-close-auth]', authModal).forEach(function (el) {
+    el.addEventListener('click', closeAuth);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (authModal.hidden) return;
+
+    if (e.key === 'Escape') { closeAuth(); return; }
+
+    // Tab stays inside the dialog, as it does for the WhatsApp one.
+    if (e.key !== 'Tab') return;
+    const items = $$(FOCUSABLE, authDialog).filter(function (el) { return el.offsetParent !== null; });
+    if (!items.length) return;
+    const first = items[0];
+    const last  = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  $('#tabSignIn').addEventListener('click', function () { setAuthMode('signin'); });
+  $('#tabRegister').addEventListener('click', function () { setAuthMode('register'); });
+  $('#goRegister').addEventListener('click', function () { setAuthMode('register'); });
+
+  $('#authEye').addEventListener('click', function () {
+    const show = authPass.type === 'password';
+    authPass.type = show ? 'text' : 'password';
+    this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    this.innerHTML = '<i class="fa-regular fa-eye' + (show ? '-slash' : '') +
+                     '" aria-hidden="true"></i>';
+    authPass.focus();
+  });
+
+  /* ---- live "is this username free?" ------------------------------------
+     Only a courtesy. The database's unique constraint is what actually stops
+     two people taking the same name, and it is checked inside the signup, so
+     a name taken in the seconds between this and the submit still fails
+     properly rather than half-creating an account. */
+  let checkTimer = null;
+  authUser.addEventListener('input', function () {
+    if (authMode !== 'register') return;
+    clearTimeout(checkTimer);
+    const raw = authUser.value;
+    const problem = usernameProblem(raw);
+    if (problem) { authNote(userHint, raw ? problem : '', 'is-bad'); return; }
+    authNote(userHint, 'Checking…', '');
+    const seq = ++checkSeq;
+    checkTimer = setTimeout(function () { checkUsername(raw.trim().toLowerCase(), seq); }, 400);
+  });
+
+  function checkUsername(username, seq) {
+    if (!db.ready) { authNote(userHint, '', ''); return; }
+    db.client.rpc('username_available', { p_username: username })
+      .then(function (res) {
+        if (seq !== checkSeq) return;          // a newer keystroke won
+        if (res.error) { authNote(userHint, '', ''); return; }
+        authNote(userHint,
+          res.data ? '\u201C' + username + '\u201D is available.'
+                   : '\u201C' + username + '\u201D is taken — try another.',
+          res.data ? 'is-good' : 'is-bad');
+      }, function () { authNote(userHint, '', ''); });
+  }
+
+  /* ---- submit ---- */
+  authForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    authNote(authErr, '');
+
+    if (!db.ready) {
+      authNote(authErr, 'Accounts are not switched on yet. You can still order — ' +
+                        'your order will be saved on this phone.', '');
+      return;
+    }
+
+    const username = authUser.value.trim().toLowerCase();
+    const password = authPass.value;
+    const reg = authMode === 'register';
+
+    const problem = usernameProblem(username);
+    if (problem) { authNote(authErr, problem); authUser.focus(); return; }
+
+    if (reg && password.length < 8) {
+      authNote(authErr, 'Use a password of at least 8 characters.');
+      authPass.focus();
+      return;
+    }
+    if (!reg && !password) {
+      authNote(authErr, 'Enter your password.');
+      authPass.focus();
+      return;
+    }
+
+    const phone = authPhone.value.trim();
+    if (reg && phone.replace(/\D/g, '').length < 10) {
+      authNote(authErr, 'Enter your 10-digit mobile number — it is how we check it ' +
+                        'is you if you forget your password.');
+      authPhone.focus();
+      return;
+    }
+
+    const btn = $('#authSubmit');
+    btn.disabled = true;
+    const label = $('#authSubmitLabel').textContent;
+    $('#authSubmitLabel').textContent = reg ? 'Creating…' : 'Signing in…';
+
+    const done = function () {
+      btn.disabled = false;
+      $('#authSubmitLabel').textContent = label;
+    };
+
+    const request = reg
+      ? db.client.auth.signUp({
+          email: authEmail(username),
+          password: password,
+          options: { data: { username: username, phone: phone } }
+        })
+      : db.client.auth.signInWithPassword({
+          email: authEmail(username),
+          password: password
+        });
+
+    request.then(function (res) {
+      done();
+      if (res.error) { authNote(authErr, authErrorText(res.error, reg)); return; }
+      if (!res.data || !res.data.session) {
+        // Only happens if email confirmation is left switched on, where the
+        // session waits for a mail that can never arrive at an internal
+        // address. Worth naming rather than showing a blank screen.
+        authNote(authErr, 'The account was made but could not be signed in. ' +
+                          'Message us on WhatsApp and we will sort it out.');
+        return;
+      }
+      onSignedIn(res.data.session.user, username);
+      closeAuth();
+      const next = afterAuth;
+      afterAuth = null;
+      if (typeof next === 'function') next();
+    }, function () {
+      done();
+      authNote(authErr, 'Could not reach the server. Check your connection and try again.');
+    });
+  });
+
+  /** Supabase phrases errors for developers; these are for customers. */
+  function authErrorText(error, registering) {
+    const msg = String((error && error.message) || '').toLowerCase();
+    if (msg.indexOf('already registered') > -1 || msg.indexOf('already been registered') > -1 ||
+        msg.indexOf('duplicate') > -1 || msg.indexOf('profiles_username_key') > -1) {
+      return 'That username is already taken — try another.';
+    }
+    if (msg.indexOf('invalid login') > -1) {
+      return 'Wrong username or password.';
+    }
+    if (msg.indexOf('username_format') > -1) {
+      return 'Use only letters, numbers and _ — no spaces.';
+    }
+    if (msg.indexOf('password') > -1) {
+      return 'Use a password of at least 8 characters.';
+    }
+    return registering
+      ? 'Could not create the account. Please try again, or message us on WhatsApp.'
+      : 'Could not sign in. Please try again, or message us on WhatsApp.';
+  }
+
+  function onSignedIn(user, username) {
+    db.user = {
+      id: user.id,
+      username: username || (user.user_metadata && user.user_metadata.username) || ''
+    };
+    renderAccount();
+    loadOrders();
+  }
+
+  function signOut() {
+    if (!db.ready) return;
+    db.client.auth.signOut().then(function () {
+      db.user = null;
+      orders = [];
+      renderAccount();
+      renderOrders();
+    }, function () { /* leaving them signed in is the safe failure */ });
+  }
+
+  function renderAccount() {
+    if (!db.ready) { navAccount.hidden = true; return; }
+    navAccount.hidden = false;
+    const inUser = Boolean(db.user);
+    navAccount.setAttribute('aria-label', inUser ? 'Your account' : 'Sign in');
+    navAccount.classList.toggle('is-in', inUser);
+    navAccount.innerHTML = inUser
+      ? '<i class="fa-solid fa-user" aria-hidden="true"></i>'
+      : '<i class="fa-regular fa-user" aria-hidden="true"></i>';
+  }
+
+  navAccount.addEventListener('click', function () {
+    if (!db.user) { openAuth({ mode: 'signin' }); return; }
+    if (confirm('Signed in as ' + db.user.username + '. Sign out?')) signOut();
+  });
+
+  // Pick a session back up on load, so a returning customer is already in.
+  if (db.ready) {
+    db.client.auth.getSession().then(function (res) {
+      const session = res && res.data && res.data.session;
+      if (session) onSignedIn(session.user);
+      else renderAccount();
+    }, function () { renderAccount(); });
+  } else {
+    renderAccount();
+  }
 
   /* ========================================================================
      4. QUOTE BUILDER — live estimate
@@ -926,6 +1274,19 @@
   }
 
   payBtn.addEventListener('click', function () {
+    // With accounts switched on, ordering needs one — it is what makes the
+    // order history follow them to another phone. Their details are already
+    // typed in, so this comes back to exactly where they were.
+    if (db.ready && !db.user) {
+      openAuth({
+        mode: 'register',
+        reason: 'Create an account so you can see this order from any phone. ' +
+                'It takes a username and a password.',
+        then: function () { payBtn.click(); }
+      });
+      return;
+    }
+
     const nameEl = $('#cartName');
     const phoneEl = $('#cartPhone');
     const bizEl = $('#cartBusiness');
@@ -1147,7 +1508,7 @@
 
   /* Escape closes the cart (handled before the modal, which sits above it) */
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !cartEl.hidden && modal.hidden) closeCart();
+    if (e.key === 'Escape' && !cartEl.hidden && modal.hidden && authModal.hidden) closeCart();
   });
 
   loadCart();
@@ -1173,7 +1534,7 @@
   const ordersNoteHi = $('#ordersNoteHi');
   const ordersShot   = $('#ordersShot');
 
-  function loadOrders() {
+  function loadLocalOrders() {
     try {
       const raw = localStorage.getItem(ORDERS_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
@@ -1186,11 +1547,74 @@
     try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); } catch (e) { /* ignore */ }
   }
 
+  /** A database row in the shape the rest of this file already speaks. */
+  function fromRow(row) {
+    return {
+      id: row.ref,
+      at: Date.parse(row.created_at) || Date.now(),
+      name: row.customer_name,
+      business: row.business,
+      phone: row.phone,
+      email: row.email || '',
+      brief: row.brief || '',
+      items: Array.isArray(row.items) ? row.items : [],
+      subtotal: row.total,
+      amount: row.paid,
+      split: row.pay_mode,
+      status: row.status || 'pending',
+      note: row.note || '',
+      shared: true       // it reached us, or it would not be in the table
+    };
+  }
+
+  /**
+   * Signed in, orders come from the database — which is the whole point: they
+   * show up on any phone, and a status the team sets is really theirs. Signed
+   * out, or with no project configured, this browser's own storage is all
+   * there is, exactly as before.
+   */
+  function loadOrders() {
+    if (!db.ready || !db.user) { loadLocalOrders(); renderOrders(); return; }
+
+    db.client.from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(MAX_ORDERS)
+      .then(function (res) {
+        if (res.error) { loadLocalOrders(); renderOrders(); return; }
+        orders = (res.data || []).map(fromRow);
+        renderOrders();
+      }, function () { loadLocalOrders(); renderOrders(); });
+  }
+
   function recordOrder(order) {
-    orders.unshift(Object.assign({ at: Date.now(), shared: false, status: 'pending' }, order));
+    const full = Object.assign({ at: Date.now(), shared: false, status: 'pending' }, order);
+    orders.unshift(full);
     orders = orders.slice(0, MAX_ORDERS);
+
+    // Kept locally either way. If the insert fails — offline, a lapsed
+    // session — the customer still has their order in front of them, and the
+    // WhatsApp message still carries everything we need.
     saveOrders();
     renderOrders();
+
+    if (!db.ready || !db.user) return;
+
+    db.client.from('orders').insert({
+      ref: full.id,
+      user_id: db.user.id,
+      customer_name: full.name,
+      business: full.business || '',
+      phone: full.phone,
+      email: full.email || null,
+      brief: full.brief || null,
+      items: full.items.map(function (i) {
+        return { name: i.name, qty: i.qty, price: i.price, step: i.step || 0 };
+      }),
+      total: full.subtotal,
+      paid: full.amount,
+      pay_mode: full.split
+    }).then(function () { /* stored */ }, function () { /* local copy stands */ });
   }
 
   function markOrderShared(id) {
@@ -1470,7 +1894,6 @@
   }
 
   loadOrders();
-  renderOrders();
   applyStatusLink();
 
   /* ========================================================================
