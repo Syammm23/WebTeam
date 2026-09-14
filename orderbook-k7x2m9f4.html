@@ -80,6 +80,9 @@
       <strong>rejected</strong> changes what the customer sees under My Orders
       straight away — but it does not message them, so send the WhatsApp too.
       A note you save here is shown to them.
+      <br />
+      An order is decided <strong>once</strong>. After that only the owner can
+      move it, and every change is recorded against the person who made it.
     </span>
   </p>
 
@@ -124,6 +127,15 @@
       <p class="adm__state" id="loadState" hidden></p>
       <p class="adm__empty" id="listEmpty">No orders yet. They appear here the moment a customer places one.</p>
       <ul class="adm__orders" id="orderList"></ul>
+    </section>
+
+    <section class="adm__panel" aria-labelledby="peopleTitle">
+      <div class="adm__list-head">
+        <h2 class="adm__h" id="peopleTitle">People</h2>
+      </div>
+      <p class="adm__state" id="peopleState" hidden></p>
+      <p class="adm__empty" id="peopleEmpty">Nobody has signed up yet.</p>
+      <ul class="people" id="peopleList"></ul>
     </section>
   </main>
 
