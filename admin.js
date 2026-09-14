@@ -42,6 +42,7 @@
   let me = null;          // { id, username, is_owner }
   let history = {};       // order ref -> [ change, ... ]
   let people = [];
+  let roleLog = [];
 
   /* ---- connection ------------------------------------------------------ */
   function connect() {
@@ -300,6 +301,15 @@
       }, function () { /* ignore */ });
   }
 
+  function loadRoleLog() {
+    client.from('role_events').select('*').order('at', { ascending: false }).limit(50)
+      .then(function (res) {
+        if (res.error) return;          // People is still usable without it
+        roleLog = res.data || [];
+        renderPeople();
+      }, function () { /* ignore */ });
+  }
+
   function loadPeople() {
     client.rpc('admin_people').then(function (res) {
       if (res.error) {
@@ -310,6 +320,7 @@
       $('#peopleState').hidden = true;
       people = res.data || [];
       renderPeople();
+      loadRoleLog();
     }, function () { /* ignore */ });
   }
 
@@ -350,6 +361,24 @@
       last.className = 'person__last';
       last.textContent = p.last_login ? 'Last login ' + fmtWhen(p.last_login) : 'Never signed in';
       head.appendChild(last);
+
+      // Only the founder sees these, and only against someone else's row.
+      // The database refuses anyone else regardless.
+      if (me.is_owner && !p.is_owner && p.username !== me.username) {
+        const grant = document.createElement('button');
+        grant.type = 'button';
+        grant.className = 'person__grant' + (p.is_admin ? ' person__grant--off' : '');
+        grant.innerHTML = '<i class="fa-solid ' +
+          (p.is_admin ? 'fa-user-minus' : 'fa-user-plus') + '" aria-hidden="true"></i> ' +
+          (p.is_admin ? 'Remove admin' : 'Make co-founder');
+        grant.addEventListener('click', function () {
+          if (p.is_admin && !confirm('Remove admin from @' + p.username + '?')) return;
+          grant.disabled = true;
+          setTeamAdmin(p.username, !p.is_admin, grant);
+        });
+        head.appendChild(grant);
+      }
+
       li.appendChild(head);
 
       const meta = document.createElement('div');
@@ -386,6 +415,25 @@
       }
 
       list.appendChild(li);
+    });
+
+    const log = $('#roleLog');
+    log.innerHTML = '';
+    log.hidden = roleLog.length === 0;
+    roleLog.forEach(function (e) {
+      const row = document.createElement('li');
+      const what = document.createElement('span');
+      what.innerHTML = '<strong></strong> made <strong></strong> <em></em>';
+      const names = what.querySelectorAll('strong');
+      names[0].textContent = '@' + (e.actor || 'someone');
+      names[1].textContent = '@' + e.target;
+      what.querySelector('em').textContent = e.made_admin ? 'a co-founder' : 'no longer an admin';
+      const when = document.createElement('span');
+      when.className = 'hist__when';
+      when.textContent = fmtWhen(e.at);
+      row.appendChild(what);
+      row.appendChild(when);
+      log.appendChild(row);
     });
   }
 
@@ -612,6 +660,26 @@
       li.appendChild(foot);
       list.appendChild(li);
     });
+  }
+
+  function setTeamAdmin(username, makeAdmin, btn) {
+    client.rpc('set_team_admin', { p_username: username, p_admin: makeAdmin })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.error) {
+          $('#peopleState').hidden = false;
+          $('#peopleState').className = 'adm__state is-bad';
+          $('#peopleState').textContent = res.error.message;
+          return;
+        }
+        $('#peopleState').hidden = true;
+        loadPeople();
+      }, function () {
+        if (btn) btn.disabled = false;
+        $('#peopleState').hidden = false;
+        $('#peopleState').className = 'adm__state is-bad';
+        $('#peopleState').textContent = 'Could not reach the server.';
+      });
   }
 
   /** Opens WhatsApp with a message that matches the order's current status. */
