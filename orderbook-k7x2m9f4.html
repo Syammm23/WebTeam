@@ -82,10 +82,7 @@
       Orders arrive here on their own. Marking one <strong>verified</strong> or
       <strong>rejected</strong> changes what the customer sees under My Orders
       straight away — but it does not message them, so send the WhatsApp too.
-      A note you save here is shown to them.
-      <br />
-      An order is decided <strong>once</strong>. After that only the owner can
-      move it, and every change is recorded against the person who made it.
+      Every change is saved against the person who made it.
     </span>
   </p>
 
@@ -114,14 +111,17 @@
       </div>
     </div>
 
+    <!-- ---------- ORDERS ---------- -->
     <section class="adm__panel" aria-labelledby="listTitle">
       <div class="adm__list-head">
-        <h2 class="adm__h" id="listTitle">Orders</h2>
-        <div class="chips" role="tablist" aria-label="Filter orders">
-          <button class="chip is-active" role="tab" aria-selected="true"  data-status="all">All</button>
-          <button class="chip" role="tab" aria-selected="false" data-status="pending">Pending</button>
-          <button class="chip" role="tab" aria-selected="false" data-status="verified">Verified</button>
-          <button class="chip" role="tab" aria-selected="false" data-status="rejected">Rejected</button>
+        <h2 class="adm__h" id="listTitle">
+          <i class="fa-solid fa-receipt" aria-hidden="true"></i> Orders
+        </h2>
+        <div class="chips" id="orderChips" role="tablist" aria-label="Filter orders">
+          <button class="chip is-active" role="tab" aria-selected="true"  data-value="all">All</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="pending">Pending</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="verified">Verified</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="rejected">Rejected</button>
         </div>
       </div>
 
@@ -132,14 +132,44 @@
       <ul class="adm__orders" id="orderList"></ul>
     </section>
 
+    <!-- ---------- PEOPLE ---------- -->
     <section class="adm__panel" aria-labelledby="peopleTitle">
       <div class="adm__list-head">
-        <h2 class="adm__h" id="peopleTitle">People</h2>
+        <h2 class="adm__h" id="peopleTitle">
+          <i class="fa-solid fa-users" aria-hidden="true"></i> People
+        </h2>
+        <div class="chips" id="peopleChips" role="tablist" aria-label="Filter people">
+          <button class="chip is-active" role="tab" aria-selected="true"  data-value="all">Everyone</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="team">Team</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="customers">Customers</button>
+        </div>
+        <!-- Access buttons stay hidden until this is switched on, so granting
+             admin cannot happen with a stray tap. Founder only. -->
+        <button class="adm__manage" id="manageBtn" hidden></button>
       </div>
+
+      <input class="input adm__search" id="peopleSearch" placeholder="Search username, name, business or phone…" />
+
       <p class="adm__state" id="peopleState" hidden></p>
       <p class="adm__empty" id="peopleEmpty">Nobody has signed up yet.</p>
       <ul class="people" id="peopleList"></ul>
-      <ul class="hist hist--roles" id="roleLog" hidden></ul>
+    </section>
+
+    <!-- ---------- ACTIVITY ---------- -->
+    <section class="adm__panel" aria-labelledby="activityTitle">
+      <div class="adm__list-head">
+        <h2 class="adm__h" id="activityTitle">
+          <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Activity
+        </h2>
+        <div class="chips" id="activityChips" role="tablist" aria-label="Activity type">
+          <button class="chip is-active" role="tab" aria-selected="true"  data-value="logins">Logins</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="orders">Order changes</button>
+          <button class="chip" role="tab" aria-selected="false" data-value="access">Access changes</button>
+        </div>
+      </div>
+
+      <p class="adm__empty" id="activityEmpty">Nothing yet.</p>
+      <ul class="hist hist--feed" id="activityList"></ul>
     </section>
   </main>
 
