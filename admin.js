@@ -298,6 +298,7 @@
           (history[e.order_ref] = history[e.order_ref] || []).push(e);
         });
         render();
+        renderActivity();
       }, function () { /* ignore */ });
   }
 
@@ -306,7 +307,7 @@
       .then(function (res) {
         if (res.error) return;          // People is still usable without it
         roleLog = res.data || [];
-        renderPeople();
+        renderActivity();
       }, function () { /* ignore */ });
   }
 
@@ -320,124 +321,10 @@
       $('#peopleState').hidden = true;
       people = res.data || [];
       renderPeople();
+      renderActivity();
       loadRoleLog();
     }, function () { /* ignore */ });
   }
-
-  /**
-   * An order is decided once. After that only the owner may move it — the
-   * database enforces that, and this greys the buttons so nobody finds out
-   * by being refused.
-   */
-  function canChangeStatus(order) {
-    return order.status === 'pending' || me.is_owner;
-  }
-
-  function renderPeople() {
-    const list = $('#peopleList');
-    list.innerHTML = '';
-    $('#peopleEmpty').hidden = people.length > 0;
-
-    people.forEach(function (p) {
-      const li = document.createElement('li');
-      li.className = 'person' + (p.is_admin ? ' person--admin' : '');
-
-      const head = document.createElement('div');
-      head.className = 'person__head';
-      const name = document.createElement('span');
-      name.className = 'person__name';
-      name.textContent = '@' + p.username;
-      head.appendChild(name);
-
-      const role = roleLabel(p);
-      if (role) {
-        const tag = document.createElement('span');
-        tag.className = 'person__tag' + (p.is_owner ? ' person__tag--owner' : '');
-        tag.textContent = role;
-        head.appendChild(tag);
-      }
-
-      const last = document.createElement('span');
-      last.className = 'person__last';
-      last.textContent = p.last_login ? 'Last login ' + fmtWhen(p.last_login) : 'Never signed in';
-      head.appendChild(last);
-
-      // Only the founder sees these, and only against someone else's row.
-      // The database refuses anyone else regardless.
-      if (me.is_owner && !p.is_owner && p.username !== me.username) {
-        const grant = document.createElement('button');
-        grant.type = 'button';
-        grant.className = 'person__grant' + (p.is_admin ? ' person__grant--off' : '');
-        grant.innerHTML = '<i class="fa-solid ' +
-          (p.is_admin ? 'fa-user-minus' : 'fa-user-plus') + '" aria-hidden="true"></i> ' +
-          (p.is_admin ? 'Remove admin' : 'Make co-founder');
-        grant.addEventListener('click', function () {
-          if (p.is_admin && !confirm('Remove admin from @' + p.username + '?')) return;
-          grant.disabled = true;
-          setTeamAdmin(p.username, !p.is_admin, grant);
-        });
-        head.appendChild(grant);
-      }
-
-      li.appendChild(head);
-
-      const meta = document.createElement('div');
-      meta.className = 'person__meta';
-      [
-        ['Name', p.full_name || '—'],
-        ['Business', p.business || '—'],
-        ['Phone', p.phone || '—'],
-        ['Joined', fmtDate(p.joined)],
-        ['Orders', String(p.orders)],
-        ['Paid (verified)', money(p.paid)]
-      ].forEach(function (pair) {
-        const span = document.createElement('span');
-        span.innerHTML = pair[0] + ' <strong></strong>';
-        span.querySelector('strong').textContent = pair[1];
-        meta.appendChild(span);
-      });
-      li.appendChild(meta);
-
-      // Their own orders, so one person's whole history is in one place.
-      const mine = orders.filter(function (o) { return o.phone === p.phone && p.phone; });
-      if (mine.length) {
-        const ul = document.createElement('ul');
-        ul.className = 'person__orders';
-        mine.forEach(function (o) {
-          const row = document.createElement('li');
-          row.innerHTML = '<span class="order__status order__status--' + (o.status || 'pending') + '"></span>';
-          row.querySelector('span').textContent = o.status || 'pending';
-          row.appendChild(document.createTextNode(
-            ' ' + o.ref + ' · ' + fmtDate(o.created_at) + ' · ' + money(o.paid) + ' of ' + money(o.total)));
-          ul.appendChild(row);
-        });
-        li.appendChild(ul);
-      }
-
-      list.appendChild(li);
-    });
-
-    const log = $('#roleLog');
-    log.innerHTML = '';
-    log.hidden = roleLog.length === 0;
-    roleLog.forEach(function (e) {
-      const row = document.createElement('li');
-      const what = document.createElement('span');
-      what.innerHTML = '<strong></strong> made <strong></strong> <em></em>';
-      const names = what.querySelectorAll('strong');
-      names[0].textContent = '@' + (e.actor || 'someone');
-      names[1].textContent = '@' + e.target;
-      what.querySelector('em').textContent = e.made_admin ? 'a co-founder' : 'no longer an admin';
-      const when = document.createElement('span');
-      when.className = 'hist__when';
-      when.textContent = fmtWhen(e.at);
-      row.appendChild(what);
-      row.appendChild(when);
-      log.appendChild(row);
-    });
-  }
-
-  $('#refreshBtn').addEventListener('click', load);
 
   /* ---- summary --------------------------------------------------------- */
   function renderStats() {
@@ -510,10 +397,6 @@
     const on = order.status === status;
     b.className = 'mark mark--' + status + (on ? ' is-on' : '');
     b.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i> ' + label;
-    b.disabled = !on && !canChangeStatus(order);
-    if (b.disabled) {
-      b.title = 'Already ' + order.status + '. Only the owner can change it now.';
-    }
     b.addEventListener('click', function () {
       if (order.status === status) return;
       if (!confirmStatus(order, status)) return;
@@ -543,9 +426,11 @@
       ''
     ];
 
-    lines.push(me.is_owner
-      ? 'The customer sees this straight away.'
-      : 'You can only decide this once. After this, only the founder can change it.');
+    // It can be changed again afterwards, so the warning is not about
+    // permanence — it is that the customer sees it immediately and that the
+    // change is recorded against whoever made it.
+    lines.push('The customer sees this straight away, and this is saved ' +
+               'against your name.');
 
     return confirm(lines.join('\n'));
   }
@@ -660,15 +545,6 @@
         li.appendChild(hist);
       }
 
-      if (!canChangeStatus(order)) {
-        const lockNote = document.createElement('p');
-        lockNote.className = 'adm-order__locked';
-        lockNote.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i> ';
-        lockNote.appendChild(document.createTextNode(
-          'Already ' + order.status + '. Only the owner can change it now.'));
-        li.appendChild(lockNote);
-      }
-
       const foot = document.createElement('div');
       foot.className = 'adm-order__foot';
       foot.appendChild(statusButton(order, 'pending', 'Pending', 'fa-hourglass-half'));
@@ -687,6 +563,225 @@
       foot.appendChild(wa);
 
       li.appendChild(foot);
+      list.appendChild(li);
+    });
+  }
+
+  /* ---- People -----------------------------------------------------------
+     Filtered, searchable, and with the access buttons hidden behind a
+     deliberate switch. Showing "Make co-founder" against every name all the
+     time makes granting admin a one-tap slip. */
+  let peopleFilter = 'all';
+  let peopleQuery = '';
+  let manageAccess = false;
+
+  function visiblePeople() {
+    const q = peopleQuery.trim().toLowerCase();
+    return people.filter(function (p) {
+      if (peopleFilter === 'team' && !p.is_admin) return false;
+      if (peopleFilter === 'customers' && p.is_admin) return false;
+      if (!q) return true;
+      return [p.username, p.full_name, p.business, p.phone]
+        .some(function (v) { return String(v || '').toLowerCase().includes(q); });
+    });
+  }
+
+  function renderPeople() {
+    // The switch only exists for the founder; the database refuses everyone
+    // else anyway, so this is about keeping the page calm, not about access.
+    const toggle = $('#manageBtn');
+    toggle.hidden = !me.is_owner;
+    toggle.classList.toggle('is-on', manageAccess);
+    toggle.innerHTML = '<i class="fa-solid ' + (manageAccess ? 'fa-lock-open' : 'fa-lock') +
+      '" aria-hidden="true"></i> ' + (manageAccess ? 'Done managing' : 'Manage access');
+
+    const rows = visiblePeople();
+    const list = $('#peopleList');
+    list.innerHTML = '';
+    $('#peopleEmpty').hidden = rows.length > 0;
+    $('#peopleEmpty').textContent = people.length
+      ? 'Nobody matches that.'
+      : 'Nobody has signed up yet.';
+
+    rows.forEach(function (p) {
+      const li = document.createElement('li');
+      li.className = 'person' + (p.is_admin ? ' person--admin' : '');
+
+      const head = document.createElement('div');
+      head.className = 'person__head';
+
+      const name = document.createElement('span');
+      name.className = 'person__name';
+      name.textContent = '@' + p.username;
+      head.appendChild(name);
+
+      const role = roleLabel(p);
+      if (role) {
+        const tag = document.createElement('span');
+        tag.className = 'person__tag' + (p.is_owner ? ' person__tag--owner' : '');
+        tag.textContent = role;
+        head.appendChild(tag);
+      }
+
+      const last = document.createElement('span');
+      last.className = 'person__last';
+      last.textContent = p.last_login ? 'Last seen ' + fmtWhen(p.last_login) : 'Never signed in';
+      head.appendChild(last);
+
+      if (manageAccess && me.is_owner && !p.is_owner && p.username !== me.username) {
+        const grant = document.createElement('button');
+        grant.type = 'button';
+        grant.className = 'person__grant' + (p.is_admin ? ' person__grant--off' : '');
+        grant.innerHTML = '<i class="fa-solid ' +
+          (p.is_admin ? 'fa-user-minus' : 'fa-user-plus') + '" aria-hidden="true"></i> ' +
+          (p.is_admin ? 'Remove admin' : 'Make co-founder');
+        grant.addEventListener('click', function () {
+          if (!confirmAccess(p, !p.is_admin)) return;
+          grant.disabled = true;
+          setTeamAdmin(p.username, !p.is_admin, grant);
+        });
+        head.appendChild(grant);
+      }
+
+      li.appendChild(head);
+
+      const meta = document.createElement('div');
+      meta.className = 'person__meta';
+      [
+        ['Name', p.full_name || '—'],
+        ['Business', p.business || '—'],
+        ['Phone', p.phone || '—'],
+        ['Joined', fmtDate(p.joined)],
+        ['Orders', String(p.orders)],
+        ['Paid (verified)', money(p.paid)]
+      ].forEach(function (pair) {
+        const span = document.createElement('span');
+        span.innerHTML = pair[0] + ' <strong></strong>';
+        span.querySelector('strong').textContent = pair[1];
+        meta.appendChild(span);
+      });
+      li.appendChild(meta);
+
+      const mine = orders.filter(function (o) { return p.phone && o.phone === p.phone; });
+      if (mine.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'person__orders';
+        mine.forEach(function (o) {
+          const row = document.createElement('li');
+          const chip = document.createElement('span');
+          chip.className = 'order__status order__status--' + (o.status || 'pending');
+          chip.textContent = o.status || 'pending';
+          row.appendChild(chip);
+          row.appendChild(document.createTextNode(
+            ' ' + o.ref + ' · ' + fmtDate(o.created_at) + ' · ' +
+            money(o.paid) + ' of ' + money(o.total)));
+          ul.appendChild(row);
+        });
+        li.appendChild(ul);
+      }
+
+      list.appendChild(li);
+    });
+  }
+
+  /** Granting admin is not a thing to do by accident. */
+  function confirmAccess(p, makeAdmin) {
+    const who = '@' + p.username + (p.full_name ? ' (' + p.full_name + ')' : '');
+    return confirm(makeAdmin
+      ? 'Make ' + who + ' a co-founder?\n\n' +
+        'They will see every order and every customer, and be able to mark ' +
+        'payments received or not received.'
+      : 'Remove admin from ' + who + '?\n\n' +
+        'They lose access to the Order Book straight away.');
+  }
+
+  /* ---- Activity ---------------------------------------------------------
+     Who signed in, and who changed what, kept apart. Mixed together they
+     answer neither question quickly. */
+  let activityTab = 'logins';
+
+  function renderActivity() {
+    const list = $('#activityList');
+    const empty = $('#activityEmpty');
+    list.innerHTML = '';
+
+    let rows = [];
+
+    if (activityTab === 'logins') {
+      rows = people.slice()
+        .filter(function (p) { return p.last_login; })
+        .sort(function (a, b) { return Date.parse(b.last_login) - Date.parse(a.last_login); })
+        .map(function (p) {
+          return {
+            when: p.last_login,
+            html: '<strong></strong> signed in',
+            fill: function (el) {
+              el.querySelector('strong').textContent = '@' + p.username;
+              if (roleLabel(p)) {
+                const tag = document.createElement('span');
+                tag.className = 'person__tag' + (p.is_owner ? ' person__tag--owner' : '');
+                tag.textContent = roleLabel(p);
+                el.appendChild(document.createTextNode(' '));
+                el.appendChild(tag);
+              }
+            }
+          };
+        });
+      empty.textContent = 'Nobody has signed in yet.';
+
+    } else if (activityTab === 'orders') {
+      Object.keys(history).forEach(function (ref) {
+        history[ref].forEach(function (e) { rows.push(e); });
+      });
+      rows.sort(function (a, b) { return Date.parse(b.at) - Date.parse(a.at); });
+      rows = rows.map(function (e) {
+        return {
+          when: e.at,
+          html: e.from_status !== e.to_status
+            ? '<strong></strong> marked <code></code> <em></em>'
+            : '<strong></strong> changed the note on <code></code>',
+          fill: function (el) {
+            el.querySelector('strong').textContent = '@' + (e.actor || 'someone');
+            el.querySelector('code').textContent = e.order_ref;
+            const to = el.querySelector('em');
+            if (to) {
+              to.textContent = e.to_status;
+              to.className = 'hist__to hist__to--' + e.to_status;
+            }
+          }
+        };
+      });
+      empty.textContent = 'No order has been changed yet.';
+
+    } else {
+      rows = roleLog.map(function (e) {
+        return {
+          when: e.at,
+          html: '<strong></strong> made <strong></strong> <em></em>',
+          fill: function (el) {
+            const names = el.querySelectorAll('strong');
+            names[0].textContent = '@' + (e.actor || 'someone');
+            names[1].textContent = '@' + e.target;
+            el.querySelector('em').textContent =
+              e.made_admin ? 'a co-founder' : 'no longer an admin';
+          }
+        };
+      });
+      empty.textContent = 'Nobody\u2019s access has changed yet.';
+    }
+
+    empty.hidden = rows.length > 0;
+
+    rows.forEach(function (r) {
+      const li = document.createElement('li');
+      const what = document.createElement('span');
+      what.innerHTML = r.html;
+      r.fill(what);
+      const when = document.createElement('span');
+      when.className = 'hist__when';
+      when.textContent = fmtWhen(r.when);
+      li.appendChild(what);
+      li.appendChild(when);
       list.appendChild(li);
     });
   }
@@ -746,21 +841,39 @@
   }
 
   /* ---- filters + search ------------------------------------------------ */
-  $$('.chip').forEach(function (chip) {
-    chip.addEventListener('click', function () {
-      filter = chip.dataset.status;
-      $$('.chip').forEach(function (c) {
-        const on = c === chip;
-        c.classList.toggle('is-active', on);
-        c.setAttribute('aria-selected', String(on));
+
+  /** Chips in one group behave as one choice. */
+  function chipGroup(selector, onPick) {
+    const chips = $$(selector);
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) {
+          const on = c === chip;
+          c.classList.toggle('is-active', on);
+          c.setAttribute('aria-selected', String(on));
+        });
+        onPick(chip.dataset.value);
       });
-      render();
     });
-  });
+  }
+
+  chipGroup('#orderChips .chip', function (v) { filter = v; render(); });
+  chipGroup('#peopleChips .chip', function (v) { peopleFilter = v; renderPeople(); });
+  chipGroup('#activityChips .chip', function (v) { activityTab = v; renderActivity(); });
 
   $('#search').addEventListener('input', function () {
     query = this.value;
     render();
+  });
+
+  $('#peopleSearch').addEventListener('input', function () {
+    peopleQuery = this.value;
+    renderPeople();
+  });
+
+  $('#manageBtn').addEventListener('click', function () {
+    manageAccess = !manageAccess;
+    renderPeople();
   });
 
   /* ---- start ----------------------------------------------------------- */

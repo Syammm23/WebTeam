@@ -66,24 +66,18 @@ declare
   actor_id   uuid := auth.uid();
   actor_name text;
   admin      boolean;
-  owner      boolean;
 begin
-  select username, is_admin, is_owner
-    into actor_name, admin, owner
+  select username, is_admin
+    into actor_name, admin
     from public.profiles where id = actor_id;
 
   if not coalesce(admin, false) then
     raise exception 'Only an admin can change an order.';
   end if;
 
-  -- Decided once. After that only the owner may move it, so a payment
-  -- cannot be quietly flipped between verified and rejected.
-  if new.status is distinct from old.status
-     and old.status <> 'pending'
-     and not coalesce(owner, false) then
-    raise exception
-      'Order % is already %. Only the owner can change it now.', old.ref, old.status;
-  end if;
+  -- Anyone on the team can change a decision, as many times as it takes.
+  -- What keeps that honest is the record below, not a lock: every change
+  -- carries the name of whoever made it.
 
   if new.status is distinct from old.status
      or new.note is distinct from old.note then

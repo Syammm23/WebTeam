@@ -488,4 +488,51 @@
    so the two do not fight over it. */
 .person__head:has(.person__grant) .person__last { margin-left: 0; }
 
-.hist--roles { margin-top: 14px; }
+/* ---- panel heads, filters, and the Activity feed ---- */
+.adm__h i { margin-right: 7px; color: var(--green); font-size: 0.85em; }
+
+.adm__manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--body);
+  transition: border-color var(--tr), background var(--tr), color var(--tr);
+}
+.adm__manage i { font-size: 10px; }
+.adm__manage:hover { border-color: var(--ink); color: var(--ink); }
+.adm__manage.is-on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* A standalone list rather than a footnote under an order, so it needs its
+   own breathing room and rows that do not crowd. */
+.hist--feed {
+  margin-top: 12px;
+  gap: 2px;
+  padding: 6px 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.hist--feed li {
+  padding: 7px 6px;
+  font-size: var(--fs-sm);
+  border-bottom: 1px solid var(--line);
+}
+.hist--feed li:last-child { border-bottom: 0; }
+.hist--feed code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+}
+.hist--feed .person__tag { font-size: 9px; }
