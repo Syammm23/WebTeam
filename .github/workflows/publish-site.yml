@@ -15,6 +15,8 @@ on:
       - orderbook-k7x2m9f4.html
       - admin.css
       - admin.js
+      - setup-sql.html
+      - setup-sql.js
       - assets/**
       - vendor/**
       - .github/workflows/publish-site.yml
@@ -45,6 +47,7 @@ jobs:
           staging="$(mktemp -d)"
           cp index.html style.css script.js "$staging/"
           cp orderbook-k7x2m9f4.html admin.css admin.js "$staging/"
+          cp setup-sql.html setup-sql.js "$staging/"
           touch "$staging/.nojekyll"
           if [ -d assets ]; then
             cp -r assets "$staging/assets"
@@ -61,7 +64,8 @@ jobs:
 
           cp "$staging/index.html" "$staging/style.css" \
              "$staging/script.js" "$staging/.nojekyll" \
-             "$staging/orderbook-k7x2m9f4.html" "$staging/admin.css" "$staging/admin.js" .
+             "$staging/orderbook-k7x2m9f4.html" "$staging/admin.css" "$staging/admin.js" \
+             "$staging/setup-sql.html" "$staging/setup-sql.js" .
 
           # The order book used to publish as admin.html. Leaving that behind
           # would keep the guessable URL working and defeat the rename.
@@ -78,7 +82,8 @@ jobs:
           fi
 
           git add -A index.html style.css script.js .nojekyll assets vendor \
-                     orderbook-k7x2m9f4.html admin.css admin.js
+                     orderbook-k7x2m9f4.html admin.css admin.js \
+                     setup-sql.html setup-sql.js
 
           if git diff --staged --quiet; then
             echo "gh-pages already matches ${GITHUB_SHA}; nothing to publish."
