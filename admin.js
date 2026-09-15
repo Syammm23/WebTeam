@@ -19,6 +19,19 @@
 (function () {
   'use strict';
 
+  /* Not inside anybody else's page.
+
+     A meta Content-Security-Policy cannot set frame-ancestors, and GitHub
+     Pages cannot send X-Frame-Options, so this is the part that is left:
+     if the panel finds itself in a frame it climbs out of it. Otherwise a
+     page somewhere else could float an invisible copy of this one under a
+     button and collect the clicks — with the team's session behind it. */
+  if (window.top !== window.self) {
+    try { window.top.location = window.self.location.href; }
+    catch (e) { document.documentElement.innerHTML = ''; }
+    return;
+  }
+
   const CONFIG = {
     supabase: {
       url: "https://bakvwxkkvzklgnkeqpfi.supabase.co",
@@ -211,7 +224,7 @@
     // the panel is where you would go to find out that it hasn't.
     const read = cols => client.from('profiles').select(cols).eq('id', user.id).limit(1);
 
-    return read('username, is_admin, is_owner, role')
+    return read('username, is_admin, is_owner, role, password_changed_at')
       .then(function (res) {
         if (res.error && missingColumn(res.error)) {
           rolesInDb = false;
@@ -234,12 +247,72 @@
           is_owner: Boolean(row.is_owner),
           // Before the roles script is run there is no role column; the two
           // flags still say who the founder is, which is what they meant.
-          role: row.role || (row.is_owner ? 'founder' : 'cofounder')
+          role: row.role || (row.is_owner ? 'founder' : 'cofounder'),
+          passwordChangedAt: row.password_changed_at || null
         };
+        me.daysLeft = daysLeft(me.passwordChangedAt);
         showUnlocked();
+        touchIdle();
+
+        // Out of time: nothing is loaded and nothing is shown until the
+        // password is changed. The server has stopped answering for this
+        // account anyway — the panel just says so in words.
+        if (me.daysLeft <= 0) { demandNewPassword(); return true; }
+
         startApp();
+        if (me.daysLeft <= PASSWORD_WARN) {
+          toast('Change your password for security — ' + dueText(me.daysLeft) + '.', 'bad');
+        }
         return true;
       });
+  }
+
+  /* ---- the fortnight ------------------------------------------------------
+
+     The panel holds every customer's phone number and every payment, so an
+     admin password stops working after fourteen days. The database is what
+     actually enforces it — password_changed_at is moved by a trigger on the
+     auth table and cannot be touched from a browser, and the role checks all
+     read it. This is the part that gives warning first.                     */
+  const PASSWORD_LIFE = 14;   // days
+  const PASSWORD_WARN = 2;    // start saying so with this many left
+
+  function daysLeft(changedAt) {
+    if (!changedAt) return PASSWORD_LIFE;   // no clock yet: not overdue
+    const age = (Date.now() - Date.parse(changedAt)) / 86400000;
+    if (!isFinite(age)) return PASSWORD_LIFE;
+    return PASSWORD_LIFE - Math.floor(age);
+  }
+
+  function dueText(n) {
+    if (n <= 0) return 'it is overdue';
+    if (n === 1) return '1 day left';
+    return n + ' days left';
+  }
+
+  let mustChangePassword = false;
+
+  function demandNewPassword() {
+    mustChangePassword = true;
+    openMe();
+  }
+
+  /** Paints the notice at the top of the account box, in either state. */
+  function paintPasswordDue() {
+    const box = $('#pwDue');
+    const n = me.daysLeft;
+    if (!mustChangePassword && n > PASSWORD_WARN) { box.hidden = true; return; }
+
+    box.hidden = false;
+    box.className = 'pwdue' + (mustChangePassword ? ' pwdue--now' : '');
+    $('#pwDueHead').textContent = mustChangePassword
+      ? 'Change your password to carry on'
+      : 'Change your password for security — ' + dueText(n) + '.';
+    $('#pwDueWhy').textContent = mustChangePassword
+      ? 'Admin passwords last ' + PASSWORD_LIFE + ' days here. Yours is past that, so ' +
+        'the rest of the panel is closed until you set a new one.'
+      : 'Admin passwords last ' + PASSWORD_LIFE + ' days. This panel has every ' +
+        'customer’s number and every payment on it, which is why.';
   }
 
   $('#lockForm').addEventListener('submit', function (e) {
@@ -440,7 +513,7 @@
     if (e.key === 'Escape') {
       if (!$('#bellPop').hidden) { closeBell(); return; }
       if (!$('#searchResults').hidden) { $('#searchResults').hidden = true; return; }
-      if (top === meModal) { closeMe(); return; }
+      if (top === meModal) { if (!mustChangePassword) closeMe(); return; }
       if (top === drawer) { closeDrawer(); return; }
       if (side.classList.contains('is-open')) { setSide(false); $('#burger').focus(); return; }
       return;
@@ -779,6 +852,9 @@
 
   function openMe() {
     const mine = state.people.find(p => p.username === me.username) || {};
+    paintPasswordDue();
+    // With the fortnight up there is no way out of this box but through it.
+    $$('[data-close-me]', meModal).forEach(el => { el.hidden = mustChangePassword; });
     $('#meUser').textContent = '@' + me.username;
     $('#meRole').textContent = roleLabel(me);
     $('#meRole').className = 'tag ' + roleTag(me);
@@ -793,7 +869,10 @@
     $('.modal__dialog', meModal).focus({ preventScroll: true });
   }
 
-  function closeMe() { meModal.hidden = true; }
+  function closeMe() {
+    if (mustChangePassword) return;
+    meModal.hidden = true;
+  }
 
   $('#meBtn').addEventListener('click', openMe);
   $$('[data-close-me]', meModal).forEach(el => el.addEventListener('click', closeMe));
@@ -847,12 +926,48 @@
       btn.disabled = false;
       if (res.error) { meNote(msg, 'Could not change it. (' + res.error.message + ')', 'is-bad'); return; }
       el.value = '';
+
+      // The trigger on the auth table has just moved password_changed_at,
+      // so the fortnight starts again from here.
+      me.passwordChangedAt = new Date().toISOString();
+      me.daysLeft = PASSWORD_LIFE;
+      paintPasswordDue();
+
+      if (mustChangePassword) {
+        mustChangePassword = false;
+        $$('[data-close-me]', meModal).forEach(el => { el.hidden = false; });
+        meNote(msg, 'Password changed. Opening the panel…', 'is-good');
+        window.setTimeout(function () { closeMe(); startApp(); }, 900);
+        return;
+      }
+
       meNote(msg, 'Password changed. Use the new one next time you sign in.', 'is-good');
       toast('Password changed.');
     }, function () {
       btn.disabled = false;
       meNote(msg, 'Could not reach the server.', 'is-bad');
     });
+  });
+
+  /* ---- left open and walked away from --------------------------------
+
+     A phone on a counter with this panel on it is every customer's number
+     and every payment, to whoever picks it up next. After half an hour of
+     nothing at all, it signs itself out.                                  */
+  const IDLE_LIMIT = 30 * 60 * 1000;
+  let idleTimer = null;
+
+  function signOutIdle() {
+    client.auth.signOut().then(function () { location.reload(); }, function () { location.reload(); });
+  }
+
+  function touchIdle() {
+    window.clearTimeout(idleTimer);
+    idleTimer = window.setTimeout(signOutIdle, IDLE_LIMIT);
+  }
+
+  ['click', 'keydown', 'pointerdown', 'focusin'].forEach(function (ev) {
+    document.addEventListener(ev, touchIdle, { passive: true });
   });
 
   /* ------------------------------------------------------------------------
@@ -890,8 +1005,21 @@
       return;
     }
     VIEWS[route]();
+    if (me.daysLeft <= PASSWORD_WARN) view.insertAdjacentHTML('afterbegin', passwordBanner());
     if (state.missing.length) view.insertAdjacentHTML('afterbegin', setupBanner());
     view.scrollTop = 0;
+    $$('#view [data-changepw]').forEach(b => b.addEventListener('click', openMe));
+  }
+
+  /** On every section, not just the account box — it is easy to miss once. */
+  function passwordBanner() {
+    return '<section class="card setupmsg" style="margin-bottom:14px">' +
+      '<div class="card__head"><h2><i class="fa-solid fa-key"></i> ' +
+        'Change your password for security</h2>' +
+        '<button class="btn--ghost btn--sm" data-changepw>Change it now</button></div>' +
+      '<p class="msg" style="margin:0">Admin passwords last ' + PASSWORD_LIFE +
+        ' days here — ' + esc(dueText(me.daysLeft)) + '. After that this panel closes ' +
+        'until you set a new one.</p></section>';
   }
 
   /**

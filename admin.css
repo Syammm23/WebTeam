@@ -891,6 +891,19 @@ table.tbl--tight { min-width: 520px; }
 .setupmsg .card__head h2 { color: var(--a-amber); }
 .setupmsg .card__head h2 i { color: var(--a-amber); }
 
+/* ---- the password fortnight ---- */
+.pwdue {
+  margin: 0 0 14px;
+  padding: 11px 13px;
+  border-radius: var(--a-r-sm);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+}
+.pwdue--now { border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.08); }
+.pwdue__head { margin: 0; font-size: 13px; font-weight: 700; color: var(--a-amber); }
+.pwdue--now .pwdue__head { color: var(--a-red); }
+.pwdue__why { margin: 5px 0 0; font-size: 12px; line-height: 1.45; color: var(--a-muted); }
+
 .toasts {
   position: fixed;
   right: 16px;

@@ -6,6 +6,33 @@
   <script>document.documentElement.classList.remove('no-js');</script>
 
   <!-- ==========================================================
+       CONTENT SECURITY POLICY
+
+       The browser's own rule about what this page may load and run.
+       It is the thing that limits the damage when something else here
+       is wrong: a script tag smuggled into a customer's name cannot
+       run, because scripts may only come from this origin, and a
+       script that did run could not send what it found anywhere but
+       our own Supabase project.
+
+       'self' for scripts is why supabase-js is served from vendor/
+       rather than a CDN. The one hash is the no-js line above; it is
+       the only inline script on the page, and if that line is ever
+       edited the hash has to be recomputed or it will stop running.
+
+       'unsafe-inline' is present for styles only. Inline style
+       attributes are used throughout the layout, and a style is not a
+       script — the worst it buys an attacker is a misdrawn page.
+
+       The four image hosts are the placeholder shots in the hero and the
+       work section. They are the only third parties that see a visitor
+       here at all, and every one of them drops off the list the moment
+       those pictures are replaced with files in assets/.
+       ========================================================== -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'self'; manifest-src 'self'; script-src 'self' 'sha256-tuKyZn/3ycw/MNMDii/kvSPrelo6SCsJSecqb1n2neg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://images.unsplash.com https://picsum.photos https://s.wordpress.com https://image.thum.io; connect-src 'self' https://bakvwxkkvzklgnkeqpfi.supabase.co wss://bakvwxkkvzklgnkeqpfi.supabase.co" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!-- ==========================================================
        SEO / META — PLACEHOLDER: business name, domain, OG image
        ========================================================== -->
   <title>WE3 — Custom Websites, Instagram Reels &amp; Video Editing in Daman &amp; Vapi</title>
@@ -1243,7 +1270,9 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+  <!-- Served from this repository, not a CDN, and pinned to one version.
+       This is the script that holds the signed-in session; see vendor/README.md. -->
+  <script src="vendor/supabase-js-2.116.0.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

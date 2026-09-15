@@ -6,6 +6,13 @@
 (function () {
   'use strict';
 
+  /* The checkout collects a name, a phone number and a payment. None of
+     that should ever be typed into a copy of this page floating inside
+     somebody else's, so if we are framed, we take over the window. */
+  if (window.top !== window.self) {
+    try { window.top.location = window.self.location.href; } catch (e) { /* cross-origin: fall through */ }
+  }
+
   /* ------------------------------------------------------------------------
      CONFIG — the only block you need to edit when going live.
      PLACEHOLDER values: replace all three.
@@ -969,23 +976,17 @@
         tbl(!r.error, r.error ? r.error.message : 'table is there');
       }, function (e) { tbl(false, String(e)); });
 
-    // A throwaway account, so the real signup error appears without burning a
-    // username someone wants.
-    const sign = line('5. A test signup');
-    const throwaway = 'chk' + Date.now().toString(36).slice(-6);
-    db.client.auth.signUp({
-      email: authEmail(throwaway),
-      password: 'CheckOnly!' + Date.now(),
-      options: { data: { username: throwaway, phone: '0000000000' } }
-    }).then(function (r) {
-      if (r.error) { sign(false, r.error.message); return; }
-      if (!r.data || !r.data.session) {
-        sign(false, 'account made but no session — email confirmation is still ON');
-        return;
-      }
-      sign(true, 'signed up and signed in as ' + throwaway);
-      db.client.auth.signOut();
-    }, function (e) { sign(false, String(e)); });
+    // There used to be a throwaway signup here, so that a real registration
+    // error showed up without burning a username. It also meant anyone who
+    // loaded ?check=1 created an account, as many times as they liked. It
+    // was worth it while signups were broken; it is not worth leaving a
+    // stranger a button that fills auth.users.
+    const sign = line('5. Registration');
+    db.client.rpc('username_available', { p_username: 'chk' + Date.now().toString(36).slice(-6) })
+      .then(function (r) {
+        if (r.error) { sign(false, r.error.message); return; }
+        sign(true, 'the signup path answers; register from the site to test it fully');
+      }, function (e) { sign(false, String(e)); });
   }
 
   try {
