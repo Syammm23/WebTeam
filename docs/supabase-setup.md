@@ -126,3 +126,82 @@ My sandbox blocks `supabase.co` and the CDN the client library loads from, so I
 can build and test the screens against a stand-in but I cannot run a real
 signup against your project. First real registration will be yours — do it
 while I am here so anything that needs fixing gets fixed straight away.
+
+## Step 6 — What keeps this safe
+
+None of this is a paid service. It is the free parts of Supabase and GitHub
+Pages, set up so that a mistake somewhere does not turn into a break-in.
+
+### The key in the page is meant to be public
+
+`sb_publishable_…` sits in plain JavaScript on purpose. It identifies the
+project; it grants nothing. Every table has row-level security on, and the
+policies are what decide the answer. Tested against a real Postgres, here is
+what each kind of visitor actually gets back:
+
+| Asking for | A stranger | A signed-in customer | An assistant |
+| --- | --- | --- | --- |
+| orders | nothing | their own, only | all of them |
+| enquiries | nothing | nothing | all of them |
+| people | nothing | their own row | their own row |
+| activity | nothing | nothing | all of it |
+| services | the public list | the public list | the public list |
+
+A customer trying to write where they should not — `is_admin = true` on their
+own row, a role for themselves, a price, someone else's order — is refused by
+the database every time.
+
+### An order is checked against our own prices
+
+Everything in the cart is worked out in the browser, so the number arriving at
+the database is whatever the browser chose to send. A rewritten page could
+have placed a ₹4,999 order for ₹1. Now the total is recomputed in SQL from the
+`services` table and an order that does not add up is refused — including one
+that smuggles in a line we do not sell, or pays ₹1 of a correct total, or
+prices two reels as 2 × 1,999 instead of the 3,999 ladder.
+
+This is why **prices are set in SQL, not in the panel.** The Services page
+lets the team rename a service, describe it, or switch it off; `price` and
+`step` are not granted to anyone signed in. If a price changes on the site, it
+has to change in this script too, or real orders will start being refused.
+
+### Admin passwords last 14 days
+
+`password_changed_at` is moved by a trigger on `auth.users`, and only when the
+stored password hash actually changes — the browser cannot set it, so nobody
+can restart their own clock without genuinely changing their password.
+
+* 12 days in, the panel starts saying so, on every screen.
+* At 14 days `is_admin()`, `is_manager()` and the rest go false. The panel
+  closes and the database stops answering for that account.
+* Signing in still works, and so does changing the password. That is the way
+  back in, and it deliberately does not depend on the thing being withheld.
+
+The panel also signs itself out after 30 minutes of nothing at all — a phone
+left on a counter is every customer's number, to whoever picks it up next.
+
+### The browser is told what the page may do
+
+Both pages carry a Content-Security-Policy. Scripts may come from this site
+and nowhere else, and anything that did run could reach nothing but our own
+Supabase project. Verified in a real browser: a `<script>` injected into the
+page does not run, a script from another origin does not load, and a `fetch`
+to an outside server is refused.
+
+That is also why `supabase-js` now lives in `vendor/` instead of a CDN, pinned
+to one version and checked against the hash npm publishes for it. It is the
+script that holds the signed-in session; it should not be whatever a third
+party served that morning. See `vendor/README.md`.
+
+Neither page can be put in a frame: both climb out of one if they find
+themselves in it.
+
+### What this does not do
+
+* **It does not stop somebody sending a thousand enquiries.** Length limits
+  keep any one of them small and well-formed; volume would need rate limiting
+  we do not have on the free tier.
+* **There is no password reset by email**, because accounts have no real email
+  address. A forgotten password is reset by the founder in SQL.
+* **`username_available()` tells a stranger whether a username exists.** The
+  registration form needs it. It gives away nothing else.

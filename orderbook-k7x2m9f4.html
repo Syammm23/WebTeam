@@ -4,6 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
+
+  <!-- What this page may load and run. It matters more here than anywhere:
+       this is where every customer's phone number and every payment is, and
+       the data on it was typed in by strangers. Scripts may come from this
+       origin only, which is why supabase-js is served from vendor/ rather
+       than a CDN, and anything that did run could reach nothing but our own
+       Supabase project. There is no inline script on this page at all. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://bakvwxkkvzklgnkeqpfi.supabase.co wss://bakvwxkkvzklgnkeqpfi.supabase.co" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>Order Book — WE3</title>
 
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
@@ -145,6 +154,14 @@
 
       <h2 class="modal__title" id="meTitle">Your account</h2>
 
+      <!-- Shown when the fortnight is up, or nearly. In the "up" case the
+           close button above is hidden and nothing else on the page has
+           loaded: changing the password is the only way on. -->
+      <div class="pwdue" id="pwDue" hidden>
+        <p class="pwdue__head" id="pwDueHead"></p>
+        <p class="pwdue__why" id="pwDueWhy"></p>
+      </div>
+
       <div class="me__id">
         <strong id="meUser">—</strong>
         <span class="tag" id="meRole"></span>
@@ -204,7 +221,9 @@
 
   <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+  <!-- Served from this repository, not a CDN, and pinned to one version.
+       This is the script that holds the signed-in session; see vendor/README.md. -->
+  <script src="vendor/supabase-js-2.116.0.js" defer></script>
   <script src="admin.js" defer></script>
 </body>
 </html>

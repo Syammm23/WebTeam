@@ -16,6 +16,7 @@ on:
       - admin.css
       - admin.js
       - assets/**
+      - vendor/**
       - .github/workflows/publish-site.yml
   workflow_dispatch:
 
@@ -48,6 +49,9 @@ jobs:
           if [ -d assets ]; then
             cp -r assets "$staging/assets"
           fi
+          if [ -d vendor ]; then
+            cp -r vendor "$staging/vendor"
+          fi
 
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -65,12 +69,15 @@ jobs:
 
           # Replace assets wholesale so deleted files do not linger on the
           # live branch.
-          rm -rf assets
+          rm -rf assets vendor
           if [ -d "$staging/assets" ]; then
             cp -r "$staging/assets" assets
           fi
+          if [ -d "$staging/vendor" ]; then
+            cp -r "$staging/vendor" vendor
+          fi
 
-          git add -A index.html style.css script.js .nojekyll assets \
+          git add -A index.html style.css script.js .nojekyll assets vendor \
                      orderbook-k7x2m9f4.html admin.css admin.js
 
           if git diff --staged --quiet; then
