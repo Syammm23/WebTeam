@@ -904,6 +904,14 @@ table.tbl--tight { min-width: 520px; }
 .pwdue--now .pwdue__head { color: var(--a-red); }
 .pwdue__why { margin: 5px 0 0; font-size: 12px; line-height: 1.45; color: var(--a-muted); }
 
+/* The database's own words, in Settings, when a table cannot be read. */
+.dbfail {
+  color: var(--a-amber);
+  font-size: 11.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-word;
+}
+
 .toasts {
   position: fixed;
   right: 16px;
