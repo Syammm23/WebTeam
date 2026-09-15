@@ -113,6 +113,71 @@
     }
   }());
 
+  /* ---- telling the team what happens here --------------------------------
+
+     Every call is fire-and-forget and wrapped: a blocked request, a missing
+     table or a customer on a bad connection must never slow the page down or
+     stop a form from reaching WhatsApp. Nothing personal is recorded beyond
+     what the visitor typed into a form themselves.                        */
+  const SESSION_KEY = 'we3.session.v1';
+
+  function sessionId() {
+    try {
+      let id = localStorage.getItem(SESSION_KEY);
+      if (!id) {
+        id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem(SESSION_KEY, id);
+      }
+      return id;
+    } catch (e) { return null; }     // private mode: the visit is anonymous
+  }
+
+  function deviceKind() {
+    const w = window.innerWidth;
+    if (w < 700) return 'Phone';
+    if (w < 1100) return 'Tablet';
+    return 'Desktop';
+  }
+
+  function logActivity(kind, detail) {
+    if (!db.ready) return;
+    try {
+      db.client.from('activities').insert({
+        session_id: sessionId(),
+        user_id: db.user ? db.user.id : null,
+        username: db.user ? db.user.username : null,
+        kind: kind,
+        detail: detail || null,
+        page: location.pathname,
+        device: deviceKind(),
+        referrer: document.referrer ? new URL(document.referrer).hostname : null
+      }).then(function () { /* logged */ }, function () { /* never mind */ });
+    } catch (e) { /* never mind */ }
+  }
+
+  /**
+   * Records an enquiry so it reaches the team's panel as well as WhatsApp.
+   *
+   * WhatsApp is still the message that actually gets read; this is the copy
+   * that can be searched, filtered and followed up months later. It never
+   * blocks the hand-off — the window opens whether this succeeds or not.
+   */
+  function saveEnquiry(fields) {
+    if (!db.ready) return;
+    try {
+      db.client.from('enquiries').insert({
+        name: fields.name || 'Someone',
+        business: fields.business || null,
+        phone: fields.phone || null,
+        email: fields.email || null,
+        service: fields.service || null,
+        source: fields.source || 'Website',
+        message: fields.message || null,
+        status: 'New'
+      }).then(function () { /* stored */ }, function () { /* WhatsApp still went */ });
+    } catch (e) { /* WhatsApp still went */ }
+  }
+
   /** username -> the internal address Supabase Auth files it under. */
   function authEmail(username) {
     return String(username).trim().toLowerCase() + '@' + CONFIG.supabase.userDomain;
@@ -336,6 +401,8 @@
         " I'd like to get my business online but I'm not sure what I need. Can you help?"
       : templates.service(service, name);
 
+    saveEnquiry({ name: name, service: service, source: 'Website', message: message });
+    logActivity('Enquiry submitted', service);
     openWhatsApp(message, numberForService(service));
     closeModal();
   });
@@ -559,6 +626,7 @@
         return;
       }
       onSignedIn(res.data.session.user, username);
+      logActivity(reg ? 'Created an account' : 'Signed in');
       closeAuth();
       const next = afterAuth;
       afterAuth = null;
@@ -1797,6 +1865,58 @@
   loadCart();
   renderCart();
 
+  /* ---- what a visit looks like from the team's side ---------------------
+     Each of these answers a question they actually ask: which service drew
+     someone in, whether the builder gets used, and where people give up. */
+  logActivity('Visited the site');
+
+  $$('[data-wa-modal]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      logActivity('Opened the enquiry form', el.dataset.service || 'Not Sure');
+    });
+  });
+
+  $$('[data-add]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      logActivity('Added to cart', btn.dataset.name || btn.dataset.add);
+    });
+  });
+
+  $$('[data-open-cart], .cartbar__btn').forEach(function (el) {
+    el.addEventListener('click', function () { logActivity('Opened the cart'); });
+  });
+
+  if (builderForm) {
+    let builderLogged = false;
+    builderForm.addEventListener('change', function () {
+      if (builderLogged) return;
+      builderLogged = true;
+      logActivity('Used the quote builder');
+    });
+  }
+
+  // Which sections people actually reach. Fires once each, so a long scroll
+  // does not turn into a hundred rows.
+  (function watchSections() {
+    if (!('IntersectionObserver' in window)) return;
+    const WATCH = { packages: 'Viewed pricing', work: 'Viewed portfolio',
+                    faq: 'Opened FAQ', contact: 'Viewed contact', services: 'Viewed services' };
+    const seen = {};
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        const id = entry.target.id;
+        if (!entry.isIntersecting || seen[id]) return;
+        seen[id] = true;
+        logActivity(WATCH[id]);
+        io.unobserve(entry.target);
+      });
+    }, { threshold: 0.35 });
+    Object.keys(WATCH).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+  }());
+
 
   /* ------------------------------------------------------------------------
      ORDER HISTORY
@@ -2200,13 +2320,17 @@
       return;
     }
 
-    openWhatsApp(templates.contact({
+    const enquiry = {
       name: name.value.trim(),
       business: business.value.trim(),
       phone: phone.value.trim(),
       service: service.value,
       message: $('#cfMessage').value.trim()
-    }), numberForService(service.value));
+    };
+
+    saveEnquiry(Object.assign({ source: 'Website' }, enquiry));
+    logActivity('Enquiry submitted', enquiry.service);
+    openWhatsApp(templates.contact(enquiry), numberForService(service.value));
   });
 
   // Clear the error state as soon as the visitor starts fixing it
