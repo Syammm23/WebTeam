@@ -886,6 +886,11 @@ table.tbl--tight { min-width: 520px; }
 }
 .msg--quiet i { margin-top: 2px; font-size: 11px; }
 
+/* The panel opens before its tables exist; this is what says so. */
+.setupmsg { border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.06); }
+.setupmsg .card__head h2 { color: var(--a-amber); }
+.setupmsg .card__head h2 i { color: var(--a-amber); }
+
 .toasts {
   position: fixed;
   right: 16px;
