@@ -541,7 +541,7 @@
     error: null,
     enquiries: [], orders: [], people: [], projects: [], tasks: [],
     services: [], activities: [], notes: [], orderEvents: [], roleEvents: [],
-    missing: [],
+    tableErrors: {},
     readNotifications: new Set()
   };
 
@@ -603,14 +603,14 @@
       state.error = (r[1].error && r[9].error) ? r[1].error : null;
       state.loading = false;
 
-      // Which of the panel's own tables are not there yet. Said out loud,
-      // because "every section is empty" and "the script has not been run"
-      // look identical from here otherwise.
-      state.missing = [
-        ['Enquiries', r[0].error], ['Projects', r[2].error], ['Services', r[4].error],
-        ['User Activity', r[5].error]
-      ].filter(x => x[1] && /does not exist|schema cache|relation/i.test(x[1])).map(x => x[0]);
-      if (!rolesInDb && state.missing.indexOf('Roles') < 0) state.missing.push('Roles');
+      // What the database actually said about each table, kept so Settings can
+      // show the real words. "Every section is empty" and "that table is not
+      // there" look identical from a screen otherwise.
+      state.tableErrors = {
+        enquiries: r[0].error, orders: r[1].error, projects: r[2].error,
+        project_tasks: r[3].error, services: r[4].error, activities: r[5].error,
+        notes: r[6].error, people: r[9].error
+      };
 
       paintCounts();
       paintNotifications();
@@ -1006,7 +1006,6 @@
     }
     VIEWS[route]();
     if (me.daysLeft <= PASSWORD_WARN) view.insertAdjacentHTML('afterbegin', passwordBanner());
-    if (state.missing.length) view.insertAdjacentHTML('afterbegin', setupBanner());
     view.scrollTop = 0;
     $$('#view [data-changepw]').forEach(b => b.addEventListener('click', openMe));
   }
@@ -1022,22 +1021,29 @@
         'until you set a new one.</p></section>';
   }
 
-  /**
-   * Shown when the panel's own tables are not in the database yet.
-   *
-   * Without it every new section is simply empty, which looks the same as a
-   * quiet week. Naming the script is the whole point.
-   */
-  function setupBanner() {
-    return '<section class="card setupmsg" style="margin-bottom:14px">' +
-      '<div class="card__head"><h2><i class="fa-solid fa-triangle-exclamation"></i> ' +
-        'The setup script has not been run yet</h2></div>' +
-      '<p class="msg" style="margin:0">' +
-        esc(state.missing.join(', ')) + ' ' + (state.missing.length > 1 ? 'are' : 'is') +
-        ' missing from the database, so ' + (state.missing.length > 1 ? 'those sections' : 'that section') +
-        ' will stay empty. Run <strong>docs/supabase-admin.sql</strong> in the Supabase SQL Editor — ' +
-        'it is safe to run more than once — then reload this page.' +
-      '</p></section>';
+  /* ---- a section whose table is not in the database yet -------------------
+
+     This used to be a banner across the top of every screen, naming a file in
+     the repository. It was in the way on nine screens that were working, and
+     a file name means nothing to somebody reading it on a phone. It belongs
+     in the one place where the question is actually being asked — the empty
+     section itself — and it should point at something that can be tapped. */
+  function tableMissing(key) {
+    const err = state.tableErrors[key];
+    return Boolean(err) && /does not exist|schema cache|relation|find the table/i.test(err);
+  }
+
+  function anythingMissing() {
+    return !rolesInDb || ['enquiries', 'projects', 'services', 'activities', 'notes']
+      .some(tableMissing);
+  }
+
+  function setupEmpty(what) {
+    return emptyState(what + ' is not set up yet',
+      'This part of the panel keeps its records in a table that has not been ' +
+      'built yet. It takes one script, run once, and running it again is safe.',
+      '<a class="btn--green" href="setup-sql.html" target="_blank" rel="noopener noreferrer">' +
+      '<i class="fa-solid fa-wrench" aria-hidden="true"></i> Open the setup script</a>');
   }
 
   function startApp() {
@@ -1210,6 +1216,7 @@
             '<td>' + esc(e.service || '—') + '</td><td>' + badge(e.status) + '</td>' +
             '<td class="num">' + fmtDate(e.created_at) + '</td></tr>').join('') +
           '</tbody></table></div>'
+        : tableMissing('enquiries') ? setupEmpty('Enquiries')
         : emptyState('No enquiries yet', 'They appear the moment someone fills in the form on the site.')) +
       '</section>';
 
@@ -1220,6 +1227,7 @@
       (feed.length
         ? '<ul class="tl">' + feed.map(a => '<li><p><strong>' + esc(a.who) + '</strong> ' + esc(a.what) + '</p>' +
             '<em>' + ago(a.at) + '</em></li>').join('') + '</ul>'
+        : tableMissing('activities') ? setupEmpty('User Activity')
         : emptyState('No activity yet', 'Visits and clicks on the public site will show up here.')) +
       '</section>';
 
@@ -1333,6 +1341,7 @@
               '<button class="is-danger" data-del="' + esc(e.id) + '" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>' +
             '</div></td></tr>';
         }).join('') + '</tbody></table></div>' + pagerHtml(p, enqF.size)
+      : tableMissing('enquiries') ? setupEmpty('Enquiries')
       : emptyState(state.enquiries.length ? 'Nothing matches those filters' : 'No enquiries yet',
           state.enquiries.length ? 'Loosen a filter, or reset them.'
             : 'They appear here the moment someone fills in the form on the site.');
@@ -1901,6 +1910,7 @@
             (canBuild() ? '<button data-proedit="' + esc(pr.id) + '" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>' : '') +
             (canDelete() ? '<button class="is-danger" data-prodel="' + esc(pr.id) + '" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>' : '') +
           '</div></td></tr>').join('') + '</tbody></table></div>' + pagerHtml(p, proF.size)
+      : tableMissing('projects') ? setupEmpty('Projects')
       : emptyState(state.projects.length ? 'Nothing matches those filters' : 'No projects yet',
           state.projects.length ? 'Loosen a filter, or reset them.' : 'Start one when a payment is confirmed.',
           canBuild() ? '<button class="btn--green" data-newpro><i class="fa-solid fa-plus"></i> Add project</button>' : '');
@@ -2164,6 +2174,7 @@
         ? '<div class="grid grid--halves">' + cards + '</div>' +
           '<p class="msg" style="margin-top:14px">The public site keeps its own prices. Changing one here ' +
           'records the change for the team — it does not rewrite the website.</p>'
+        : tableMissing('services') ? setupEmpty('Services')
         : emptyState('No services yet', 'Add the work you sell so enquiries and orders can be counted against it.',
             canEditCat() ? '<button class="btn--green" id="svcNew2"><i class="fa-solid fa-plus"></i> Add service</button>' : '')) +
       (canEditCat() ? '' : notYours('Editing the catalogue'));
@@ -2269,6 +2280,7 @@
           '<td>' + esc(a.referrer || 'direct') + '</td>' +
           '<td class="num">' + ago(a.at) + '</td></tr>').join('') +
         '</tbody></table></div>' + pagerHtml(p, actF.size)
+      : tableMissing('activities') ? setupEmpty('User Activity')
       : emptyState(state.activities.length ? 'Nothing matches those filters' : 'No activity yet',
           state.activities.length ? 'Loosen a filter, or clear them.'
             : 'Visits, clicks and form opens on the public site will appear here.');
@@ -2426,7 +2438,7 @@
           if (res.error && /could not find the function|schema cache|does not exist/i.test(res.error.message || '')) {
             sel.disabled = false;
             sel.value = was;
-            toast('Roles are not in the database yet — run docs/supabase-admin.sql first.', 'bad');
+            toast('Roles are not set up in the database yet. Settings → Data has the script.', 'bad');
             return;
           }
           sel.disabled = false;
@@ -2608,13 +2620,30 @@
           '<button class="btn--ghost btn--block" id="setClearRead">Mark everything unread again</button>' +
         '</section>' +
         '<section class="card"><div class="card__head"><h2><i class="fa-solid fa-database"></i> Data</h2></div>' +
+          // What the database said, table by table, in its own words. Without
+          // this a section that is empty and a section that cannot be read
+          // look exactly the same, and there is nothing to send me.
           '<dl class="dl">' +
-            '<div><dt>Enquiries</dt><dd>' + state.enquiries.length + '</dd></div>' +
-            '<div><dt>Orders</dt><dd>' + state.orders.length + '</dd></div>' +
-            '<div><dt>People</dt><dd>' + state.people.length + '</dd></div>' +
-            '<div><dt>Projects</dt><dd>' + state.projects.length + '</dd></div>' +
-            '<div><dt>Activity events</dt><dd>' + state.activities.length + '</dd></div>' +
+            [['Enquiries', 'enquiries', state.enquiries.length],
+             ['Orders', 'orders', state.orders.length],
+             ['People', 'people', state.people.length],
+             ['Projects', 'projects', state.projects.length],
+             ['Services', 'services', state.services.length],
+             ['Activity', 'activities', state.activities.length]
+            ].map(function (t) {
+              const err = state.tableErrors[t[1]];
+              return '<div><dt>' + esc(t[0]) + '</dt><dd>' +
+                (err ? '<span class="dbfail">' + esc(err) + '</span>'
+                     : t[2] + (t[2] === 1 ? ' row' : ' rows')) + '</dd></div>';
+            }).join('') +
+            '<div><dt>Roles</dt><dd>' +
+              (rolesInDb ? 'in the database' : '<span class="dbfail">not set up yet</span>') +
+            '</dd></div>' +
           '</dl>' +
+          (anythingMissing()
+            ? '<a class="btn--green btn--block" href="setup-sql.html" target="_blank" rel="noopener noreferrer">' +
+              '<i class="fa-solid fa-wrench" aria-hidden="true"></i> Open the setup script</a>'
+            : '') +
           '<button class="btn--ghost btn--block" id="setReload"><i class="fa-solid fa-rotate"></i> Reload everything</button>' +
         '</section>' +
       '</div>';
