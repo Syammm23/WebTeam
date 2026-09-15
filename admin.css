@@ -517,6 +517,32 @@
 .tag--red    { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.3); color: var(--a-red); }
 .tag--blue   { background: rgba(125, 211, 252, 0.1); border-color: rgba(125, 211, 252, 0.28); color: var(--a-blue); }
 .tag--owner  { background: #fff; border-color: #fff; color: #05230F; }
+.tag--grey   { background: rgba(255, 255, 255, 0.05); border-color: var(--a-line-2); color: var(--a-muted); }
+
+/* ---- the role picker on Team ---- */
+.rolepick {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--a-line);
+}
+.rolepick__lbl {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--a-faint);
+}
+.rolepick__can { margin: 7px 0 0; font-size: 12px; line-height: 1.45; color: var(--a-muted); }
+.rolepick__you {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--a-faint);
+}
+.tbl tr.is-me td { background: rgba(34, 197, 94, 0.05); }
 
 /* ---- form controls ---- */
 .fld { display: grid; gap: 5px; margin-bottom: 12px; }
@@ -846,6 +872,19 @@ table.tbl--tight { min-width: 520px; }
 .msg { margin: 4px 0 10px; font-size: 12px; line-height: 1.45; color: var(--a-muted); }
 .msg.is-good { color: var(--a-green); font-weight: 600; }
 .msg.is-bad  { color: var(--a-red); }
+/* Said where a control would be, so a missing button reads as a rule
+   rather than as something broken. */
+.msg--quiet {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: var(--a-r-sm);
+  border: 1px solid var(--a-line);
+  background: var(--a-raised);
+  color: var(--a-faint);
+}
+.msg--quiet i { margin-top: 2px; font-size: 11px; }
 
 .toasts {
   position: fixed;
