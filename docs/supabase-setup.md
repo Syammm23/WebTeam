@@ -188,6 +188,11 @@ Supabase project. Verified in a real browser: a `<script>` injected into the
 page does not run, a script from another origin does not load, and a `fetch`
 to an outside server is refused.
 
+The policy names this Supabase project by URL, in the `connect-src` of both
+`index.html` and `orderbook-k7x2m9f4.html`. **If the project ever changes, both
+of those have to change too**, or the site will silently stop being able to
+reach its own database.
+
 That is also why `supabase-js` now lives in `vendor/` instead of a CDN, pinned
 to one version and checked against the hash npm publishes for it. It is the
 script that holds the signed-in session; it should not be whatever a third
