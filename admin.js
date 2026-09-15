@@ -94,7 +94,7 @@
      2. CONNECTION  (unchanged)
      ------------------------------------------------------------------------ */
   let client = null;
-  let me = null;          // { id, username, is_admin, is_owner }
+  let me = null;          // { id, username, is_admin, is_owner, role }
 
   function connect() {
     if (!window.supabase || typeof window.supabase.createClient !== 'function') return false;
@@ -120,10 +120,68 @@
     $('#lock').hidden = false;
   }
 
-  function roleLabel(p) {
-    if (p.is_owner) return 'Founder';
-    if (p.is_admin) return 'Co-founder';
+  /* ---- roles -------------------------------------------------------------
+
+     Five roles, and what separates them is what a person may CHANGE. Every
+     role reads everything: five people in one office, and hiding a phone
+     number from whoever answers the phone helps nobody.
+
+     Each of these is checked again by the database. The buttons below are
+     there so nobody is offered work the server is going to refuse — they
+     are not the thing standing between a role and a payment.              */
+  const ROLES = {
+    founder:   { label: 'Founder',       tag: 'tag--owner',
+                 can: 'Everything, and decides who else gets in.' },
+    cofounder: { label: 'Co-founder',    tag: 'tag--green',
+                 can: 'Everything except changing who gets in — including deciding payments.' },
+    developer: { label: 'Web Developer', tag: 'tag--blue',
+                 can: 'Projects, tasks and the service catalogue. Cannot decide payments.' },
+    editor:    { label: 'Editor',        tag: 'tag--amber',
+                 can: 'Enquiries, notes and the service catalogue. Cannot decide payments.' },
+    assistant: { label: 'Assistant',     tag: 'tag--grey',
+                 can: 'Enquiries and notes. Reads everything else without changing it.' }
+  };
+
+  // The order they are offered in, founder excluded: a second founder can
+  // overrule every decision in the book, so that stays a line of SQL.
+  const GRANTABLE = ['cofounder', 'developer', 'editor', 'assistant'];
+
+  function roleOf(p) {
+    if (p && p.role) return p.role;
+    if (p && p.is_owner) return 'founder';
+    if (p && p.is_admin) return 'cofounder';
     return '';
+  }
+
+  function roleLabel(p) {
+    const r = ROLES[roleOf(p)];
+    return r ? r.label : '';
+  }
+
+  /** "a Web Developer", but "an Editor" and "an Assistant". */
+  function a(word) {
+    return (/^[aeiou]/i.test(String(word)) ? 'an ' : 'a ') + word;
+  }
+
+  function roleTag(p) {
+    const r = ROLES[roleOf(p)];
+    return r ? r.tag : 'tag--grey';
+  }
+
+  // What the signed-in admin may do. Named for the decision, not the role,
+  // so adding a role later does not mean hunting for every `=== 'editor'`.
+  const iAm        = () => (me ? roleOf(me) : '');
+  const isFounder  = () => iAm() === 'founder';
+  const canMoney   = () => ['founder', 'cofounder'].indexOf(iAm()) > -1;
+  const canBuild   = () => ['founder', 'cofounder', 'developer'].indexOf(iAm()) > -1;
+  const canEditCat = () => ['founder', 'cofounder', 'developer', 'editor'].indexOf(iAm()) > -1;
+  const canDelete  = () => canMoney();
+
+  /** The line shown where a button would be if the role allowed it. */
+  function notYours(what) {
+    return '<p class="msg msg--quiet"><i class="fa-solid fa-lock"></i> ' +
+      esc(what) + ' is for the founder and co-founders. Yours is ' +
+      esc(roleLabel(me)) + '.</p>';
   }
 
   function showUnlocked() {
@@ -138,7 +196,7 @@
    * A non-admin is told so and signed straight back out.
    */
   function afterSignIn(user) {
-    return client.from('profiles').select('username, is_admin, is_owner').eq('id', user.id).limit(1)
+    return client.from('profiles').select('username, is_admin, is_owner, role').eq('id', user.id).limit(1)
       .then(function (res) {
         if (res.error) { lockErr('Could not check your account. (' + res.error.message + ')'); return false; }
         const row = (res.data || [])[0];
@@ -151,7 +209,10 @@
           id: user.id,
           username: row.username,
           is_admin: true,
-          is_owner: Boolean(row.is_owner)
+          is_owner: Boolean(row.is_owner),
+          // Older databases have no role column; fall back to what the two
+          // flags used to mean so a panel never opens without one.
+          role: row.role || (row.is_owner ? 'founder' : 'cofounder')
         };
         showUnlocked();
         startApp();
@@ -498,6 +559,7 @@
         lastActivity: lastAct,
         isTeam: p.is_admin,
         isOwner: p.is_owner,
+        role: roleOf(p),
         orders: mine,
         services: services,
         total: total,
@@ -687,7 +749,7 @@
     const mine = state.people.find(p => p.username === me.username) || {};
     $('#meUser').textContent = '@' + me.username;
     $('#meRole').textContent = roleLabel(me);
-    $('#meRole').className = 'tag' + (me.is_owner ? ' tag--owner' : ' tag--green');
+    $('#meRole').className = 'tag ' + roleTag(me);
     $('#meSince').textContent = mine.joined ? 'With WE3 since ' + fmtDate(mine.joined) : '';
     $('#meLast').textContent = mine.last_login ? 'Last signed in ' + fmtWhen(mine.last_login) : '';
     $('#meName').value = mine.full_name || '';
@@ -984,8 +1046,9 @@
 
     const quick = '<section class="card"><div class="card__head"><h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2></div>' +
       '<div class="chipbar">' +
-      '<button class="btn--ghost btn--sm" data-quick="project"><i class="fa-solid fa-folder-plus"></i> Add Project</button>' +
-      '<button class="btn--ghost btn--sm" data-quick="service"><i class="fa-solid fa-plus"></i> Add Service</button>' +
+      (canBuild() ? '<button class="btn--ghost btn--sm" data-quick="project"><i class="fa-solid fa-folder-plus"></i> Add Project</button>' : '') +
+      (canEditCat() ? '<button class="btn--ghost btn--sm" data-quick="service"><i class="fa-solid fa-plus"></i> Add Service</button>' : '') +
+      '<a class="btn--ghost btn--sm" href="#enquiries"><i class="fa-solid fa-file-lines"></i> Enquiries</a>' +
       '<a class="btn--ghost btn--sm" href="#clients"><i class="fa-solid fa-user-group"></i> Clients</a>' +
       '<a class="btn--ghost btn--sm" href="#analytics"><i class="fa-solid fa-chart-column"></i> Reports</a>' +
       '</div></section>';
@@ -996,7 +1059,8 @@
       pageHead('Welcome back, @' + esc(me.username) + ' 👋',
                "Here's what's happening with your business today.",
                '<span class="page-head__date">' + esc(today) + '<em>Keep building 🚀</em></span>' +
-               '<button class="btn--green" id="addNew"><i class="fa-solid fa-plus"></i> Add New</button>') +
+               ((canBuild() || canEditCat())
+                 ? '<button class="btn--green" id="addNew"><i class="fa-solid fa-plus"></i> Add New</button>' : '')) +
       '<div class="grid grid--kpi" style="margin-bottom:14px">' + cards + '</div>' +
       '<div class="grid grid--2">' + enqCard + '<div class="grid">' + feedCard + quick + '</div></div>';
 
@@ -1005,7 +1069,9 @@
       if (b.dataset.quick === 'project') editProject(null);
       if (b.dataset.quick === 'service') editService(null);
     }));
-    $('#addNew').addEventListener('click', function () {
+    if ($('#addNew')) $('#addNew').addEventListener('click', function () {
+      if (canBuild() && !canEditCat()) { editProject(null); return; }
+      if (canEditCat() && !canBuild()) { editService(null); return; }
       const pick = prompt('Add what?\n\n1 — Project\n2 — Service\n\nType 1 or 2:');
       if (pick === '1') editProject(null);
       else if (pick === '2') editService(null);
@@ -1522,14 +1588,21 @@
         '<div><dt>Placed</dt><dd>' + fmtWhen(o.created_at) + '</dd></div>' +
       '</dl></div>' +
       '<div class="dsec"><h3>Payment</h3>' +
-        '<div class="chipbar" id="oMarks">' +
-          ['pending', 'verified', 'rejected'].map(s =>
-            '<button class="chip2' + (o.status === s ? ' is-on' : '') + '" data-mark="' + s + '">' +
-            (s === 'pending' ? 'Pending' : s === 'verified' ? 'Verified' : 'Rejected') + '</button>').join('') +
-        '</div>' +
-        '<div class="fld" style="margin-top:12px"><label for="oNote">Message shown to the customer</label>' +
-          '<textarea class="inp" id="oNote" placeholder="They read this on their own order.">' + esc(o.note || '') + '</textarea></div>' +
-        '<button class="btn--green btn--block" id="oSaveNote"><i class="fa-solid fa-check"></i> Save note</button>' +
+        // Deciding a payment, and the note the customer reads about it, are
+        // the same decision. The database refuses both from anyone else, so
+        // showing the controls would only be offering work that will bounce.
+        (canMoney()
+          ? '<div class="chipbar" id="oMarks">' +
+              ['pending', 'verified', 'rejected'].map(s =>
+                '<button class="chip2' + (o.status === s ? ' is-on' : '') + '" data-mark="' + s + '">' +
+                (s === 'pending' ? 'Pending' : s === 'verified' ? 'Verified' : 'Rejected') + '</button>').join('') +
+            '</div>' +
+            '<div class="fld" style="margin-top:12px"><label for="oNote">Message shown to the customer</label>' +
+              '<textarea class="inp" id="oNote" placeholder="They read this on their own order.">' + esc(o.note || '') + '</textarea></div>' +
+            '<button class="btn--green btn--block" id="oSaveNote"><i class="fa-solid fa-check"></i> Save note</button>'
+          : '<p style="margin-bottom:10px">Marked <strong>' + esc(o.status) + '</strong>.</p>' +
+            (o.note ? '<p class="msg" style="margin-bottom:10px"><strong>Message to the customer:</strong> ' + esc(o.note) + '</p>' : '') +
+            notYours('Deciding a payment')) +
         '<button class="btn--ghost btn--block" id="oWa"><i class="fa-brands fa-whatsapp"></i> Message customer</button>' +
       '</div>' +
       '<div class="dsec"><h3>History</h3>' +
@@ -1555,7 +1628,7 @@
               });
           });
         });
-        $('#oSaveNote', root).addEventListener('click', function () {
+        if ($('#oSaveNote', root)) $('#oSaveNote', root).addEventListener('click', function () {
           const btn = this;
           btn.disabled = true;
           client.from('orders').update({ note: $('#oNote', root).value.trim() || null,
@@ -1646,17 +1719,17 @@
           '<td class="num">' + fmtDate(pr.deadline) + '</td>' +
           '<td><div class="acts">' +
             '<button data-pro="' + esc(pr.id) + '" aria-label="Open project"><i class="fa-solid fa-eye"></i></button>' +
-            '<button data-proedit="' + esc(pr.id) + '" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>' +
-            '<button class="is-danger" data-prodel="' + esc(pr.id) + '" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>' +
+            (canBuild() ? '<button data-proedit="' + esc(pr.id) + '" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>' : '') +
+            (canDelete() ? '<button class="is-danger" data-prodel="' + esc(pr.id) + '" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>' : '') +
           '</div></td></tr>').join('') + '</tbody></table></div>' + pagerHtml(p, proF.size)
       : emptyState(state.projects.length ? 'Nothing matches those filters' : 'No projects yet',
           state.projects.length ? 'Loosen a filter, or reset them.' : 'Start one when a payment is confirmed.',
-          '<button class="btn--green" data-newpro><i class="fa-solid fa-plus"></i> Add project</button>');
+          canBuild() ? '<button class="btn--green" data-newpro><i class="fa-solid fa-plus"></i> Add project</button>' : '');
 
     $('#view').innerHTML =
       pageHead('Projects', 'What is being built, for whom, and by when.',
         '<button class="btn--ghost" id="proExport"><i class="fa-solid fa-file-arrow-down"></i> Export CSV</button>' +
-        '<button class="btn--green" id="proNew"><i class="fa-solid fa-plus"></i> Add project</button>') +
+        (canBuild() ? '<button class="btn--green" id="proNew"><i class="fa-solid fa-plus"></i> Add project</button>' : '')) +
       '<section class="card">' +
         '<div class="filters">' +
           '<div class="fld"><label for="proQ">Search</label>' +
@@ -1677,7 +1750,7 @@
       Object.assign(proF, { q: '', status: 'all', date: 'all', from: '', to: '', page: 1 });
       again();
     });
-    $('#proNew').addEventListener('click', () => editProject(null));
+    if ($('#proNew')) $('#proNew').addEventListener('click', () => editProject(null));
     $$('#view [data-newpro]').forEach(b => b.addEventListener('click', () => editProject(null)));
     $('#proExport').addEventListener('click', function () {
       exportCsv('we3-projects.csv', [
@@ -1702,6 +1775,10 @@
   };
 
   function editProject(id) {
+    // Guarded here rather than only at each button: the dashboard, the Add New
+    // prompt and the project drawer all lead in, and a page left open while
+    // someone's role changed would still have the old buttons on it.
+    if (!canBuild()) { toast('Projects are for the founder, co-founders and the web developer.', 'bad'); return; }
     const pr = id ? state.projects.find(x => String(x.id) === String(id)) : null;
     const people = clients();
 
@@ -1889,23 +1966,28 @@
         '<p class="msg" style="margin:8px 0 12px">' + esc(s.description || '') + '</p>' +
         '<dl class="dl"><div><dt>Enquiries</dt><dd>' + enq + '</dd></div>' +
         '<div><dt>Orders (verified)</dt><dd>' + sold + '</dd></div></dl>' +
-        '<div class="chipbar" style="margin-top:12px">' +
-          '<button class="btn--ghost btn--sm" data-sedit="' + esc(s.id) + '"><i class="fa-solid fa-pen"></i> Edit</button>' +
-          '<button class="btn--ghost btn--sm" data-stoggle="' + esc(s.id) + '">' +
-            (s.active ? '<i class="fa-solid fa-eye-slash"></i> Disable' : '<i class="fa-solid fa-eye"></i> Enable') + '</button>' +
-          '<button class="btn--ghost btn--sm btn--danger" data-sdel="' + esc(s.id) + '" aria-label="Delete service"><i class="fa-solid fa-trash"></i></button>' +
-        '</div></article>';
+        (canEditCat()
+          ? '<div class="chipbar" style="margin-top:12px">' +
+              '<button class="btn--ghost btn--sm" data-sedit="' + esc(s.id) + '"><i class="fa-solid fa-pen"></i> Edit</button>' +
+              '<button class="btn--ghost btn--sm" data-stoggle="' + esc(s.id) + '">' +
+                (s.active ? '<i class="fa-solid fa-eye-slash"></i> Disable' : '<i class="fa-solid fa-eye"></i> Enable') + '</button>' +
+              (canDelete()
+                ? '<button class="btn--ghost btn--sm btn--danger" data-sdel="' + esc(s.id) + '" aria-label="Delete service"><i class="fa-solid fa-trash"></i></button>'
+                : '') +
+            '</div>'
+          : '') + '</article>';
     }).join('');
 
     $('#view').innerHTML =
       pageHead('Services', 'Your catalogue, and how much interest each one gets.',
-        '<button class="btn--green" id="svcNew"><i class="fa-solid fa-plus"></i> Add service</button>') +
+        canEditCat() ? '<button class="btn--green" id="svcNew"><i class="fa-solid fa-plus"></i> Add service</button>' : '') +
       (state.services.length
         ? '<div class="grid grid--halves">' + cards + '</div>' +
           '<p class="msg" style="margin-top:14px">The public site keeps its own prices. Changing one here ' +
           'records the change for the team — it does not rewrite the website.</p>'
         : emptyState('No services yet', 'Add the work you sell so enquiries and orders can be counted against it.',
-            '<button class="btn--green" id="svcNew2"><i class="fa-solid fa-plus"></i> Add service</button>'));
+            canEditCat() ? '<button class="btn--green" id="svcNew2"><i class="fa-solid fa-plus"></i> Add service</button>' : '')) +
+      (canEditCat() ? '' : notYours('Editing the catalogue'));
 
     const open = () => editService(null);
     if ($('#svcNew')) $('#svcNew').addEventListener('click', open);
@@ -1932,6 +2014,7 @@
   };
 
   function editService(id) {
+    if (!canEditCat()) { toast('The catalogue is not yours to change.', 'bad'); return; }
     const s = id ? state.services.find(x => String(x.id) === String(id)) : null;
     openDrawer(s ? 'Edit service' : 'New service',
       '<div class="fld"><label for="sName">Name</label>' +
@@ -2051,35 +2134,78 @@
   VIEWS.team = function () {
     const team = state.people.filter(p => p.is_admin);
     const others = state.people.filter(p => !p.is_admin);
+    const mayManage = isFounder();
+
+    // The picker is the whole feature: one control that says what someone
+    // is now and every other thing they could be, rather than a single
+    // in/out switch that had to mean "co-founder" or nothing.
+    function picker(p) {
+      const now = roleOf(p);
+      return '<div class="rolepick">' +
+        '<label class="rolepick__lbl" for="role-' + esc(p.username) + '">Role</label>' +
+        '<select class="inp" id="role-' + esc(p.username) + '" data-setrole="' + esc(p.username) + '">' +
+          '<option value=""' + (now ? '' : ' selected') + '>No access</option>' +
+          GRANTABLE.map(r => '<option value="' + r + '"' + (now === r ? ' selected' : '') + '>' +
+            esc(ROLES[r].label) + '</option>').join('') +
+        '</select>' +
+        '<p class="rolepick__can">' + esc(now ? ROLES[now].can : 'Cannot open this panel.') + '</p>' +
+      '</div>';
+    }
 
     const row = p => '<article class="card" style="padding:14px">' +
       '<div class="card__head" style="margin-bottom:8px">' +
         '<h2 style="font-size:14px">@' + esc(p.username) + ' ' +
-          (roleLabel(p) ? '<span class="tag ' + (p.is_owner ? 'tag--owner' : 'tag--green') + '">' + roleLabel(p) + '</span>' : '') +
+          (roleLabel(p) ? '<span class="tag ' + roleTag(p) + '">' + roleLabel(p) + '</span>' : '') +
         '</h2>' +
-        (manageAccess && me.is_owner && !p.is_owner && p.username !== me.username
-          ? '<button class="btn--ghost btn--sm' + (p.is_admin ? ' btn--danger' : '') + '" data-grant="' + esc(p.username) + '">' +
-            '<i class="fa-solid ' + (p.is_admin ? 'fa-user-minus' : 'fa-user-plus') + '"></i> ' +
-            (p.is_admin ? 'Remove admin' : 'Make co-founder') + '</button>'
-          : '') +
       '</div>' +
       '<dl class="dl">' +
         '<div><dt>Name</dt><dd>' + esc(p.full_name || '—') + '</dd></div>' +
         '<div><dt>Phone</dt><dd>' + esc(p.phone || '—') + '</dd></div>' +
         '<div><dt>Joined</dt><dd>' + fmtDate(p.joined) + '</dd></div>' +
         '<div><dt>Last signed in</dt><dd>' + (p.last_login ? fmtWhen(p.last_login) : 'never') + '</dd></div>' +
-      '</dl></article>';
+      '</dl>' +
+      (manageAccess && mayManage && roleOf(p) !== 'founder' && p.username !== me.username
+        ? picker(p)
+        : '') +
+      '</article>';
+
+    // What each role means, spelled out once. Everyone sees it: knowing why
+    // a button is missing is the difference between a rule and a fault.
+    const key = '<section class="card" style="margin-bottom:14px">' +
+      '<div class="card__head"><h2><i class="fa-solid fa-id-badge"></i> What each role can do</h2></div>' +
+      '<div class="tablewrap"><table class="tbl tbl--tight"><thead><tr>' +
+        '<th>Role</th><th>Can change</th></tr></thead><tbody>' +
+      Object.keys(ROLES).map(r => '<tr' + (iAm() === r ? ' class="is-me"' : '') + '>' +
+        '<td><span class="tag ' + ROLES[r].tag + '">' + esc(ROLES[r].label) + '</span>' +
+          (iAm() === r ? ' <span class="rolepick__you">you</span>' : '') + '</td>' +
+        '<td>' + esc(ROLES[r].can) + '</td></tr>').join('') +
+      '</tbody></table></div></section>';
+
+    const changeLine = function (e) {
+      const to = e.to_role && ROLES[e.to_role] ? ROLES[e.to_role].label.toLowerCase() : null;
+      const from = e.from_role && ROLES[e.from_role] ? ROLES[e.from_role].label.toLowerCase() : null;
+      if (to) return 'made <strong>@' + esc(e.target) + '</strong> ' + esc(a(to)) + (from ? ' (was ' + esc(a(from)) + ')' : '');
+      if (from) return 'removed <strong>@' + esc(e.target) + '</strong>’s access (was ' + esc(from) + ')';
+      // Rows written before roles existed only recorded in or out.
+      return e.made_admin
+        ? 'made <strong>@' + esc(e.target) + '</strong> a co-founder'
+        : 'removed <strong>@' + esc(e.target) + '</strong>’s access';
+    };
 
     $('#view').innerHTML =
-      pageHead('Team', 'Who can get into this panel, and who has been in lately.',
-        me.is_owner
+      pageHead('Team', 'Who can get into this panel, what each of them may change, and who has been in lately.',
+        mayManage
           ? '<button class="btn--ghost' + (manageAccess ? ' btn--danger' : '') + '" id="manageBtn">' +
             '<i class="fa-solid ' + (manageAccess ? 'fa-lock-open' : 'fa-lock') + '"></i> ' +
             (manageAccess ? 'Done managing' : 'Manage access') + '</button>'
           : '') +
+      key +
       '<section class="card" style="margin-bottom:14px"><div class="card__head">' +
-        '<h2><i class="fa-solid fa-users-gear"></i> Admins</h2></div>' +
-        '<div class="grid grid--halves">' + team.map(row).join('') + '</div></section>' +
+        '<h2><i class="fa-solid fa-users-gear"></i> The team</h2>' +
+        (mayManage && !manageAccess
+          ? '<span class="msg msg--quiet" style="margin:0">Manage access to change a role</span>' : '') +
+      '</div>' +
+      '<div class="grid grid--halves">' + team.map(row).join('') + '</div></section>' +
       (manageAccess
         ? '<section class="card" style="margin-bottom:14px"><div class="card__head">' +
           '<h2><i class="fa-solid fa-user-plus"></i> Everyone else</h2></div>' +
@@ -2089,8 +2215,7 @@
       '<section class="card"><div class="card__head"><h2><i class="fa-solid fa-clock-rotate-left"></i> Access changes</h2></div>' +
         (state.roleEvents.length
           ? '<ul class="tl">' + state.roleEvents.map(e => '<li><p><strong>@' + esc(e.actor || 'someone') +
-              '</strong> made <strong>@' + esc(e.target) + '</strong> ' +
-              (e.made_admin ? 'a co-founder' : 'no longer an admin') + '</p><em>' + fmtWhen(e.at) + '</em></li>').join('') + '</ul>'
+              '</strong> ' + changeLine(e) + '</p><em>' + fmtWhen(e.at) + '</em></li>').join('') + '</ul>'
           : '<p class="msg">Nobody’s access has changed yet.</p>') + '</section>';
 
     if ($('#manageBtn')) $('#manageBtn').addEventListener('click', function () {
@@ -2098,24 +2223,31 @@
       VIEWS.team();
     });
 
-    $$('#view [data-grant]').forEach(b => b.addEventListener('click', function () {
-      const p = state.people.find(x => x.username === b.dataset.grant);
-      const makeAdmin = !p.is_admin;
+    $$('#view [data-setrole]').forEach(sel => sel.addEventListener('change', function () {
+      const p = state.people.find(x => x.username === sel.dataset.setrole);
+      const was = roleOf(p);
+      const now = sel.value;
+      if (now === was) return;
+
       const who = '@' + p.username + (p.full_name ? ' (' + p.full_name + ')' : '');
-      const ok = confirm(makeAdmin
-        ? 'Make ' + who + ' a co-founder?\n\nThey will see every order and every customer, ' +
-          'and be able to mark payments received or not received.'
-        : 'Remove admin from ' + who + '?\n\nThey lose access to this panel straight away.');
-      if (!ok) return;
-      b.disabled = true;
-      client.rpc('set_team_admin', { p_username: p.username, p_admin: makeAdmin })
+      const ok = confirm(now
+        ? 'Make ' + who + ' ' + a(ROLES[now].label) + '?\n\n' + ROLES[now].can +
+          '\n\nThey will see every order and every customer.'
+        : 'Remove ' + who + '’s access?\n\nThey lose this panel straight away.');
+
+      // Put the control back where it was; the reload below is what moves it.
+      if (!ok) { sel.value = was; return; }
+
+      sel.disabled = true;
+      client.rpc('set_team_role', { p_username: p.username, p_role: now || null })
         .then(function (res) {
-          b.disabled = false;
-          if (res.error) { toast(res.error.message, 'bad'); return; }
-          toast(makeAdmin ? 'Added as a co-founder.' : 'Admin removed.');
+          sel.disabled = false;
+          if (res.error) { toast(res.error.message, 'bad'); sel.value = was; return; }
+          toast(now ? 'Now ' + a(ROLES[now].label) + '.' : 'Access removed.');
           loadAll();
         }, function () {
-          b.disabled = false;
+          sel.disabled = false;
+          sel.value = was;
           toast('Could not reach the server.', 'bad');
         });
     }));
@@ -2265,7 +2397,8 @@
         '<section class="card"><div class="card__head"><h2><i class="fa-solid fa-user"></i> Admin profile</h2></div>' +
           '<dl class="dl">' +
             '<div><dt>Username</dt><dd>@' + esc(me.username) + '</dd></div>' +
-            '<div><dt>Role</dt><dd>' + badge(roleLabel(me)) + '</dd></div>' +
+            '<div><dt>Role</dt><dd><span class="tag ' + roleTag(me) + '">' + esc(roleLabel(me)) + '</span></dd></div>' +
+            '<div><dt>You can change</dt><dd>' + esc((ROLES[iAm()] || {}).can || '—') + '</dd></div>' +
             '<div><dt>Name</dt><dd>' + esc(mine.full_name || '—') + '</dd></div>' +
             '<div><dt>Phone</dt><dd>' + esc(mine.phone || '—') + '</dd></div>' +
             '<div><dt>Last signed in</dt><dd>' + (mine.last_login ? fmtWhen(mine.last_login) : '—') + '</dd></div>' +

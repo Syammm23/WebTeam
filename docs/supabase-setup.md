@@ -46,20 +46,37 @@ line fails, nothing is left half-made, so you can fix and re-run.
 When it finishes it prints five rows. **Every one must say `true`.** If any says
 `false`, or you get a red error instead of a result, send me what it says.
 
-## Step 4 — Register yourselves, then become admins
+## Step 4 — Register yourselves, then give out the roles
 
 Open the live site and **register normally** — pick your usernames like any
-customer would. Then come back to the SQL Editor and run this once, with your
-real usernames:
+customer would. Then run `docs/supabase-admin.sql`, which creates the panel's
+tables and the five roles.
+
+The founder is set by that script (`adminlogbook`). Everyone else gets their
+role from the panel itself: **Team → Manage access**, pick a role from the
+dropdown next to their name.
+
+| Role | What they may change |
+| --- | --- |
+| Founder | Everything, and decides who else gets in |
+| Co-founder | Everything except changing who gets in — including deciding payments |
+| Web Developer | Projects, tasks and the service catalogue |
+| Editor | Enquiries, notes and the service catalogue |
+| Assistant | Enquiries and notes |
+
+Every role reads everything. What the role decides is what they may *change*,
+and the database decides it, not the page: a hidden button is a courtesy, the
+policy is the fence.
+
+A second **founder** is deliberately not offered in that dropdown — a founder
+can overrule every decision in the book and hand out access themselves, so it
+takes a line of SQL:
 
 ```sql
 update public.profiles
-   set is_admin = true
- where username in ('shyam', 'partner2', 'partner3');
+   set role = 'founder', is_admin = true, is_owner = true
+ where username = 'their_username';
 ```
-
-Those three accounts can then open the order book. Everyone else gets turned
-away by the database itself, not by the page.
 
 ## Step 5 — Send me two values
 

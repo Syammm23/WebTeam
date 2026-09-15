@@ -1,4 +1,14 @@
 -- =====================================================================
+-- SUPERSEDED by docs/supabase-admin.sql, which contains everything here
+-- and the roles on top of it. Run that one instead. This file is kept
+-- only so that a database set up from it can be read back.
+--
+-- Running this again AFTER supabase-admin.sql would put the old rules
+-- back: it would let any admin decide a payment, where the newer script
+-- keeps that to the founder and co-founders.
+-- =====================================================================
+
+-- =====================================================================
 -- WE3 — everything the Order Book needs, in one script.
 --
 --   * is_owner, so the founder can overrule a decided order
