@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <title>Setup SQL — WE3</title>
+
+  <!-- One page whose whole job is to hand over the setup script without
+       anything else getting copied by mistake. No fonts, no icons, no
+       Supabase client: nothing here talks to anything. -->
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px 16px 60px;
+      background: #0B0F14;
+      color: #E6EDF3;
+      font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .sub { color: #8B949E; font-size: 13.5px; margin: 0 0 20px; }
+    ol { margin: 0 0 20px; padding-left: 20px; color: #C9D1D9; font-size: 14px; }
+    ol li { margin-bottom: 7px; }
+    .warn {
+      margin: 0 0 20px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: 1px solid rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+      color: #FBBF24;
+      font-size: 13.5px;
+    }
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    button {
+      font: inherit;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: #22C55E;
+      color: #05230F;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    button.ghost { background: transparent; border-color: #21262D; color: #E6EDF3; }
+    #said { font-size: 13px; color: #22C55E; font-weight: 600; }
+    pre {
+      margin: 0;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #21262D;
+      background: #010409;
+      color: #C9D1D9;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre;
+      overflow: auto;
+      max-height: 60vh;
+    }
+    .count { color: #6E7681; font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>WE3 setup script</h1>
+    <p class="sub">Everything the admin panel needs: the tables, the roles, the
+       password clock and the order price check.</p>
+
+    <div class="warn">
+      Copy the <strong>whole</strong> thing and run it in one go. It is a single
+      transaction &mdash; half of it does nothing at all. Running it again is safe.
+    </div>
+
+    <ol>
+      <li>Tap <strong>Copy the SQL</strong> below.</li>
+      <li>Open Supabase &rarr; <strong>SQL Editor</strong>.</li>
+      <li>Clear whatever is in the box, paste, and press <strong>Run</strong>.</li>
+      <li>Fourteen rows come back. Every one should say <strong>t</strong>.</li>
+    </ol>
+
+    <div class="bar">
+      <button id="copy" type="button">Copy the SQL</button>
+      <button id="select" class="ghost" type="button">Select it instead</button>
+      <span id="said"></span>
+    </div>
+
+    <pre id="sql">-- =====================================================================
+-- WE3 — the tables the admin panel manages, and who may do what in it.
+--
+-- Run once in the Supabase SQL Editor. Safe to run again, at any point,
+-- in any state. It needs only `profiles` and `orders`, which the site is
+-- already using; everything else it either creates or brings up to date.
+--
+-- Nothing here touches auth or the login. Accounts, passwords, sessions
+-- and the order flow keep working exactly as they do now.
+--
+-- Every row of the check at the bottom must say true.
+-- =====================================================================
+
+begin;
+
+-- =====================================================================
+-- ROLES
+--
+--   founder     everything, and decides who else gets in
+--   cofounder   everything except changing who gets in
+--   developer   projects, tasks and the service catalogue
+--   editor      enquiries, notes and the service catalogue
+--   assistant   enquiries and notes
+--
+-- Every role reads everything — five people in one office, and hiding a
+-- customer&#x27;s phone number from the person answering the phone helps
+-- nobody. What the roles decide is who may CHANGE what, and the answer
+-- is enforced here rather than by hiding a button.
+-- =====================================================================
+
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+alter table public.profiles add column if not exists is_owner boolean not null default false;
+alter table public.profiles add column if not exists role     text;
+
+do $$
+begin
+  alter table public.profiles
+    add constraint profiles_role_check
+    check (role is null or role in
+           (&#x27;founder&#x27;, &#x27;cofounder&#x27;, &#x27;developer&#x27;, &#x27;editor&#x27;, &#x27;assistant&#x27;));
+exception when duplicate_object then null;
+end $$;
+
+-- A customer may edit these four columns and nothing else. The narrow
+-- grant is what stops someone writing `role` onto their own row.
+revoke update on public.profiles from authenticated;
+grant update (phone, full_name, business, email) on public.profiles to authenticated;
+
+-- Bring existing accounts across: the founder stays the founder, anyone
+-- who was an admin becomes a co-founder, everyone else stays a customer.
+update public.profiles set role = &#x27;founder&#x27;
+ where coalesce(is_owner, false) and role is null;
+update public.profiles set role = &#x27;cofounder&#x27;
+ where coalesce(is_admin, false) and not coalesce(is_owner, false) and role is null;
+
+-- `role` is the answer from here on; these two are kept in step with it
+-- so that the policies written before roles existed still hold.
+-- coalesce, not a bare comparison: `role = &#x27;founder&#x27;` is NULL for a customer,
+-- and is_owner is NOT NULL, so the plain form fails on the first customer row.
+update public.profiles
+   set is_admin = (role is not null),
+       is_owner = coalesce(role = &#x27;founder&#x27;, false)
+ where is_admin is distinct from (role is not null)
+    or is_owner is distinct from coalesce(role = &#x27;founder&#x27;, false);
+
+create or replace function public.my_role()
+returns text language sql stable security definer set search_path = public as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() is not null;
+$$;
+
+create or replace function public.is_owner()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() = &#x27;founder&#x27;;
+$$;
+
+-- Money and deletions. A wrong answer here either takes cash off a real
+-- order or throws a record away, so it stays with the two people whose
+-- business it is.
+create or replace function public.is_manager()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;);
+$$;
+
+-- The work itself: projects and the tasks under them.
+create or replace function public.can_build()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;, &#x27;developer&#x27;);
+$$;
+
+-- What the services are called and what they cost.
+create or replace function public.can_catalogue()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;, &#x27;developer&#x27;, &#x27;editor&#x27;);
+$$;
+
+grant execute on function public.my_role()       to authenticated;
+grant execute on function public.is_admin()      to authenticated;
+grant execute on function public.is_owner()      to authenticated;
+grant execute on function public.is_manager()    to authenticated;
+grant execute on function public.can_build()     to authenticated;
+grant execute on function public.can_catalogue() to authenticated;
+
+-- ---------------------------------------------------------- enquiries
+-- Everyone who fills in the contact form or the WhatsApp box. The public
+-- site writes these; only the team reads them.
+create table if not exists public.enquiries (
+  id            bigserial primary key,
+  created_at    timestamptz not null default now(),
+  name          text not null,
+  business      text,
+  phone         text,
+  email         text,
+  service       text,
+  source        text not null default &#x27;Website&#x27;,
+  message       text,
+  status        text not null default &#x27;New&#x27;,
+  internal_note text,
+  handled_by    text,
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists enquiries_created_idx on public.enquiries (created_at desc);
+alter table public.enquiries enable row level security;
+
+-- A visitor may leave an enquiry and nothing else. Pinning status and
+-- internal_note is what stops the public key posting a row that already
+-- claims to be handled, or writing notes into the team&#x27;s own column.
+drop policy if exists &quot;anyone may enquire&quot; on public.enquiries;
+create policy &quot;anyone may enquire&quot; on public.enquiries
+  for insert to anon, authenticated
+  with check (status = &#x27;New&#x27; and internal_note is null and handled_by is null);
+
+drop policy if exists &quot;admin reads enquiries&quot; on public.enquiries;
+create policy &quot;admin reads enquiries&quot; on public.enquiries
+  for select to authenticated using (public.is_admin());
+
+-- Answering an enquiry is the job everyone on the team does.
+drop policy if exists &quot;admin updates enquiries&quot; on public.enquiries;
+create policy &quot;admin updates enquiries&quot; on public.enquiries
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists &quot;admin deletes enquiries&quot; on public.enquiries;
+create policy &quot;admin deletes enquiries&quot; on public.enquiries
+  for delete to authenticated using (public.is_manager());
+
+-- --------------------------------------------------------- activities
+-- What people actually do on the site. Written by the public page, read
+-- only by the team.
+create table if not exists public.activities (
+  id         bigserial primary key,
+  at         timestamptz not null default now(),
+  session_id text,
+  user_id    uuid,
+  username   text,
+  kind       text not null,
+  detail     text,
+  page       text,
+  device     text,
+  referrer   text
+);
+
+create index if not exists activities_at_idx on public.activities (at desc);
+alter table public.activities enable row level security;
+
+-- A signed-out visitor logs anonymously; a signed-in one may only log as
+-- themselves. Without this, anyone holding the public key could write rows
+-- that blame someone else for what they did.
+drop policy if exists &quot;anyone may log activity&quot; on public.activities;
+create policy &quot;anyone may log activity&quot; on public.activities
+  for insert to anon, authenticated
+  with check (
+    (user_id is null and username is null)      -- a signed-out visitor
+    or user_id = auth.uid()                     -- or an account, as itself
+  );
+
+drop policy if exists &quot;admin reads activity&quot; on public.activities;
+create policy &quot;admin reads activity&quot; on public.activities
+  for select to authenticated using (public.is_admin());
+
+-- ----------------------------------------------------------- services
+-- The catalogue the team manages. The public site keeps its own prices
+-- for now; changing those from here would need the site to read them, so
+-- this stays a record rather than a remote control.
+create table if not exists public.services (
+  id          bigserial primary key,
+  slug        text unique not null,
+  name        text not null,
+  price       integer not null default 0,
+  description text,
+  active      boolean not null default true,
+  sort        integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+-- Reels do not multiply: the first is 1,999 and each one after it is 2,000,
+-- so two come to 3,999. `step` is what the site calls the same rule, and it
+-- lives here as well so the database can check an order&#x27;s arithmetic.
+alter table public.services add column if not exists step integer not null default 0;
+
+alter table public.services enable row level security;
+
+drop policy if exists &quot;anyone reads active services&quot; on public.services;
+create policy &quot;anyone reads active services&quot; on public.services
+  for select to anon, authenticated using (active or public.is_admin());
+
+-- Named on purpose rather than left as one &quot;for all&quot; policy: writing a
+-- price and deleting the service are not the same decision.
+drop policy if exists &quot;admin writes services&quot; on public.services;
+drop policy if exists &quot;catalogue adds services&quot; on public.services;
+create policy &quot;catalogue adds services&quot; on public.services
+  for insert to authenticated with check (public.can_catalogue());
+
+drop policy if exists &quot;catalogue edits services&quot; on public.services;
+create policy &quot;catalogue edits services&quot; on public.services
+  for update to authenticated using (public.can_catalogue()) with check (public.can_catalogue());
+
+drop policy if exists &quot;manager deletes services&quot; on public.services;
+create policy &quot;manager deletes services&quot; on public.services
+  for delete to authenticated using (public.is_manager());
+
+-- The price is not the panel&#x27;s to change. index.html charges it and the
+-- order check below enforces it, so a price edited in one place and not
+-- the others would start turning real customers away. Name, description,
+-- on/off and order are the team&#x27;s; price and step are set here.
+revoke update on public.services from authenticated;
+grant update (name, description, active, sort) on public.services to authenticated;
+
+-- These names and prices must match index.html exactly: an order is checked
+-- against this table before it is accepted, so a price changed on the site
+-- and not here would start turning real customers away.
+insert into public.services (slug, name, price, step, description, sort) values
+  (&#x27;website&#x27;,   &#x27;Website Development&#x27;,    4999,    0, &#x27;Custom website, mobile responsive, 1-year domain + hosting included.&#x27;, 1),
+  (&#x27;combo&#x27;,     &#x27;Combo Package&#x27;,          8999,    0, &#x27;Website + 2 Instagram reels + one edited video.&#x27;, 2),
+  (&#x27;reel&#x27;,      &#x27;Reel Making&#x27;,            1999, 2000, &#x27;Shooting and professional editing, delivered ready to post.&#x27;, 3),
+  (&#x27;video&#x27;,     &#x27;Video Editing&#x27;,           999,    0, &#x27;You shoot it, we edit it — cuts, colour, captions and music.&#x27;, 4),
+  (&#x27;shopshoot&#x27;, &#x27;Store Photoshoot&#x27;,        299,    0, &#x27;We shoot your shop, so your site is not built on stock photos.&#x27;, 5),
+  (&#x27;maint6&#x27;,    &#x27;Maintenance — 6 Months&#x27;, 2999,    0, &#x27;Content updates, bug fixes and uptime monitoring.&#x27;, 6),
+  (&#x27;maint12&#x27;,   &#x27;Maintenance — 1 Year&#x27;,   4999,    0, &#x27;Content updates, bug fixes and uptime monitoring.&#x27;, 7)
+on conflict (slug) do update
+  set name = excluded.name, price = excluded.price, step = excluded.step, sort = excluded.sort;
+
+-- ----------------------------------------------------------- projects
+create table if not exists public.projects (
+  id          bigserial primary key,
+  created_at  timestamptz not null default now(),
+  name        text not null,
+  client_id   uuid references auth.users(id) on delete set null,
+  client_name text,
+  phone       text,
+  service     text,
+  order_ref   text,
+  start_date  date,
+  deadline    date,
+  status      text not null default &#x27;Not Started&#x27;,
+  progress    integer not null default 0,
+  budget      integer not null default 0,
+  paid        integer not null default 0,
+  assignee    text,
+  notes       text,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.projects enable row level security;
+
+drop policy if exists &quot;admin manages projects&quot; on public.projects;
+drop policy if exists &quot;admin reads projects&quot; on public.projects;
+create policy &quot;admin reads projects&quot; on public.projects
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists &quot;builder adds projects&quot; on public.projects;
+create policy &quot;builder adds projects&quot; on public.projects
+  for insert to authenticated with check (public.can_build());
+
+drop policy if exists &quot;builder edits projects&quot; on public.projects;
+create policy &quot;builder edits projects&quot; on public.projects
+  for update to authenticated using (public.can_build()) with check (public.can_build());
+
+drop policy if exists &quot;manager deletes projects&quot; on public.projects;
+create policy &quot;manager deletes projects&quot; on public.projects
+  for delete to authenticated using (public.is_manager());
+
+create table if not exists public.project_tasks (
+  id         bigserial primary key,
+  project_id bigint not null references public.projects(id) on delete cascade,
+  title      text not null,
+  assignee   text,
+  due_date   date,
+  priority   text not null default &#x27;Medium&#x27;,
+  status     text not null default &#x27;To Do&#x27;,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists project_tasks_project_idx on public.project_tasks (project_id);
+alter table public.project_tasks enable row level security;
+
+drop policy if exists &quot;admin manages tasks&quot; on public.project_tasks;
+drop policy if exists &quot;admin reads tasks&quot; on public.project_tasks;
+create policy &quot;admin reads tasks&quot; on public.project_tasks
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists &quot;builder writes tasks&quot; on public.project_tasks;
+create policy &quot;builder writes tasks&quot; on public.project_tasks
+  for all to authenticated using (public.can_build()) with check (public.can_build());
+
+-- -------------------------------------------------------------- notes
+-- Private to the team. Kept apart from orders.note, which the customer
+-- reads — mixing the two would put an internal remark on their screen.
+create table if not exists public.notes (
+  id        bigserial primary key,
+  at        timestamptz not null default now(),
+  entity    text not null,          -- &#x27;client&#x27; | &#x27;enquiry&#x27; | &#x27;project&#x27;
+  entity_id text not null,
+  body      text not null,
+  author    text
+);
+
+create index if not exists notes_entity_idx on public.notes (entity, entity_id, at desc);
+alter table public.notes enable row level security;
+
+drop policy if exists &quot;admin manages notes&quot; on public.notes;
+drop policy if exists &quot;admin reads notes&quot; on public.notes;
+create policy &quot;admin reads notes&quot; on public.notes
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists &quot;admin writes notes&quot; on public.notes;
+create policy &quot;admin writes notes&quot; on public.notes
+  for insert to authenticated with check (public.is_admin());
+
+drop policy if exists &quot;manager deletes notes&quot; on public.notes;
+create policy &quot;manager deletes notes&quot; on public.notes
+  for delete to authenticated using (public.is_manager());
+
+-- =====================================================================
+-- MONEY
+-- Deciding a payment is a manager&#x27;s call. The policy stops the write and
+-- the trigger stops it again, because this is the one place in the panel
+-- where being wrong costs somebody money.
+-- =====================================================================
+-- Written by the trigger below, never by the browser, so nobody can decide
+-- an order without leaving the record of it.
+create table if not exists public.order_events (
+  id          bigserial primary key,
+  order_ref   text not null references public.orders(ref) on delete cascade,
+  at          timestamptz not null default now(),
+  actor_id    uuid,
+  actor       text,                     -- username, kept as text so the
+                                        -- history survives an account going
+  from_status text,
+  to_status   text,
+  from_note   text,
+  to_note     text
+);
+
+create index if not exists order_events_ref_idx on public.order_events (order_ref, at desc);
+alter table public.order_events enable row level security;
+
+drop policy if exists &quot;admin reads history&quot; on public.order_events;
+create policy &quot;admin reads history&quot; on public.order_events
+  for select to authenticated using (public.is_admin());
+
+revoke insert, update, delete on public.order_events from authenticated, anon;
+
+drop policy if exists &quot;admin updates orders&quot; on public.orders;
+create policy &quot;admin updates orders&quot; on public.orders
+  for update to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+
+create or replace function public.guard_order_change()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  actor_id   uuid := auth.uid();
+  actor_name text;
+begin
+  select username into actor_name from public.profiles where id = actor_id;
+
+  if not public.is_manager() then
+    raise exception &#x27;Only the founder or a co-founder can decide a payment.&#x27;;
+  end if;
+
+  -- Anyone who may decide may decide again, as many times as it takes.
+  -- What keeps that honest is the record below, not a lock: every change
+  -- carries the name of whoever made it.
+  if new.status is distinct from old.status
+     or new.note is distinct from old.note then
+    insert into public.order_events (order_ref, actor_id, actor,
+                                     from_status, to_status, from_note, to_note)
+    values (old.ref, actor_id, actor_name,
+            old.status, new.status, old.note, new.note);
+  end if;
+
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists on_order_changed on public.orders;
+create trigger on_order_changed
+  before update on public.orders
+  for each row execute function public.guard_order_change();
+
+-- =====================================================================
+-- WHO GETS IN
+-- =====================================================================
+
+-- Who changed whose access, and to what. Written by the function that
+-- does the work, so it cannot be skipped.
+create table if not exists public.role_events (
+  id         bigserial primary key,
+  at         timestamptz not null default now(),
+  actor      text,
+  target     text,
+  made_admin boolean
+);
+alter table public.role_events add column if not exists from_role text;
+alter table public.role_events add column if not exists to_role   text;
+
+alter table public.role_events enable row level security;
+
+drop policy if exists &quot;admin reads role history&quot; on public.role_events;
+create policy &quot;admin reads role history&quot; on public.role_events
+  for select to authenticated using (public.is_admin());
+
+revoke insert, update, delete on public.role_events from authenticated, anon;
+
+create or replace function public.set_team_role(p_username text, p_role text)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  actor_name  text;
+  target_id   uuid;
+  target_role text;
+  uname       text := lower(trim(p_username));
+  newrole     text := nullif(lower(trim(coalesce(p_role, &#x27;&#x27;))), &#x27;&#x27;);
+begin
+  -- The check that matters. A co-founder calling this by hand gets nowhere.
+  if not public.is_owner() then
+    raise exception &#x27;Only the founder can change who has access.&#x27;;
+  end if;
+
+  -- &#x27;founder&#x27; is deliberately missing. A second founder can overrule every
+  -- decision in the book and hand out access themselves; that should take a
+  -- deliberate line of SQL, not one tap on a phone.
+  if newrole is not null and newrole not in (&#x27;cofounder&#x27;, &#x27;developer&#x27;, &#x27;editor&#x27;, &#x27;assistant&#x27;) then
+    raise exception &#x27;Unknown role: %.&#x27;, newrole;
+  end if;
+
+  select username into actor_name from public.profiles where id = auth.uid();
+  select id, role into target_id, target_role from public.profiles where username = uname;
+
+  if target_id is null then
+    raise exception &#x27;No account called %.&#x27;, uname;
+  end if;
+
+  -- Changing your own access would lock everyone out of granting it back.
+  if target_id = auth.uid() then
+    raise exception &#x27;You cannot change your own access.&#x27;;
+  end if;
+
+  if target_role = &#x27;founder&#x27; then
+    raise exception &#x27;That account is a founder.&#x27;;
+  end if;
+
+  update public.profiles
+     set role     = newrole,
+         is_admin = (newrole is not null),
+         is_owner = false
+   where id = target_id;
+
+  insert into public.role_events (actor, target, made_admin, from_role, to_role)
+  values (actor_name, uname, newrole is not null, target_role, newrole);
+
+  return coalesce(newrole, &#x27;none&#x27;);
+end;
+$$;
+
+-- Kept so that anything still calling the old name keeps working.
+create or replace function public.set_team_admin(p_username text, p_admin boolean)
+returns text language plpgsql security definer set search_path = public as $$
+begin
+  return public.set_team_role(p_username, case when p_admin then &#x27;cofounder&#x27; else null end);
+end;
+$$;
+
+-- EXECUTE is granted to PUBLIC by default, which would leave these callable
+-- by anyone holding the public key. Both check is_owner() as well, but the
+-- grant is the fence that should not have to be tested.
+revoke execute on function public.set_team_role(text, text)     from public, anon;
+revoke execute on function public.set_team_admin(text, boolean) from public, anon;
+grant  execute on function public.set_team_role(text, text)     to authenticated;
+grant  execute on function public.set_team_admin(text, boolean) to authenticated;
+
+-- Who signed up, when they last signed in, and what they have ordered.
+-- last_sign_in_at lives in the auth schema, which the browser cannot read
+-- directly, so it comes through here — and only for an admin.
+drop function if exists public.admin_people();
+create function public.admin_people()
+returns table (
+  username   text,
+  phone      text,
+  full_name  text,
+  business   text,
+  role       text,
+  is_admin   boolean,
+  is_owner   boolean,
+  joined     timestamptz,
+  last_login timestamptz,
+  orders     integer,
+  paid       integer
+)
+language sql stable security definer set search_path = public as $$
+  select p.username, p.phone, p.full_name, p.business, p.role,
+         p.role is not null, coalesce(p.role = &#x27;founder&#x27;, false),
+         p.created_at, u.last_sign_in_at,
+         count(o.ref)::int,
+         coalesce(sum(o.paid) filter (where o.status = &#x27;verified&#x27;), 0)::int
+    from public.profiles p
+    join auth.users u on u.id = p.id
+    left join public.orders o on o.user_id = p.id
+   where public.is_admin()
+   group by p.username, p.phone, p.full_name, p.business, p.role,
+            p.created_at, u.last_sign_in_at
+   order by u.last_sign_in_at desc nulls last;
+$$;
+
+revoke execute on function public.admin_people() from public, anon;
+grant  execute on function public.admin_people() to authenticated;
+
+-- =====================================================================
+-- PASSWORDS EXPIRE AFTER 14 DAYS
+--
+-- The panel holds every customer&#x27;s phone number and every payment. A
+-- password that has been the same since the shop opened is the likeliest
+-- way in, so it stops working after a fortnight.
+--
+-- `password_changed_at` is moved by a trigger on auth.users, and only when
+-- the stored hash actually changes. The browser cannot set it, so nobody
+-- can restart their own clock without genuinely changing the password.
+-- =====================================================================
+
+alter table public.profiles add column if not exists password_changed_at timestamptz;
+alter table public.profiles alter column password_changed_at set default now();
+
+-- Everyone alive today gets a fresh fortnight rather than being locked out
+-- the moment this runs.
+update public.profiles set password_changed_at = now() where password_changed_at is null;
+
+create or replace function public.on_password_changed()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.encrypted_password is distinct from old.encrypted_password then
+    update public.profiles set password_changed_at = now() where id = new.id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_password_changed on auth.users;
+create trigger on_auth_password_changed
+  after update of encrypted_password on auth.users
+  for each row execute function public.on_password_changed();
+
+-- One number the panel can ask for: days until this password must change.
+-- Negative means it already had to.
+create or replace function public.password_days_left()
+returns integer language sql stable security definer set search_path = public as $$
+  select 14 - floor(
+    extract(epoch from (now() - coalesce(
+      (select password_changed_at from public.profiles where id = auth.uid()), now()
+    ))) / 86400
+  )::int;
+$$;
+
+-- Null is treated as fresh on purpose. A missing timestamp is a setup
+-- problem, and locking the whole team out of their own panel is not the
+-- right answer to one.
+create or replace function public.password_fresh()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select password_changed_at from public.profiles where id = auth.uid()), now()
+  ) &gt; now() - interval &#x27;14 days&#x27;;
+$$;
+
+grant execute on function public.password_days_left() to authenticated;
+grant execute on function public.password_fresh()     to authenticated;
+
+-- A stale password stops being an admin password. Signing in still works,
+-- and so does changing it — that is the way back in, and it deliberately
+-- does not depend on the thing being withheld.
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() is not null and public.password_fresh();
+$$;
+
+create or replace function public.is_manager()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;) and public.password_fresh();
+$$;
+
+create or replace function public.is_owner()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() = &#x27;founder&#x27; and public.password_fresh();
+$$;
+
+create or replace function public.can_build()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;, &#x27;developer&#x27;) and public.password_fresh();
+$$;
+
+create or replace function public.can_catalogue()
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.my_role() in (&#x27;founder&#x27;, &#x27;cofounder&#x27;, &#x27;developer&#x27;, &#x27;editor&#x27;)
+     and public.password_fresh();
+$$;
+
+-- =====================================================================
+-- AN ORDER IS CHECKED AGAINST OUR OWN PRICES
+--
+-- Everything in the cart is worked out in the browser, which means the
+-- number arriving here is whatever the browser chose to send. Until now
+-- the only rule was that it said &quot;pending&quot;. A rewritten page could have
+-- placed a 4,999 order for 1 rupee and it would have been filed like any
+-- other. So the total is recomputed here, from this table, and an order
+-- that does not add up is refused.
+-- =====================================================================
+
+create or replace function public.order_total(p_items jsonb)
+returns integer language sql stable security definer set search_path = public as $$
+  select coalesce(sum(
+    case when s.step &gt; 0 then s.price + (i.qty - 1) * s.step
+         else s.price * i.qty end
+  ), 0)::int
+  from jsonb_to_recordset(p_items) as i(name text, qty int)
+  join public.services s on s.name = i.name;
+$$;
+
+create or replace function public.guard_new_order()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  n_sent  integer;
+  n_known integer;
+  bad_qty integer;
+  want    integer;
+  half    integer;
+begin
+  if jsonb_typeof(new.items) is distinct from &#x27;array&#x27; then
+    raise exception &#x27;That order has no items.&#x27;;
+  end if;
+
+  select count(*) into n_sent from jsonb_array_elements(new.items);
+
+  select count(*), count(*) filter (where i.qty is null or i.qty &lt; 1 or i.qty &gt; 20)
+    into n_known, bad_qty
+    from jsonb_to_recordset(new.items) as i(name text, qty int)
+    join public.services s on s.name = i.name;
+
+  if n_sent = 0 then
+    raise exception &#x27;That order has no items.&#x27;;
+  end if;
+
+  -- Every line must be something we sell. Without this check an unknown
+  -- line could ride along free beside a total that happens to add up.
+  if n_sent &lt;&gt; n_known then
+    raise exception &#x27;That order has an item we do not sell.&#x27;;
+  end if;
+
+  if bad_qty &gt; 0 then
+    raise exception &#x27;That order asks for an impossible quantity.&#x27;;
+  end if;
+
+  want := public.order_total(new.items);
+  half := round(want / 2.0)::int;
+
+  if new.total is distinct from want then
+    raise exception &#x27;Order total is % but our prices make it %. If a price changed on the site, change it in Services too.&#x27;,
+      new.total, want;
+  end if;
+
+  if new.pay_mode = &#x27;half&#x27; then
+    if new.paid is distinct from half then
+      raise exception &#x27;Half of % is %, not %.&#x27;, want, half, new.paid;
+    end if;
+  elsif new.pay_mode = &#x27;full&#x27; then
+    if new.paid is distinct from want then
+      raise exception &#x27;A full payment of % is %, not %.&#x27;, want, want, new.paid;
+    end if;
+  else
+    raise exception &#x27;Unknown payment mode &quot;%&quot;.&#x27;, new.pay_mode;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_order_placed on public.orders;
+create trigger on_order_placed
+  before insert on public.orders
+  for each row execute function public.guard_new_order();
+
+-- =====================================================================
+-- WHAT A STRANGER MAY WRITE
+--
+-- enquiries and activities are the only two tables the public key may
+-- insert into, so they are the only two anyone can aim at. Nothing here
+-- stops somebody sending a thousand enquiries; what it stops is one
+-- enquiry carrying a megabyte, or a status the panel cannot render.
+-- =====================================================================
+
+-- `not valid` throughout: every new write is checked, and rows already in
+-- the table are left alone. One odd legacy row should not abort the script.
+do $$
+begin
+  alter table public.enquiries add constraint enquiries_sane check (
+    length(name) between 1 and 80
+    and coalesce(length(business), 0) &lt;= 80
+    and coalesce(length(phone), 0)    &lt;= 20
+    and coalesce(length(email), 0)    &lt;= 120
+    and coalesce(length(service), 0)  &lt;= 60
+    and coalesce(length(message), 0)  &lt;= 2000
+    and length(source) &lt;= 30
+    and status in (&#x27;New&#x27;, &#x27;Contacted&#x27;, &#x27;Quoted&#x27;, &#x27;In Progress&#x27;, &#x27;Completed&#x27;, &#x27;Lost&#x27;)
+    and coalesce(length(internal_note), 0) &lt;= 2000
+  ) not valid;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter table public.activities add constraint activities_sane check (
+    length(kind) between 1 and 60
+    and coalesce(length(detail), 0)     &lt;= 200
+    and coalesce(length(page), 0)       &lt;= 200
+    and coalesce(length(device), 0)     &lt;= 20
+    and coalesce(length(referrer), 0)   &lt;= 120
+    and coalesce(length(session_id), 0) &lt;= 60
+    and coalesce(length(username), 0)   &lt;= 20
+  ) not valid;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter table public.orders add constraint orders_sane check (
+    status in (&#x27;pending&#x27;, &#x27;verified&#x27;, &#x27;rejected&#x27;)
+    and pay_mode in (&#x27;half&#x27;, &#x27;full&#x27;)
+    and total between 0 and 10000000
+    and paid  between 0 and 10000000
+    and paid &lt;= total
+    and length(customer_name) between 1 and 80
+    and length(business) &lt;= 80
+    and length(phone) between 1 and 20
+    and coalesce(length(email), 0) &lt;= 120
+    and coalesce(length(brief), 0) &lt;= 2000
+    and coalesce(length(note), 0)  &lt;= 2000
+  ) not valid;
+exception when duplicate_object then null;
+end $$;
+
+commit;
+
+notify pgrst, &#x27;reload schema&#x27;;
+
+-- The founder.
+update public.profiles
+   set role = &#x27;founder&#x27;, is_admin = true, is_owner = true
+ where username = &#x27;adminlogbook&#x27;;
+
+-- --------------------------------------------------------------- check
+-- Every row must say true.
+select &#x27;enquiries&#x27;      as thing, to_regclass(&#x27;public.enquiries&#x27;)     is not null as ok
+union all select &#x27;activities&#x27;,    to_regclass(&#x27;public.activities&#x27;)    is not null
+union all select &#x27;services&#x27;,      to_regclass(&#x27;public.services&#x27;)      is not null
+union all select &#x27;projects&#x27;,      to_regclass(&#x27;public.projects&#x27;)      is not null
+union all select &#x27;project_tasks&#x27;, to_regclass(&#x27;public.project_tasks&#x27;) is not null
+union all select &#x27;notes&#x27;,         to_regclass(&#x27;public.notes&#x27;)         is not null
+union all select &#x27;order_events&#x27;,  to_regclass(&#x27;public.order_events&#x27;)  is not null
+union all select &#x27;role column&#x27;,   exists (select 1 from information_schema.columns
+                                           where table_schema = &#x27;public&#x27; and table_name = &#x27;profiles&#x27;
+                                             and column_name = &#x27;role&#x27;)
+union all select &#x27;set_team_role()&#x27;, exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                                             where n.nspname = &#x27;public&#x27; and p.proname = &#x27;set_team_role&#x27;)
+union all select &#x27;is_manager()&#x27;,    exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                                             where n.nspname = &#x27;public&#x27; and p.proname = &#x27;is_manager&#x27;)
+union all select &#x27;founder is set&#x27;,  exists (select 1 from public.profiles
+                                             where username = &#x27;adminlogbook&#x27; and role = &#x27;founder&#x27;)
+union all select &#x27;password clock&#x27;,  exists (select 1 from information_schema.columns
+                                             where table_schema = &#x27;public&#x27; and table_name = &#x27;profiles&#x27;
+                                               and column_name = &#x27;password_changed_at&#x27;)
+union all select &#x27;password trigger&#x27;, exists (select 1 from pg_trigger where tgname = &#x27;on_auth_password_changed&#x27;)
+union all select &#x27;order price check&#x27;, exists (select 1 from pg_trigger where tgname = &#x27;on_order_placed&#x27;);
+</pre>
+    <p class="count">793 lines.</p>
+  </div>
+
+  <script src="setup-sql.js" defer></script>
+</body>
+</html>
