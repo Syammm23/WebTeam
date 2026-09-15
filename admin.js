@@ -195,8 +195,30 @@
    * Confirms the signed-in account is an admin before showing anything.
    * A non-admin is told so and signed straight back out.
    */
+  // True once a read has come back saying profiles.role is not there yet,
+  // so the rest of the page stops offering what the database cannot do.
+  let rolesInDb = true;
+
+  /** Does this error mean "that column isn't there"? */
+  function missingColumn(error) {
+    const m = String((error && error.message) || '').toLowerCase();
+    return m.indexOf('does not exist') > -1 || m.indexOf('column') > -1 || m.indexOf('42703') > -1;
+  }
+
   function afterSignIn(user) {
-    return client.from('profiles').select('username, is_admin, is_owner, role').eq('id', user.id).limit(1)
+    // Asks for the role, and asks again without it if the column is not
+    // there. Signing in must not depend on a migration having been run —
+    // the panel is where you would go to find out that it hasn't.
+    const read = cols => client.from('profiles').select(cols).eq('id', user.id).limit(1);
+
+    return read('username, is_admin, is_owner, role')
+      .then(function (res) {
+        if (res.error && missingColumn(res.error)) {
+          rolesInDb = false;
+          return read('username, is_admin, is_owner');
+        }
+        return res;
+      })
       .then(function (res) {
         if (res.error) { lockErr('Could not check your account. (' + res.error.message + ')'); return false; }
         const row = (res.data || [])[0];
@@ -210,8 +232,8 @@
           username: row.username,
           is_admin: true,
           is_owner: Boolean(row.is_owner),
-          // Older databases have no role column; fall back to what the two
-          // flags used to mean so a panel never opens without one.
+          // Before the roles script is run there is no role column; the two
+          // flags still say who the founder is, which is what they meant.
           role: row.role || (row.is_owner ? 'founder' : 'cofounder')
         };
         showUnlocked();
@@ -446,6 +468,7 @@
     error: null,
     enquiries: [], orders: [], people: [], projects: [], tasks: [],
     services: [], activities: [], notes: [], orderEvents: [], roleEvents: [],
+    missing: [],
     readNotifications: new Set()
   };
 
@@ -506,6 +529,15 @@
       // two fail there is nothing worth showing.
       state.error = (r[1].error && r[9].error) ? r[1].error : null;
       state.loading = false;
+
+      // Which of the panel's own tables are not there yet. Said out loud,
+      // because "every section is empty" and "the script has not been run"
+      // look identical from here otherwise.
+      state.missing = [
+        ['Enquiries', r[0].error], ['Projects', r[2].error], ['Services', r[4].error],
+        ['User Activity', r[5].error]
+      ].filter(x => x[1] && /does not exist|schema cache|relation/i.test(x[1])).map(x => x[0]);
+      if (!rolesInDb && state.missing.indexOf('Roles') < 0) state.missing.push('Roles');
 
       paintCounts();
       paintNotifications();
@@ -858,7 +890,26 @@
       return;
     }
     VIEWS[route]();
+    if (state.missing.length) view.insertAdjacentHTML('afterbegin', setupBanner());
     view.scrollTop = 0;
+  }
+
+  /**
+   * Shown when the panel's own tables are not in the database yet.
+   *
+   * Without it every new section is simply empty, which looks the same as a
+   * quiet week. Naming the script is the whole point.
+   */
+  function setupBanner() {
+    return '<section class="card setupmsg" style="margin-bottom:14px">' +
+      '<div class="card__head"><h2><i class="fa-solid fa-triangle-exclamation"></i> ' +
+        'The setup script has not been run yet</h2></div>' +
+      '<p class="msg" style="margin:0">' +
+        esc(state.missing.join(', ')) + ' ' + (state.missing.length > 1 ? 'are' : 'is') +
+        ' missing from the database, so ' + (state.missing.length > 1 ? 'those sections' : 'that section') +
+        ' will stay empty. Run <strong>docs/supabase-admin.sql</strong> in the Supabase SQL Editor — ' +
+        'it is safe to run more than once — then reload this page.' +
+      '</p></section>';
   }
 
   function startApp() {
@@ -2241,6 +2292,15 @@
       sel.disabled = true;
       client.rpc('set_team_role', { p_username: p.username, p_role: now || null })
         .then(function (res) {
+          // Before the roles script is run there is no set_team_role, and the
+          // old set_team_admin only knew in or out. Say that, rather than
+          // showing PostgREST's "function not found" and leaving them guessing.
+          if (res.error && /could not find the function|schema cache|does not exist/i.test(res.error.message || '')) {
+            sel.disabled = false;
+            sel.value = was;
+            toast('Roles are not in the database yet — run docs/supabase-admin.sql first.', 'bad');
+            return;
+          }
           sel.disabled = false;
           if (res.error) { toast(res.error.message, 'bad'); sel.value = was; return; }
           toast(now ? 'Now ' + a(ROLES[now].label) + '.' : 'Access removed.');
