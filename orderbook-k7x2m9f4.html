@@ -53,125 +53,84 @@
     </form>
   </div>
 
-  <header class="adm__top">
-    <a class="adm__brand" href="index.html">
-      <img src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
-      <span>Order Book</span>
-    </a>
-    <div class="adm__top-actions">
-      <button class="adm__who" id="meBtn" title="Your account">
-        <i class="fa-solid fa-user" aria-hidden="true"></i>
-        <span id="whoami"></span>
-      </button>
-      <button class="btn btn--outline-dark btn--sm" id="refreshBtn">
-        <i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh
-      </button>
-      <a class="btn btn--green btn--sm" href="index.html">
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Website
-      </a>
-      <button class="btn btn--outline-dark btn--sm" id="signOutBtn">
-        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
-      </button>
+  <!-- ======================================================================
+       SHELL — sidebar + topbar. Everything below the lock screen.
+       ====================================================================== -->
+  <div class="shell">
+
+    <!-- ---------- SIDEBAR ---------- -->
+    <aside class="side" id="side" aria-label="Sections">
+      <div class="side__brand">
+        <img src="assets/we3-wordmark.png" alt="WE3" width="520" height="158" />
+        <span>Admin Panel</span>
+      </div>
+
+      <nav class="side__nav" aria-label="Main">
+        <a class="navit is-on" href="#dashboard"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Dashboard</span></a>
+        <a class="navit" href="#enquiries"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>Enquiries</span><em class="navit__count" data-count="enquiries"></em></a>
+        <a class="navit" href="#clients"><i class="fa-solid fa-user-group" aria-hidden="true"></i><span>Clients</span></a>
+        <a class="navit" href="#orders"><i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Orders</span><em class="navit__count" data-count="orders"></em></a>
+        <a class="navit" href="#projects"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>Projects</span></a>
+        <a class="navit" href="#services"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span>Services</span></a>
+        <a class="navit" href="#activity"><i class="fa-solid fa-wave-square" aria-hidden="true"></i><span>User Activity</span></a>
+        <a class="navit" href="#team"><i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Team</span></a>
+        <a class="navit" href="#analytics"><i class="fa-solid fa-chart-column" aria-hidden="true"></i><span>Analytics</span></a>
+        <a class="navit" href="#settings"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>Settings</span></a>
+      </nav>
+
+      <div class="side__quote">
+        <p>&ldquo;Build.<br />Create.<br />Grow Together.&rdquo;</p>
+        <span>— WE3</span>
+      </div>
+    </aside>
+
+    <div class="side__scrim" id="sideScrim" hidden></div>
+
+    <!-- ---------- MAIN ---------- -->
+    <div class="main">
+
+      <header class="topbar">
+        <button class="topbar__burger" id="burger" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+
+        <div class="search" role="search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="globalSearch" type="search" autocomplete="off"
+                 placeholder="Search anything… (name, phone, service, status)"
+                 aria-label="Search everything" aria-expanded="false"
+                 aria-controls="searchResults" />
+          <kbd>Ctrl K</kbd>
+          <div class="search__panel" id="searchResults" role="listbox" hidden></div>
+        </div>
+
+        <div class="topbar__right">
+          <button class="iconbtn" id="bellBtn" aria-label="Notifications" aria-expanded="false">
+            <i class="fa-solid fa-bell" aria-hidden="true"></i>
+            <em class="iconbtn__dot" id="bellDot" hidden></em>
+          </button>
+          <div class="pop" id="bellPop" hidden>
+            <div class="pop__head">
+              <strong>Notifications</strong>
+              <button class="pop__link" id="readAll">Mark all read</button>
+            </div>
+            <ul class="pop__list" id="bellList"></ul>
+          </div>
+
+          <button class="who" id="meBtn">
+            <span class="who__avatar" id="whoAvatar">?</span>
+            <span class="who__text">
+              <strong id="whoami">Admin</strong>
+              <em>WE3 Agency</em>
+            </span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="view" id="view" tabindex="-1"></main>
     </div>
-  </header>
-
-  <!-- Stated up front so nobody assumes more than this page does. -->
-  <p class="adm__notice">
-    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-    <span>
-      Orders arrive here on their own. Marking one <strong>verified</strong> or
-      <strong>rejected</strong> changes what the customer sees under My Orders
-      straight away — but it does not message them, so send the WhatsApp too.
-      Every change is saved against the person who made it.
-    </span>
-  </p>
-
-  <main class="adm__main">
-
-    <div class="adm__stats">
-      <div class="stat-tile">
-        <span class="stat-tile__label">Orders</span>
-        <strong class="stat-tile__value" id="statTotal">0</strong>
-      </div>
-      <div class="stat-tile stat-tile--pending">
-        <span class="stat-tile__label">Pending</span>
-        <strong class="stat-tile__value" id="statPending">0</strong>
-      </div>
-      <div class="stat-tile stat-tile--ok">
-        <span class="stat-tile__label">Verified</span>
-        <strong class="stat-tile__value" id="statVerified">0</strong>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-tile__label">Received (verified)</span>
-        <strong class="stat-tile__value" id="statMoney">₹0</strong>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-tile__label">Balance due</span>
-        <strong class="stat-tile__value" id="statDue">₹0</strong>
-      </div>
-    </div>
-
-    <!-- ---------- ORDERS ---------- -->
-    <section class="adm__panel" aria-labelledby="listTitle">
-      <div class="adm__list-head">
-        <h2 class="adm__h" id="listTitle">
-          <i class="fa-solid fa-receipt" aria-hidden="true"></i> Orders
-        </h2>
-        <div class="chips" id="orderChips" role="tablist" aria-label="Filter orders">
-          <button class="chip is-active" role="tab" aria-selected="true"  data-value="all">All</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="pending">Pending</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="verified">Verified</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="rejected">Rejected</button>
-        </div>
-      </div>
-
-      <input class="input adm__search" id="search" placeholder="Search name, business, phone or reference…" />
-
-      <p class="adm__state" id="loadState" hidden></p>
-      <p class="adm__empty" id="listEmpty">No orders yet. They appear here the moment a customer places one.</p>
-      <ul class="adm__orders" id="orderList"></ul>
-    </section>
-
-    <!-- ---------- PEOPLE ---------- -->
-    <section class="adm__panel" aria-labelledby="peopleTitle">
-      <div class="adm__list-head">
-        <h2 class="adm__h" id="peopleTitle">
-          <i class="fa-solid fa-users" aria-hidden="true"></i> People
-        </h2>
-        <div class="chips" id="peopleChips" role="tablist" aria-label="Filter people">
-          <button class="chip is-active" role="tab" aria-selected="true"  data-value="all">Everyone</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="team">Team</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="customers">Customers</button>
-        </div>
-        <!-- Access buttons stay hidden until this is switched on, so granting
-             admin cannot happen with a stray tap. Founder only. -->
-        <button class="adm__manage" id="manageBtn" hidden></button>
-      </div>
-
-      <input class="input adm__search" id="peopleSearch" placeholder="Search username, name, business or phone…" />
-
-      <p class="adm__state" id="peopleState" hidden></p>
-      <p class="adm__empty" id="peopleEmpty">Nobody has signed up yet.</p>
-      <ul class="people" id="peopleList"></ul>
-    </section>
-
-    <!-- ---------- ACTIVITY ---------- -->
-    <section class="adm__panel" aria-labelledby="activityTitle">
-      <div class="adm__list-head">
-        <h2 class="adm__h" id="activityTitle">
-          <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Activity
-        </h2>
-        <div class="chips" id="activityChips" role="tablist" aria-label="Activity type">
-          <button class="chip is-active" role="tab" aria-selected="true"  data-value="logins">Logins</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="orders">Order changes</button>
-          <button class="chip" role="tab" aria-selected="false" data-value="access">Access changes</button>
-        </div>
-      </div>
-
-      <p class="adm__empty" id="activityEmpty">Nothing yet.</p>
-      <ul class="hist hist--feed" id="activityList"></ul>
-    </section>
-  </main>
+  </div>
 
   <!-- ======================================================================
        MY ACCOUNT — an admin's own details and password
@@ -188,41 +147,62 @@
 
       <div class="me__id">
         <strong id="meUser">—</strong>
-        <span class="person__tag" id="meRole"></span>
+        <span class="tag" id="meRole"></span>
       </div>
       <p class="me__since" id="meSince"></p>
       <p class="me__since" id="meLast"></p>
 
-      <div class="cf-row">
+      <div class="fld">
         <label for="meName">Your name</label>
-        <input class="input" type="text" id="meName" autocomplete="name" placeholder="Your name" />
+        <input class="inp" type="text" id="meName" autocomplete="name" placeholder="Your name" />
       </div>
-      <div class="cf-row">
+      <div class="fld">
         <label for="mePhone">Phone number</label>
-        <input class="input" type="tel" id="mePhone" autocomplete="tel" inputmode="numeric" placeholder="Phone number" />
+        <input class="inp" type="tel" id="mePhone" autocomplete="tel" inputmode="numeric" placeholder="Phone number" />
       </div>
-      <p class="me__msg" id="meMsg" hidden></p>
+      <p class="msg" id="meMsg" hidden></p>
       <button class="btn btn--green btn--block" id="meSave">
         <i class="fa-solid fa-check" aria-hidden="true"></i> Save
       </button>
 
       <h3 class="me__h">Password</h3>
-      <div class="cf-row">
+      <div class="fld">
         <label for="mePass">New password</label>
         <div class="pw">
-          <input class="input" type="password" id="mePass" autocomplete="new-password"
+          <input class="inp" type="password" id="mePass" autocomplete="new-password"
                  placeholder="At least 8 characters" />
           <button class="pw__eye" type="button" id="meEye" aria-label="Show password">
             <i class="fa-solid fa-eye" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-      <p class="me__msg" id="mePassMsg" hidden></p>
-      <button class="btn btn--outline-dark btn--block" id="mePassBtn">
+      <p class="msg" id="mePassMsg" hidden></p>
+      <button class="btn btn--ghost btn--block" id="mePassBtn">
         <i class="fa-solid fa-key" aria-hidden="true"></i> Change password
+      </button>
+
+      <button class="btn btn--ghost btn--block" id="signOutBtn">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
       </button>
     </div>
   </div>
+
+  <!-- A drawer for record details, and a place for toasts. Both are filled
+       in by admin.js so there is one of each rather than one per section. -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer__backdrop" data-close-drawer></div>
+    <aside class="drawer__panel" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="drawerTitle">
+      <header class="drawer__head">
+        <h2 id="drawerTitle">Details</h2>
+        <button class="iconbtn" data-close-drawer aria-label="Close">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+      <div class="drawer__body" id="drawerBody"></div>
+    </aside>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
   <script src="admin.js" defer></script>
